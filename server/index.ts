@@ -160,6 +160,18 @@ async function initDB() {
     client.release();
   }
 
+  // Run product column migrations outside transaction for reliability
+  try {
+    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS is_master BOOLEAN DEFAULT false');
+    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS quantity VARCHAR(100)');
+    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS product_image BYTEA');
+    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)');
+    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_symbol VARCHAR(255)');
+    console.log('✅ Product columns verified');
+  } catch (colErr) {
+    console.error('Product column migration error:', colErr);
+  }
+
   // Seed demo data if tables are empty
   try {
     const { default: bcrypt } = await import('bcryptjs');
