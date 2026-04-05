@@ -118,7 +118,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const renderPage = () => {
     switch (page) {
       case 'add':
-        return canEdit ? <AddProduct onProductAdded={handleProductAdded} /> : <div className="page-placeholder">You don't have permission to add products.</div>;
+        return <AddProduct onProductAdded={handleProductAdded} />;
       case 'edit':
         return canEdit && selectedProduct ? (
           <EditProduct product={selectedProduct} onSave={handleSaveProduct} onCancel={() => setPage('list')} />
@@ -187,20 +187,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             <span className="nav-icon">📊</span>
             Dashboard
           </a>
-          {canEdit && (
-            <a
-              href="#"
-              className={page === 'add' ? 'active' : ''}
-              onClick={(e) => {
-                e.preventDefault();
-                setPage('add');
-                setSidebarOpen(false);
-              }}
-            >
-              <span className="nav-icon">➕</span>
-              Add Products
-            </a>
-          )}
+          <a
+            href="#"
+            className={page === 'add' ? 'active' : ''}
+            onClick={(e) => {
+              e.preventDefault();
+              setPage('add');
+              setSidebarOpen(false);
+            }}
+          >
+            <span className="nav-icon">➕</span>
+            Add Products
+          </a>
           <a
             href="#"
             className={page === 'list' ? 'active' : ''}

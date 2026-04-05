@@ -83,7 +83,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
         <h1>Product List</h1>
         <div className="products-list-actions">
           <button className="export-btn" onClick={handleExport}>Export</button>
-          {canEdit && <button className="primary-btn" onClick={goAdd}>Add Product +</button>}
+          <button className="primary-btn" onClick={goAdd}>Add Product +</button>
         </div>
       </div>
 
