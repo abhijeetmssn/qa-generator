@@ -4,7 +4,7 @@ import { apiGetMasterProducts } from '../services/api';
 import type { Product } from '../services/api';
 
 type AddProductProps = {
-  onProductAdded?: (product: any) => void;
+  onProductAdded?: (product: any) => Promise<void> | void;
 };
 
 const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
@@ -110,7 +110,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
     
     setAddedProduct(product);
     if (onProductAdded) {
-      onProductAdded(product);
+      await onProductAdded(product);
     }
     setSelectedMasterId('');
     setProductImageFile(null);

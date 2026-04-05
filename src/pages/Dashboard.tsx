@@ -110,6 +110,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       setAllProducts(prev => [...prev, saved]);
     } catch (error) {
       console.error('Failed to add product:', error);
+      alert('Failed to add product. Please try again.');
     }
   };
 
