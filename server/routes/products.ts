@@ -77,14 +77,7 @@ router.get('/trash/list', authenticateToken, async (_req, res) => {
 // GET /api/products/master — list master catalog products (for dropdown)
 router.get('/master', authenticateToken, async (_req, res) => {
   try {
-    const decoded = (_req as any).user;
-    const user = decoded?.email ? await findUserByEmail(decoded.email) : null;
-    let companyName: string | undefined;
-    if (user?.companyId) {
-      const company = await getCompanyById(user.companyId);
-      companyName = company?.name;
-    }
-    const products = await getMasterProducts(companyName);
+    const products = await getMasterProducts();
     return res.json({ products });
   } catch (err) {
     console.error('Get master products error:', err);
