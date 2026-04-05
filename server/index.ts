@@ -122,7 +122,7 @@ async function initDB() {
       }
     }
 
-    // Create products table
+    // Create products table (with all columns)
     await client.query(`
       CREATE TABLE IF NOT EXISTS products (
         id                    SERIAL PRIMARY KEY,
@@ -138,18 +138,26 @@ async function initDB() {
         registration_number   VARCHAR(255),
         packing_size          VARCHAR(100),
         manufacturer_licence  VARCHAR(255),
+        image_url             VARCHAR(500),
+        hazard_symbol         VARCHAR(255),
+        quantity              VARCHAR(100),
+        product_image         BYTEA,
+        is_master             BOOLEAN DEFAULT false,
         owner_uid             VARCHAR(100) REFERENCES users(uid),
         active                VARCHAR(1) DEFAULT 'Y',
         created_at            TIMESTAMPTZ DEFAULT NOW()
       );
     `);
 
-    // Migrate products table: add is_master, quantity, product_image, image_url, hazard_symbol columns
+    // Migrate products table: add columns if table already existed without them
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS is_master BOOLEAN DEFAULT false');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS quantity VARCHAR(100)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS product_image BYTEA');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_symbol VARCHAR(255)');
+
+    // Mark all existing products as master catalog so they appear in dropdown
+    await client.query("UPDATE products SET is_master = true WHERE is_master = false OR is_master IS NULL");
 
     await client.query('COMMIT');
     console.log('✅ Database tables ready');
@@ -158,24 +166,6 @@ async function initDB() {
     console.error('Migration failed:', err);
   } finally {
     client.release();
-  }
-
-  // Run product column migrations outside transaction for reliability
-  try {
-    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS is_master BOOLEAN DEFAULT false');
-    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS quantity VARCHAR(100)');
-    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS product_image BYTEA');
-    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)');
-    await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_symbol VARCHAR(255)');
-
-    // Mark all existing products as master (catalog products) if not already set
-    const { rowCount } = await pool.query("UPDATE products SET is_master = true WHERE is_master = false OR is_master IS NULL");
-    if (rowCount && rowCount > 0) {
-      console.log(`✅ Marked ${rowCount} existing products as master catalog`);
-    }
-    console.log('✅ Product columns verified');
-  } catch (colErr) {
-    console.error('Product column migration error:', colErr);
   }
 
   // Seed demo data if tables are empty
