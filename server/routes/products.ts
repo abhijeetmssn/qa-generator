@@ -49,7 +49,9 @@ router.get('/', authenticateToken, async (_req, res) => {
       const company = await getCompanyById(user.companyId);
       companyName = company?.name;
     }
+    console.log('[GET /products] user:', user?.email, 'companyId:', user?.companyId, 'companyName:', companyName);
     const products = await getProducts(companyName);
+    console.log('[GET /products] returned', products.length, 'products');
     return res.json({ products });
   } catch (err) {
     console.error('Get products error:', err);
@@ -158,6 +160,8 @@ router.post('/', authenticateToken, requireRole('admin', 'editor'), async (req, 
   try {
     const body = req.body;
     const user = (req as any).user;
+    console.log('[POST /products] user from JWT:', JSON.stringify(user));
+    console.log('[POST /products] body:', JSON.stringify(body));
     const product = {
       id: body.id || Date.now(),
       uniqueId: body.uniqueId || uuidv4().replace(/-/g, '').slice(0, 9),
@@ -179,6 +183,7 @@ router.post('/', authenticateToken, requireRole('admin', 'editor'), async (req, 
     };
 
     const saved = await addProduct(product);
+    console.log('[POST /products] saved product:', JSON.stringify(saved));
     return res.status(201).json({ product: saved });
   } catch (err) {
     console.error('Add product error:', err);
