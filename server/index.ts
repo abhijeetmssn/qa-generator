@@ -167,6 +167,12 @@ async function initDB() {
     await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS product_image BYTEA');
     await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)');
     await pool.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_symbol VARCHAR(255)');
+
+    // Mark all existing products as master (catalog products) if not already set
+    const { rowCount } = await pool.query("UPDATE products SET is_master = true WHERE is_master = false OR is_master IS NULL");
+    if (rowCount && rowCount > 0) {
+      console.log(`✅ Marked ${rowCount} existing products as master catalog`);
+    }
     console.log('✅ Product columns verified');
   } catch (colErr) {
     console.error('Product column migration error:', colErr);
