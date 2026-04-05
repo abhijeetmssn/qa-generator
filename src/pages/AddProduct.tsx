@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { apiGetMasterProducts, apiUploadProductImage } from '../services/api';
+import { apiGetMasterProducts } from '../services/api';
 import type { Product } from '../services/api';
 
 type AddProductProps = {
