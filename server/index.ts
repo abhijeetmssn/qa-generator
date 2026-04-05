@@ -156,9 +156,6 @@ async function initDB() {
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_symbol VARCHAR(255)');
 
-    // Mark all existing products as master catalog so they appear in dropdown
-    await client.query("UPDATE products SET is_master = true WHERE is_master = false OR is_master IS NULL");
-
     await client.query('COMMIT');
     console.log('✅ Database tables ready');
   } catch (err) {
