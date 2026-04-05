@@ -151,10 +151,17 @@ export interface Product {
   manufacturerLicence?: string;
   imageUrl?: string;
   hazardSymbol?: string;
+  quantity?: string;
+  productImage?: string;
 }
 
 export async function apiGetProducts(): Promise<Product[]> {
   const data = await request<{ products: Product[] }>('/products');
+  return data.products;
+}
+
+export async function apiGetMasterProducts(): Promise<Product[]> {
+  const data = await request<{ products: Product[] }>('/products/master');
   return data.products;
 }
 
@@ -184,6 +191,24 @@ export async function apiUpdateProduct(uniqueId: string, updates: Partial<Produc
 
 export async function apiDeleteProduct(uniqueId: string): Promise<void> {
   await request(`/products/${uniqueId}`, { method: 'DELETE' });
+}
+
+export async function apiUploadProductImage(uniqueId: string, file: File): Promise<{ message: string; productImage: string }> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('productImage', file);
+
+  const res = await fetch(`${API_BASE}/products/${uniqueId}/upload-image`, {
+    method: 'POST',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Image upload failed');
+  }
+  return data;
 }
 
 export async function apiGetTrashProducts(): Promise<Product[]> {

@@ -12,14 +12,30 @@ import {
   restoreProduct,
   permanentDeleteProduct,
   findUserByEmail,
+  getMasterProducts,
+  updateProductImage,
+  getProductImage,
 } from '../db';
 import { authenticateToken, requireRole } from '../middleware';
 import type { Request, Response, NextFunction } from 'express';
+import path from 'path';
 
 const router = Router();
 
 // Multer: store uploaded file in memory
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+// Multer for product image upload (5MB limit)
+const productImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['.png', '.jpg', '.jpeg', '.webp'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext)) cb(null, true);
+    else cb(new Error('Only image files are allowed (png, jpg, jpeg, webp)'));
+  },
+});
 
 // GET /api/products — list products filtered by user's company
 router.get('/', authenticateToken, async (_req, res) => {
@@ -46,6 +62,58 @@ router.get('/trash/list', authenticateToken, async (_req, res) => {
   } catch (err) {
     console.error('Get trash error:', err);
     return res.status(500).json({ error: 'Failed to fetch trash' });
+  }
+});
+
+// GET /api/products/master — list master catalog products (for dropdown)
+router.get('/master', authenticateToken, async (_req, res) => {
+  try {
+    const decoded = (_req as any).user;
+    const user = decoded?.email ? await findUserByEmail(decoded.email) : null;
+    const companyName = user?.companyName || undefined;
+    const products = await getMasterProducts(companyName);
+    return res.json({ products });
+  } catch (err) {
+    console.error('Get master products error:', err);
+    return res.status(500).json({ error: 'Failed to fetch master products' });
+  }
+});
+
+// POST /api/products/:uniqueId/upload-image — upload product image
+router.post('/:uniqueId/upload-image', authenticateToken, requireRole('admin', 'editor'), productImageUpload.single('productImage'), async (req: Request, res: Response) => {
+  try {
+    const { uniqueId } = req.params;
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file uploaded' });
+    }
+    const product = await getProductByUniqueId(uniqueId);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    const success = await updateProductImage(uniqueId, req.file.buffer);
+    if (!success) {
+      return res.status(500).json({ error: 'Failed to save image' });
+    }
+    return res.json({ message: 'Product image uploaded successfully', productImage: `/api/products/${uniqueId}/image` });
+  } catch (err) {
+    console.error('Upload product image error:', err);
+    return res.status(500).json({ error: 'Failed to upload product image' });
+  }
+});
+
+// GET /api/products/:uniqueId/image — serve product image
+router.get('/:uniqueId/image', async (req: Request, res: Response) => {
+  try {
+    const imageBuffer = await getProductImage(req.params.uniqueId);
+    if (!imageBuffer) {
+      return res.status(404).json({ error: 'No image found' });
+    }
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=86400');
+    return res.send(imageBuffer);
+  } catch (err) {
+    console.error('Get product image error:', err);
+    return res.status(500).json({ error: 'Failed to fetch image' });
   }
 });
 
@@ -84,6 +152,7 @@ router.post('/', authenticateToken, requireRole('admin', 'editor'), async (req, 
       manufacturerLicence: body.manufacturerLicence,
       imageUrl: body.imageUrl,
       hazardSymbol: body.hazardSymbol,
+      quantity: body.quantity,
       owner_uid: user.uid,
     };
 
@@ -261,6 +330,7 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
           packingSize: mapped.packingSize || undefined,
           manufacturerLicence: mapped.manufacturerLicence || undefined,
           owner_uid: user.uid,
+          is_master: true,
         });
         results.inserted++;
       } catch (err: any) {

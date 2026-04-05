@@ -126,6 +126,17 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack }) => {
         <h1>Agri Input Information System (AIIS)</h1>
       </div>
 
+      {/* Product Image */}
+      {(product.productImage || product.imageUrl) && (
+        <div style={{ maxWidth: '800px', margin: '0 auto 16px', padding: '0 16px', textAlign: 'center' }}>
+          <img
+            src={product.productImage || product.imageUrl}
+            alt={product.name}
+            style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+          />
+        </div>
+      )}
+
       <div className="view-product-content">
         <div className="view-info-grid">
           <div className="view-info-column">

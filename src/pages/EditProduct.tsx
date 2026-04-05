@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { Product } from '../services/api';
+import { apiUploadProductImage } from '../services/api';
 
 interface EditProductProps {
   product: Product;
@@ -18,9 +19,13 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
     technicalName: product.technicalName || '',
     registrationNumber: product.registrationNumber || '',
     packingSize: product.packingSize || '',
+    quantity: product.quantity || '',
     manufacturerLicence: product.manufacturerLicence || '',
   });
   const [saving, setSaving] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(product.productImage || null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -31,6 +36,13 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
     e.preventDefault();
     setSaving(true);
     try {
+      if (imageFile) {
+        try {
+          await apiUploadProductImage(product.uniqueId, imageFile);
+        } catch (imgErr) {
+          console.error('Failed to upload image:', imgErr);
+        }
+      }
       await onSave(product.uniqueId, form);
     } finally {
       setSaving(false);
@@ -87,8 +99,35 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
               <input name="packingSize" value={form.packingSize} onChange={handleChange} placeholder="e.g. 1 KG" />
             </div>
             <div className="form-group">
+              <label>Quantity</label>
+              <input name="quantity" value={form.quantity} onChange={handleChange} placeholder="e.g. 100, 500 units" />
+            </div>
+            <div className="form-group">
               <label>Manufacturer Licence</label>
               <input name="manufacturerLicence" value={form.manufacturerLicence} onChange={handleChange} placeholder="Licence #" />
+            </div>
+            <div className="form-group">
+              <label>Product Image</label>
+              {imagePreview && (
+                <div style={{ marginBottom: '8px' }}>
+                  <img src={imagePreview} alt="Product" style={{ maxWidth: '150px', maxHeight: '100px', borderRadius: '6px', border: '1px solid #e2e8f0' }} />
+                </div>
+              )}
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setImageFile(file);
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setImagePreview(reader.result as string);
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                style={{ padding: '8px' }}
+              />
             </div>
           </div>
 

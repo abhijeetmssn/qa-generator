@@ -30,6 +30,8 @@ export interface Product {
   manufacturerLicence?: string;
   imageUrl?: string;
   hazardSymbol?: string; // e.g. '☠️ Toxic', '🔥 Flammable'
+  quantity?: string;
+  productImage?: string; // URL path to serve the image
   owner_uid?: string;
   active?: string; // 'Y' or 'N'
 }
@@ -64,6 +66,8 @@ function rowToProduct(row: any): Product {
     manufacturerLicence: row.manufacturer_licence,
     imageUrl: row.image_url,
     hazardSymbol: row.hazard_symbol,
+    quantity: row.quantity,
+    productImage: row.product_image ? `/api/products/${row.unique_id}/image` : undefined,
     owner_uid: row.owner_uid,
     active: row.active || 'Y',
   };
@@ -75,13 +79,28 @@ export async function getProducts(companyName?: string): Promise<Product[]> {
     const { rows } = await pool.query(
       `SELECT p.* FROM products p
        JOIN users u ON p.owner_uid = u.uid
-       WHERE p.active = 'Y' AND u.company_name = $1
+       WHERE p.active = 'Y' AND (p.is_master = false OR p.is_master IS NULL) AND u.company_name = $1
        ORDER BY p.id`,
       [companyName]
     );
     return rows.map(rowToProduct);
   }
-  const { rows } = await pool.query("SELECT * FROM products WHERE active = 'Y' ORDER BY id");
+  const { rows } = await pool.query("SELECT * FROM products WHERE active = 'Y' AND (is_master = false OR is_master IS NULL) ORDER BY id");
+  return rows.map(rowToProduct);
+}
+
+export async function getMasterProducts(companyName?: string): Promise<Product[]> {
+  if (companyName) {
+    const { rows } = await pool.query(
+      `SELECT p.* FROM products p
+       JOIN users u ON p.owner_uid = u.uid
+       WHERE p.active = 'Y' AND p.is_master = true AND u.company_name = $1
+       ORDER BY p.name`,
+      [companyName]
+    );
+    return rows.map(rowToProduct);
+  }
+  const { rows } = await pool.query("SELECT * FROM products WHERE active = 'Y' AND is_master = true ORDER BY name");
   return rows.map(rowToProduct);
 }
 
@@ -105,10 +124,10 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
   return rows.length > 0 ? rowToProduct(rows[0]) : undefined;
 }
 
-export async function addProduct(product: Product): Promise<Product> {
+export async function addProduct(product: Product & { is_master?: boolean }): Promise<Product> {
   const { rows } = await pool.query(
-    `INSERT INTO products (unique_id, name, batch, mfg, expiry, short_url, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, hazard_symbol, owner_uid)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+    `INSERT INTO products (unique_id, name, batch, mfg, expiry, short_url, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, hazard_symbol, quantity, owner_uid, is_master)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
      RETURNING *`,
     [
       product.uniqueId,
@@ -125,7 +144,9 @@ export async function addProduct(product: Product): Promise<Product> {
       product.manufacturerLicence || null,
       product.imageUrl || null,
       product.hazardSymbol || null,
+      product.quantity || null,
       product.owner_uid || null,
+      product.is_master || false,
     ]
   );
   return rowToProduct(rows[0]);
@@ -150,6 +171,7 @@ export async function updateProduct(uniqueId: string, updates: Partial<Product>)
     manufacturerLicence: 'manufacturer_licence',
     imageUrl: 'image_url',
     hazardSymbol: 'hazard_symbol',
+    quantity: 'quantity',
   };
 
   for (const [key, col] of Object.entries(columnMap)) {
@@ -352,4 +374,19 @@ export async function addUser(user: User): Promise<User> {
     [user.uid, user.email, user.password, user.companyId || null, user.role || 'user']
   );
   return user;
+}
+
+// ── Product Image ──
+export async function updateProductImage(uniqueId: string, imageBuffer: Buffer): Promise<boolean> {
+  const result = await pool.query(
+    'UPDATE products SET product_image = $1 WHERE unique_id = $2',
+    [imageBuffer, uniqueId]
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function getProductImage(uniqueId: string): Promise<Buffer | null> {
+  const { rows } = await pool.query('SELECT product_image FROM products WHERE unique_id = $1', [uniqueId]);
+  if (rows.length === 0 || !rows[0].product_image) return null;
+  return rows[0].product_image;
 }

@@ -9,7 +9,7 @@ import BulkUpload from './BulkUpload';
 import CreateCompany from './CreateCompany';
 import Trash from './Trash';
 import Logo from '../components/Logo';
-import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct } from '../services/api';
+import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct, apiUploadProductImage } from '../services/api';
 import type { Product } from '../services/api';
 import type { UserRole } from '../services/api';
 
@@ -93,9 +93,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     }
   };
 
-  const handleProductAdded = async (newProduct: Product) => {
+  const handleProductAdded = async (newProduct: any) => {
     try {
+      const imageFile = newProduct._imageFile;
+      delete newProduct._imageFile;
       const saved = await apiAddProduct(newProduct);
+      // Upload image if provided
+      if (imageFile && saved.uniqueId) {
+        try {
+          const imgResult = await apiUploadProductImage(saved.uniqueId, imageFile);
+          saved.productImage = imgResult.productImage;
+        } catch (imgErr) {
+          console.error('Failed to upload product image:', imgErr);
+        }
+      }
       setAllProducts(prev => [...prev, saved]);
     } catch (error) {
       console.error('Failed to add product:', error);

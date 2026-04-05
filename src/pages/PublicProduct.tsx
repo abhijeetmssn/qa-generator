@@ -97,10 +97,10 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
       </div>
 
       {/* Product Image */}
-      {product.imageUrl && (
+      {(product.productImage || product.imageUrl) && (
         <div style={{ maxWidth: '600px', margin: '0 auto', padding: '16px' }}>
           <img 
-            src={product.imageUrl} 
+            src={product.productImage || product.imageUrl} 
             alt={product.name}
             style={{
               width: '100%',
