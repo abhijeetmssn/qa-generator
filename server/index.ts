@@ -83,6 +83,7 @@ async function initDB() {
 
     // Migrate existing users table: add company_id if it doesn't exist
     try {
+      await client.query('SAVEPOINT users_migration');
       await client.query(
         'ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id)'
       );
@@ -96,7 +97,9 @@ async function initDB() {
       await client.query(
         'ALTER TABLE users DROP COLUMN IF EXISTS company_address'
       );
+      await client.query('RELEASE SAVEPOINT users_migration');
     } catch (migrationErr: any) {
+      await client.query('ROLLBACK TO SAVEPOINT users_migration');
       if (!migrationErr.message.includes('already exists')) {
         console.error('Migration warning:', migrationErr.message);
       }
@@ -104,12 +107,15 @@ async function initDB() {
 
     // Migrate logo column to BYTEA for binary data storage
     try {
+      await client.query('SAVEPOINT logo_migration');
       await client.query(
         `ALTER TABLE companies 
          ALTER COLUMN logo TYPE BYTEA`
       );
+      await client.query('RELEASE SAVEPOINT logo_migration');
       console.log('✅ Logo column migrated to BYTEA');
     } catch (migrationErr: any) {
+      await client.query('ROLLBACK TO SAVEPOINT logo_migration');
       // Column might already be BYTEA, ignore this error
       if (!migrationErr.message.includes('already') && !migrationErr.message.includes('same')) {
         console.warn('Logo column migration info:', migrationErr.message);
