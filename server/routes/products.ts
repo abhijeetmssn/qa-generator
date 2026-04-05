@@ -20,6 +20,7 @@ import {
 import { authenticateToken, requireRole } from '../middleware';
 import type { Request, Response, NextFunction } from 'express';
 import path from 'path';
+import pool from '../pool';
 
 const router = Router();
 
@@ -71,6 +72,21 @@ router.get('/trash/list', authenticateToken, async (_req, res) => {
   } catch (err) {
     console.error('Get trash error:', err);
     return res.status(500).json({ error: 'Failed to fetch trash' });
+  }
+});
+
+// GET /api/products/debug — check products table schema and data (temporary)
+router.get('/debug', async (_req, res) => {
+  try {
+    const { rows: columns } = await pool.query(
+      "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'products' ORDER BY ordinal_position"
+    );
+    const { rows: counts } = await pool.query(
+      "SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE is_master = true) as master, COUNT(*) FILTER (WHERE is_master = false OR is_master IS NULL) as non_master, COUNT(*) FILTER (WHERE active = 'Y') as active FROM products"
+    );
+    return res.json({ columns, counts: counts[0] });
+  } catch (err: any) {
+    return res.json({ error: err.message });
   }
 });
 
