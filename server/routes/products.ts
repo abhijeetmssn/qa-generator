@@ -86,7 +86,10 @@ router.get('/debug', async (_req, res) => {
     const { rows: counts } = await pool.query(
       "SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE is_master = true) as master, COUNT(*) FILTER (WHERE is_master = false OR is_master IS NULL) as non_master, COUNT(*) FILTER (WHERE active = 'Y') as active FROM products"
     );
-    return res.json({ columns, counts: counts[0] });
+    const { rows: recent } = await pool.query(
+      "SELECT id, unique_id, name, batch, is_master, owner_uid, active, created_at FROM products ORDER BY id DESC LIMIT 10"
+    );
+    return res.json({ columns, counts: counts[0], recent });
   } catch (err: any) {
     return res.json({ error: err.message });
   }

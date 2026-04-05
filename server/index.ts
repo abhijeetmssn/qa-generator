@@ -156,13 +156,6 @@ async function initDB() {
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_symbol VARCHAR(255)');
 
-    // One-time migration: mark existing products as master (only if no master products exist yet)
-    const { rows: masterCheck } = await client.query("SELECT 1 FROM products WHERE is_master = true LIMIT 1");
-    if (masterCheck.length === 0) {
-      await client.query("UPDATE products SET is_master = true WHERE is_master = false OR is_master IS NULL");
-      console.log('✅ One-time migration: marked existing products as master');
-    }
-
     await client.query('COMMIT');
     console.log('✅ Database tables ready');
   } catch (err) {
