@@ -79,7 +79,8 @@ export async function getProducts(companyName?: string): Promise<Product[]> {
     const { rows } = await pool.query(
       `SELECT p.* FROM products p
        JOIN users u ON p.owner_uid = u.uid
-       WHERE p.active = 'Y' AND (p.is_master = false OR p.is_master IS NULL) AND u.company_name = $1
+       JOIN companies c ON u.company_id = c.id
+       WHERE p.active = 'Y' AND (p.is_master = false OR p.is_master IS NULL) AND c.name = $1
        ORDER BY p.id`,
       [companyName]
     );
@@ -94,7 +95,8 @@ export async function getMasterProducts(companyName?: string): Promise<Product[]
     const { rows } = await pool.query(
       `SELECT p.* FROM products p
        JOIN users u ON p.owner_uid = u.uid
-       WHERE p.active = 'Y' AND p.is_master = true AND u.company_name = $1
+       JOIN companies c ON u.company_id = c.id
+       WHERE p.active = 'Y' AND p.is_master = true AND c.name = $1
        ORDER BY p.name`,
       [companyName]
     );
@@ -109,7 +111,8 @@ export async function getTrashProducts(companyName?: string): Promise<Product[]>
     const { rows } = await pool.query(
       `SELECT p.* FROM products p
        JOIN users u ON p.owner_uid = u.uid
-       WHERE p.active = 'N' AND u.company_name = $1
+       JOIN companies c ON u.company_id = c.id
+       WHERE p.active = 'N' AND c.name = $1
        ORDER BY p.id`,
       [companyName]
     );
