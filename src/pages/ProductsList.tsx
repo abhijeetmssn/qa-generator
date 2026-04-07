@@ -85,7 +85,6 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
       'Technical Name': p.technicalName || '',
       'Registration Number': p.registrationNumber || '',
       'Packing Size': p.packingSize || '',
-      'Quantity': p.quantity || '',
       'Manufacturer Licence': p.manufacturerLicence || '',
     }));
 
@@ -179,7 +178,6 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                 <th>Unique Id</th>
                 <th>Product Name</th>
                 <th>Batch Number</th>
-                <th>Quantity</th>
                 <th>Manufacturing Date</th>
                 <th>Expiry Date</th>
                 <th>Short Url</th>
@@ -189,7 +187,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
             <tbody>
               {paged.length === 0 ? (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>
                     {search ? 'No products match your search.' : 'No products found.'}
                   </td>
                 </tr>
@@ -200,7 +198,6 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                     <td>{product.uniqueId}</td>
                     <td>{product.name}</td>
                     <td>{product.batch}</td>
-                    <td>{product.quantity || '-'}</td>
                     <td>{product.mfg}</td>
                     <td>{product.expiry}</td>
                     <td>
