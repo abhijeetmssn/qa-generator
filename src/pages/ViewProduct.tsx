@@ -179,6 +179,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
             <div className="view-logo">{companyName?.substring(0, 3).toUpperCase() || 'FAS'}</div>
           )}
         </div>
+        {companyName && <p className="view-company-name">{companyName}</p>}
         <h1>Agri Input Information System (AIIS)</h1>
       </div>
 

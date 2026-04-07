@@ -3,16 +3,20 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
   background: white;
-  border-radius: 14px;
+  border-radius: 16px;
   overflow-y: auto;
   max-height: calc(100vh - 100px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
 }
 
 .view-header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #eee;
+  padding: 14px 24px;
+  border-bottom: none;
+  background: #fafbfc;
+  border-radius: 16px 16px 0 0;
 }
 
 .back-btn {
@@ -30,15 +34,28 @@
 }
 
 .view-product-header {
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #0ea5e9 100%);
-  padding: 32px 24px;
+  background: linear-gradient(135deg, #0f2557 0%, #1e3a8a 50%, #2563eb 100%);
+  padding: 32px 28px;
   text-align: center;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 16px;
   flex-direction: column;
+  position: relative;
+}
+
+.view-product-header::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .view-logo-section {
@@ -48,31 +65,43 @@
 }
 
 .view-logo {
-  width: 60px;
-  height: 60px;
+  width: 52px;
+  height: 52px;
   background: white;
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  color: #4caf50;
-  font-size: 1.5rem;
+  color: #1e3a8a;
+  font-size: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .view-logo-img {
-  max-width: 80px;
-  max-height: 60px;
+  max-width: 70px;
+  max-height: 52px;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 10px;
   background: white;
   padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .view-product-header h1 {
-  font-size: 2rem;
+  font-size: 1.6rem;
   margin: 0;
   color: white;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.view-company-name {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: 0.5px;
 }
 
 .view-product-content {
@@ -100,24 +129,25 @@
 .view-info-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   text-align: center;
   align-items: center;
 }
 
 .view-info-group label {
   font-weight: 700;
-  font-size: 0.9rem;
-  color: #222;
+  font-size: 0.82rem;
+  color: #475569;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
 }
 
 .view-info-group p {
   font-size: 1rem;
-  color: #555;
+  color: #1e293b;
   margin: 0;
   line-height: 1.5;
+  font-weight: 500;
 }
 
 .view-info-group small {
@@ -164,7 +194,11 @@
 .contact-details {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  background: #f8f9fb;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
 }
 
 .contact-details p {
@@ -183,38 +217,64 @@
   text-decoration: underline;
 }
 
+.website-link {
+  margin-top: 4px;
+}
+
+.website-link a {
+  color: #5b6abf;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.website-link a:hover {
+  text-decoration: underline;
+}
+
 .social-links {
   display: flex;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 14px;
+  margin-top: 12px;
 }
 
 .fb-btn,
 .ig-btn {
-  padding: 6px 12px;
-  border-radius: 4px;
-  color: white;
+  padding: 11px 30px;
+  border-radius: 24px;
+  color: #fff !important;
   text-decoration: none;
-  font-size: 0.85rem;
+  font-size: 0.93rem;
   font-weight: 600;
   border: none;
   cursor: pointer;
+  display: inline-block;
+  text-align: center;
+  letter-spacing: 0.3px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.25s ease;
+}
+
+.fb-btn:hover,
+.ig-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .fb-btn {
-  background: #1877f2;
+  background: linear-gradient(135deg, #4a90d9, #1877f2);
 }
 
 .ig-btn {
-  background: #e1306c;
+  background: linear-gradient(135deg, #f77737, #e1306c);
 }
 
 .view-footer {
-  padding: 16px 24px;
-  border-top: 1px solid #eee;
+  padding: 20px 24px;
+  border-top: 1px solid #e2e8f0;
   text-align: center;
-  color: #888;
-  font-size: 0.9rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  background: #fafbfc;
 }
 
 .view-footer p {
@@ -223,11 +283,11 @@
 
 /* QR Code Section */
 .qr-section {
-  margin-top: 16px;
-  padding: 20px;
-  background: #f8fafb;
-  border-radius: 12px;
-  border: 1px dashed #d1d5db;
+  margin-top: 20px;
+  padding: 24px;
+  background: #f8f9fb;
+  border-radius: 14px;
+  border: 1.5px dashed #cbd5e1;
   text-align: center;
 }
 
@@ -235,11 +295,12 @@
   display: flex;
   justify-content: center;
   margin: 12px 0;
-  padding: 12px;
+  padding: 16px;
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   display: inline-block;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .qr-url {
@@ -256,80 +317,112 @@
 }
 
 .download-qr-btn {
-  padding: 10px 24px;
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  padding: 11px 24px;
+  background: linear-gradient(135deg, #0f2557 0%, #1e3a8a 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   flex: 1;
   min-width: 150px;
+  box-shadow: 0 3px 12px rgba(30, 58, 138, 0.25);
 }
 
 .download-qr-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(30, 58, 138, 0.35);
 }
 
 .print-qr-btn {
-  padding: 10px 24px;
+  padding: 11px 24px;
   background: linear-gradient(135deg, #059669 0%, #10b981 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   flex: 1;
   min-width: 150px;
+  box-shadow: 0 3px 12px rgba(16, 185, 129, 0.25);
 }
 
 .print-qr-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
 }
 
 /* ── Public Product Page Styles ── */
 .public-product-page {
   max-height: none;
-  border-radius: 0;
   min-height: 100vh;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
 }
 
 .public-header {
-  background: linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #4ade80 100%);
-  padding: 0;
+  background: linear-gradient(135deg, #0f2557 0%, #1e3a8a 50%, #2563eb 100%);
+  padding: 32px 24px;
   flex-direction: column;
-  gap: 0;
+  gap: 12px;
+  position: relative;
+  overflow: visible;
+}
+
+.public-header::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -15%;
+  width: 250px;
+  height: 250px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .public-header-logo {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 50px;
-  padding: 8px 24px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  justify-content: center;
 }
 
 .public-logo-img {
-  max-width: 36px;
-  max-height: 36px;
+  max-width: 70px;
+  max-height: 52px;
   object-fit: contain;
-  border-radius: 50%;
+  border-radius: 10px;
   background: white;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.public-logo-fallback {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  background: white;
+  color: #1e3a8a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .public-company-name {
-  color: white;
+  color: rgba(255, 255, 255, 0.9);
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 1.1rem;
   letter-spacing: 0.5px;
+  margin-top: 4px;
 }
 
 .public-header h1 {
@@ -339,13 +432,14 @@
 
 .public-content {
   flex-direction: column;
+  width: 100%;
 }
 
 .public-info-list {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  max-width: 700px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  max-width: 900px;
   width: 100%;
   margin: 0 auto;
 }
@@ -353,17 +447,28 @@
 .public-info-list .view-info-group {
   text-align: left;
   align-items: flex-start;
+  padding: 14px 18px;
+  background: #fafbfc;
+  border-radius: 10px;
+  border: 1px solid #e8ecf1;
+  transition: box-shadow 0.2s ease;
+}
+
+.public-info-list .view-info-group:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
 .public-info-list .view-info-group label {
-  font-weight: 800;
-  font-size: 0.9rem;
-  color: #111;
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: #64748b;
+  letter-spacing: 0.6px;
 }
 
 .public-info-list .view-info-group p {
-  font-size: 1rem;
-  color: #444;
+  font-size: 0.95rem;
+  color: #1e293b;
+  font-weight: 500;
 }
 
 .public-bottom-section {
@@ -555,16 +660,16 @@
   }
 
   .public-header-logo {
-    padding: 6px 16px;
+    padding: 0;
   }
 
   .public-company-name {
-    font-size: 0.75rem;
+    font-size: 0.95rem;
   }
 
   .public-logo-img {
-    max-width: 28px;
-    max-height: 28px;
+    max-width: 56px;
+    max-height: 42px;
   }
 
   .public-content {
@@ -572,15 +677,16 @@
   }
 
   .public-info-list {
-    gap: 20px;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .public-info-list .view-info-group label {
-    font-size: 0.85rem;
+    font-size: 0.72rem;
   }
 
   .public-info-list .view-info-group p {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
 
   .public-bottom-section {
@@ -624,9 +730,9 @@
 
   .fb-btn,
   .ig-btn {
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-size: 0.9rem;
+    padding: 12px 32px;
+    border-radius: 24px;
+    font-size: 1rem;
   }
 
   .contact-details p {

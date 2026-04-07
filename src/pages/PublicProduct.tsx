@@ -111,9 +111,11 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
         <div className="public-header-logo">
           {logoUrl && !logoError ? (
             <img src={logoUrl} alt={product.companyName || 'Company Logo'} className="public-logo-img" onError={() => setLogoError(true)} />
-          ) : null}
-          <span className="public-company-name">{product.companyName || company?.name || ''}</span>
+          ) : (
+            <div className="public-logo-fallback">{(product.companyName || company?.name || 'C').substring(0, 3).toUpperCase()}</div>
+          )}
         </div>
+        <span className="public-company-name">{product.companyName || company?.name || ''}</span>
         <h1>Agri Input Information System (AIIS)</h1>
       </div>
 
@@ -201,9 +203,10 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
               {product.manufacturerAddress && <p>🏠 - Regd. Office: {product.manufacturerAddress}</p>}
               {company?.phone && <p>📱 - <a href={`tel:${company.phone}`}>{company.phone}</a></p>}
               {company?.email && <p>✉️ - <a href={`mailto:${company.email}`}>{company.email}</a></p>}
-              <div className="social-links">
-                <a href="#" className="fb-btn">f &nbsp; Facebook</a>
-                <a href="#" className="ig-btn">◎ &nbsp; Instagram</a>
+              <p className="website-link">🌐 <a href="https://aborizen.com" target="_blank" rel="noopener noreferrer">https://aborizen.com</a></p>
+              <div className="social-links" style={{ display: 'flex', gap: '14px', marginTop: '12px' }}>
+                <a href="https://www.facebook.com/share/15dP3RRYwS/" target="_blank" rel="noopener noreferrer" className="fb-btn" style={{ padding: '12px 32px', borderRadius: '24px', color: '#fff', background: 'linear-gradient(135deg, #4a90d9, #1877f2)', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}>Facebook</a>
+                <a href="https://www.instagram.com/aborizen?igsh=MWF6NWZlN3RhcWN2eA==" target="_blank" rel="noopener noreferrer" className="ig-btn" style={{ padding: '12px 32px', borderRadius: '24px', color: '#fff', background: 'linear-gradient(135deg, #f77737, #e1306c)', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}>Instagram</a>
               </div>
             </div>
           </div>

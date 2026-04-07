@@ -6,7 +6,7 @@
 .dashboard-container {
   display: flex;
   height: 100vh;
-  background: linear-gradient(135deg, #f5f7fb 0%, #e8eef8 100%);
+  background: linear-gradient(135deg, #f0f2f5 0%, #e4e9f2 100%);
   position: relative;
   overflow: hidden;
 }
@@ -15,12 +15,12 @@
 .sidebar {
   width: 250px;
   min-width: 250px;
-  background: linear-gradient(180deg, #1e3a8a 0%, #3b82f6 50%, #0ea5e9 100%);
+  background: linear-gradient(180deg, #0f2557 0%, #1e3a8a 40%, #2563eb 100%);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 0 0 12px 0;
-  box-shadow: 4px 0 20px rgba(30, 58, 138, 0.2);
+  box-shadow: 4px 0 24px rgba(15, 37, 87, 0.25);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
   overflow-y: auto;
@@ -68,9 +68,9 @@
 
 .sidebar-nav a {
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.95rem;
-  padding: 12px 16px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.93rem;
+  padding: 11px 16px;
   border-radius: 10px;
   transition: all 0.25s ease;
   font-weight: 500;
@@ -80,13 +80,15 @@
   position: relative;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  letter-spacing: 0.2px;
 }
 
 .sidebar-nav a.active {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   font-weight: 600;
+  backdrop-filter: blur(4px);
 }
 .sidebar-nav a.active::before {
   content: '';
@@ -149,15 +151,15 @@
 
 /* ── Top Header ── */
 .header {
-  height: 56px;
-  min-height: 56px;
-  background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 50%, #0ea5e9 100%);
+  height: 58px;
+  min-height: 58px;
+  background: linear-gradient(90deg, #0f2557 0%, #1e3a8a 50%, #2563eb 100%);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 24px;
   color: white;
-  box-shadow: 0 2px 12px rgba(30, 58, 138, 0.15);
+  box-shadow: 0 2px 16px rgba(15, 37, 87, 0.2);
   z-index: 10;
 }
 
@@ -208,12 +210,13 @@
   right: 0;
   margin-top: 8px;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.05);
   min-width: 220px;
   overflow: hidden;
   z-index: 1000;
   animation: slideDown 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 @keyframes slideDown {
@@ -270,10 +273,17 @@
   align-items: center;
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
   padding: 28px 36px;
   min-width: 280px;
   gap: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 12px 32px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
 }
 .card-icon {
   font-size: 2.2rem;
@@ -297,11 +307,12 @@
 /* ── Page Placeholder ── */
 .page-placeholder {
   background: #fff;
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 24px;
   width: 100%;
   max-width: 800px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 /* ── Products List Page ── */
@@ -343,20 +354,24 @@
 .secondary-btn,
 .export-btn {
   border: none;
-  border-radius: 8px;
-  padding: 10px 18px;
+  border-radius: 10px;
+  padding: 10px 20px;
   font-weight: 600;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
   white-space: nowrap;
+  letter-spacing: 0.2px;
 }
 .primary-btn {
-  background: #4caf50;
+  background: linear-gradient(135deg, #4caf50, #43a047);
   color: white;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.25);
 }
 .primary-btn:hover {
-  background: #43a047;
+  background: linear-gradient(135deg, #43a047, #388e3c);
+  box-shadow: 0 4px 14px rgba(76, 175, 80, 0.35);
+  transform: translateY(-1px);
 }
 .primary-btn:disabled {
   opacity: 0.6;
@@ -365,30 +380,37 @@
 .secondary-btn {
   background: white;
   color: #4caf50;
-  border: 1px solid #4caf50;
+  border: 1.5px solid #4caf50;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 .secondary-btn:hover {
   background: #f0fdf4;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.15);
+  transform: translateY(-1px);
 }
 .export-btn {
-  background: #f9b115;
+  background: linear-gradient(135deg, #f9b115, #f59e0b);
   color: #222;
+  box-shadow: 0 2px 8px rgba(249, 177, 21, 0.25);
 }
 .export-btn:hover {
-  background: #e5a30e;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 4px 14px rgba(249, 177, 21, 0.35);
+  transform: translateY(-1px);
 }
 
 /* ── Products Table ── */
 .products-table-card {
   background: white;
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 20px;
   width: 100%;
   max-width: 100%;
   min-height: 400px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .table-top {
@@ -436,13 +458,15 @@
   vertical-align: middle;
 }
 .products-table th {
-  background: #f8fafb;
+  background: linear-gradient(180deg, #f8fafb, #f1f5f9);
   color: #1e3a8a;
   font-weight: 700;
-  font-size: 0.9rem;
-  padding: 10px 10px;
+  font-size: 0.85rem;
+  padding: 12px 12px;
   border-bottom: 2px solid #e0e6ef;
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 /* Let most columns truncate but keep Actions visible */
 .products-table td {
@@ -460,8 +484,12 @@
   width: 1%; /* shrink-to-fit */
 }
 
+.products-table tbody tr {
+  transition: background 0.15s ease;
+}
+
 .products-table tbody tr:hover {
-  background: #f8fafc;
+  background: #f1f5f9;
 }
 
 /* ── Action Buttons in Table ── */
@@ -470,13 +498,13 @@
   background: #f3f4f6;
   color: #222;
   margin-right: 4px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  padding: 6px 14px;
-  font-size: 0.88rem;
+  padding: 7px 14px;
+  font-size: 0.85rem;
   font-weight: 500;
-  transition: all 0.2s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   white-space: nowrap;
 }
 .icon-btn:last-child {
@@ -523,12 +551,13 @@
   color: #2e7d32;
 }
 .content-card {
-  background: #f1f1f1;
-  border-radius: 16px;
-  padding: 24px;
+  background: #f8f9fb;
+  border-radius: 18px;
+  padding: 28px;
   width: 100%;
   max-width: 1024px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 .add-product-form {
   display: flex;
@@ -570,19 +599,21 @@
 }
 .form-group input,
 .form-group select {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 11px 15px;
   font-size: 0.95rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  background: white;
+  transition: border-color 0.25s, box-shadow 0.25s;
+  background: #fafbfc;
   color: #111827;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
 }
 
 /* Date input calendar icon styling */
@@ -609,30 +640,35 @@
 }
 
 .submit-btn {
-  width: 140px;
+  width: 150px;
   align-self: flex-start;
   border: none;
-  border-radius: 8px;
-  background: #4caf50;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4caf50, #43a047);
   color: white;
-  padding: 10px 20px;
+  padding: 11px 22px;
   cursor: pointer;
   font-weight: 600;
   font-size: 0.95rem;
-  transition: background 0.2s;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.25);
+  letter-spacing: 0.3px;
 }
 .submit-btn:hover {
-  background: #3b9c43;
+  background: linear-gradient(135deg, #43a047, #388e3c);
+  box-shadow: 0 4px 14px rgba(76, 175, 80, 0.35);
+  transform: translateY(-1px);
 }
 
 /* ── Manage Users Page ── */
 .manage-users-page {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 32px;
   width: 100%;
   max-width: 720px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 /* =====================================================
@@ -827,11 +863,12 @@
    ===================================================== */
 .bulk-upload-page {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 32px;
   width: 100%;
   max-width: 720px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 .bulk-step {

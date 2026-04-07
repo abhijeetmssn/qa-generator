@@ -6,10 +6,12 @@ html, body, #root {
 }
 
 body {
-  font-family: 'Segoe UI', 'Trebuchet MS', sans-serif;
-  background: linear-gradient(135deg, #f5f7fb 0%, #e8eef8 100%);
+  font-family: 'Inter', 'Segoe UI', 'Trebuchet MS', sans-serif;
+  background: linear-gradient(135deg, #f0f2f5 0%, #e4e9f2 100%);
   min-height: 100%;
   color: #1f2937;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -21,27 +23,27 @@ a {
 }
 
 /* Global smooth transitions */
-button, a, input, select {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+button, a, input, select, textarea {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(59, 130, 246, 0.05);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #3b82f6 0%, #0ea5e9 100%);
-  border-radius: 4px;
+  background: rgba(30, 58, 138, 0.2);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #1e3a8a 0%, #3b82f6 100%);
+  background: rgba(30, 58, 138, 0.4);
 }
 
 /* ── Consistent Form Input Styles ── */
@@ -54,15 +56,16 @@ input[type="date"],
 textarea,
 select {
   width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  padding: 11px 15px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
   font-size: 14px;
   font-family: inherit;
-  background: white;
+  background: #fafbfc;
   color: #1f2937;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 input[type="text"]::placeholder,
@@ -84,7 +87,8 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
 }
 
 input[type="text"]:disabled,
