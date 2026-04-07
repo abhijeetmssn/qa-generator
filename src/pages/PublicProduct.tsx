@@ -26,6 +26,23 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
           if (prod.companyId) {
             apiGetCompanyById(prod.companyId).then(setCompany).catch(console.error);
           }
+          // Preload images before showing page
+          const imagesToLoad: string[] = [];
+          if (prod.productImage) imagesToLoad.push(`${API_BASE.replace('/api', '')}${prod.productImage}`);
+          else if (prod.imageUrl) imagesToLoad.push(prod.imageUrl);
+          if (prod.hazardId) imagesToLoad.push(`${API_BASE}/hazards/${prod.hazardId}/image`);
+
+          if (imagesToLoad.length > 0) {
+            await Promise.race([
+              Promise.all(imagesToLoad.map(src => new Promise<void>(resolve => {
+                const img = new Image();
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+                img.src = src;
+              }))),
+              new Promise<void>(resolve => setTimeout(resolve, 3000)),
+            ]);
+          }
         } else {
           setError('Product not found');
         }
@@ -127,12 +144,13 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
               <label>CAUTIONARY SYMBOL AS PER THE TOXICITY CLASSIFICATION</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 {product.hazardId ? (
-                  <img
-                    src={`${API_BASE}/hazards/${product.hazardId}/image`}
-                    alt="Hazard Symbol"
-                    style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'contain', background: 'white' }}
-                    loading="lazy"
-                  />
+                  <div style={{ background: '#fff', padding: '4px', borderRadius: '6px', display: 'inline-block' }}>
+                    <img
+                      src={`${API_BASE}/hazards/${product.hazardId}/image`}
+                      alt="Hazard Symbol"
+                      style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'contain', display: 'block' }}
+                    />
+                  </div>
                 ) : (
                   <div className="safety-symbol">
                     <div className="symbol-yellow">⚠️</div>
@@ -143,7 +161,6 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
                   <img
                     src={product.productImage ? `${API_BASE.replace('/api', '')}${product.productImage}` : product.imageUrl}
                     alt={product.name}
-                    loading="lazy"
                     style={{ maxWidth: '120px', maxHeight: '120px', objectFit: 'contain', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#f8fafb' }}
                   />
                 )}

@@ -16,6 +16,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
   const logoUrl = companyId ? `${API_BASE}/companies/${companyId}/logo` : undefined;
   const qrRef = useRef<HTMLDivElement>(null);
   const [company, setCompany] = useState<Company | null>(null);
+  const [imagesReady, setImagesReady] = useState(false);
 
   const [logoError, setLogoError] = useState(false);
 
@@ -24,6 +25,28 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
       apiGetCompanyById(companyId).then(setCompany).catch(console.error);
     }
   }, [companyId]);
+
+  // Preload product and hazard images before showing page
+  useEffect(() => {
+    const imagesToLoad: string[] = [];
+    if (product.productImage) imagesToLoad.push(`${API_BASE.replace('/api', '')}${product.productImage}`);
+    else if (product.imageUrl) imagesToLoad.push(product.imageUrl);
+    if (product.hazardId) imagesToLoad.push(`${API_BASE}/hazards/${product.hazardId}/image`);
+
+    if (imagesToLoad.length === 0) { setImagesReady(true); return; }
+
+    let loaded = 0;
+    const onDone = () => { loaded++; if (loaded >= imagesToLoad.length) setImagesReady(true); };
+    imagesToLoad.forEach(src => {
+      const img = new Image();
+      img.onload = onDone;
+      img.onerror = onDone;
+      img.src = src;
+    });
+    // Fallback: show page after 3s even if images fail
+    const timer = setTimeout(() => setImagesReady(true), 3000);
+    return () => clearTimeout(timer);
+  }, [product, API_BASE]);
 
   // Build the public product view URL
   const productUrl = `${window.location.origin}/#product/${product.uniqueId}`;
@@ -127,6 +150,14 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
     };
   };
 
+  if (!imagesReady) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <p style={{ fontSize: '18px', color: '#666', fontWeight: '500' }}>Loading product details...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="view-product-page">
       <div className="view-header">
@@ -177,12 +208,13 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
               <label>CAUTIONARY SYMBOL AS PER THE TOXICITY CLASSIFICATION</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 {product.hazardId ? (
-                  <img
-                    src={`${API_BASE}/hazards/${product.hazardId}/image`}
-                    alt="Hazard Symbol"
-                    style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'contain', background: 'white' }}
-                    loading="lazy"
-                  />
+                  <div style={{ background: '#fff', padding: '4px', borderRadius: '6px', display: 'inline-block' }}>
+                    <img
+                      src={`${API_BASE}/hazards/${product.hazardId}/image`}
+                      alt="Hazard Symbol"
+                      style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'contain', display: 'block' }}
+                    />
+                  </div>
                 ) : (
                   <div className="safety-symbol">
                     <div className="symbol-yellow">⚠️</div>
@@ -193,7 +225,6 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
                   <img
                     src={product.productImage ? `${API_BASE.replace('/api', '')}${product.productImage}` : product.imageUrl}
                     alt={product.name}
-                    loading="lazy"
                     style={{ maxWidth: '120px', maxHeight: '120px', objectFit: 'contain', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#f8fafb' }}
                   />
                 )}
