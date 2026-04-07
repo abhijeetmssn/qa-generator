@@ -113,7 +113,6 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
     }
     setSelectedMasterId('');
     setProductImageFile(null);
-    setImagePreview(null);
     if (imageInputRef.current) imageInputRef.current.value = '';
     setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', quantity: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardSymbol: '' });
   };
