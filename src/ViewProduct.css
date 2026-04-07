@@ -293,6 +293,98 @@
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
+/* ── Public Product Page Styles ── */
+.public-product-page {
+  max-height: none;
+  border-radius: 0;
+}
+
+.public-bottom-section {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Cautionary symbol + product image row */
+.cautionary-symbol-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.hazard-symbol-box {
+  background: #fff;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hazard-symbol-img {
+  max-width: 140px;
+  max-height: 140px;
+  object-fit: contain;
+  display: block;
+}
+
+.hazard-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.symbol-triangle {
+  width: 0;
+  height: 0;
+  border-left: 70px solid transparent;
+  border-right: 70px solid transparent;
+  border-bottom: 120px solid #ffeb3b;
+  position: relative;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.symbol-triangle span {
+  position: absolute;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: 900;
+  font-size: 14px;
+  color: #333;
+  white-space: nowrap;
+}
+
+.symbol-label {
+  font-weight: 700;
+  color: #333;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.product-image-box {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.product-detail-img {
+  max-width: 180px;
+  max-height: 180px;
+  object-fit: contain;
+  display: block;
+  border-radius: 6px;
+}
+
 /* ── Mobile Responsive ── */
 @media (max-width: 768px) {
   .view-product-page {
@@ -384,5 +476,76 @@
   .view-footer {
     padding: 12px 16px;
     font-size: 0.8rem;
+  }
+
+  /* Public product mobile styles */
+  .public-product-page .view-info-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .public-product-page .view-info-group {
+    text-align: left;
+    align-items: flex-start;
+  }
+
+  .public-product-page .view-info-group label {
+    font-size: 0.85rem;
+    font-weight: 800;
+  }
+
+  .public-product-page .view-info-group p {
+    font-size: 0.95rem;
+  }
+
+  .public-bottom-section {
+    padding: 16px 0 0;
+  }
+
+  .public-bottom-section .view-info-group {
+    text-align: left;
+    align-items: flex-start;
+  }
+
+  .cautionary-symbol-row {
+    justify-content: flex-start;
+    gap: 16px;
+  }
+
+  .hazard-symbol-img {
+    max-width: 120px;
+    max-height: 120px;
+  }
+
+  .symbol-triangle {
+    border-left: 55px solid transparent;
+    border-right: 55px solid transparent;
+    border-bottom: 95px solid #ffeb3b;
+  }
+
+  .symbol-triangle span {
+    top: 40px;
+    font-size: 12px;
+  }
+
+  .product-detail-img {
+    max-width: 150px;
+    max-height: 150px;
+  }
+
+  .social-links {
+    margin-top: 12px;
+  }
+
+  .fb-btn,
+  .ig-btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+
+  .contact-details p {
+    font-size: 0.9rem;
+    line-height: 1.8;
   }
 }

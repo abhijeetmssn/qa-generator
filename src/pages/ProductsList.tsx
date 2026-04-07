@@ -1,7 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
+import { format } from 'date-fns';
 import type { Product, Company } from '../services/api';
 import { apiGetAllCompanies } from '../services/api';
+
+function formatMonthYear(val?: string) {
+  if (!val) return '—';
+  // Accepts 'YYYY-MM' or 'YYYY-MM-DD'
+  const [year, month] = val.split('-');
+  if (!year || !month) return val;
+  return `${month}/${year.slice(-2)}`;
+}
 
 interface ProductsListProps {
   products: Product[];
@@ -198,8 +207,8 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                     <td>{product.uniqueId}</td>
                     <td>{product.name}</td>
                     <td>{product.batch}</td>
-                    <td>{product.mfg}</td>
-                    <td>{product.expiry}</td>
+                      <td>{formatMonthYear(product.mfg)}</td>
+                      <td>{formatMonthYear(product.expiry)}</td>
                     <td>
                       {product.shortUrl} <button className="icon-btn copy">Copy</button>
                     </td>

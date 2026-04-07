@@ -120,7 +120,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const renderPage = () => {
     switch (page) {
       case 'add':
-        return <AddProduct onProductAdded={handleProductAdded} />;
+        return <AddProduct onProductAdded={handleProductAdded} onProductsList={() => setPage('list')} />;
       case 'edit':
         return canEdit && selectedProduct ? (
           <EditProduct product={selectedProduct} onSave={handleSaveProduct} onCancel={() => setPage('list')} />

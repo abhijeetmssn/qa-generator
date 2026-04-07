@@ -3,6 +3,14 @@ import { QRCodeSVG } from 'qrcode.react';
 import '../ViewProduct.css';
 import type { Product, Company } from '../services/api';
 import { apiGetCompanyById } from '../services/api';
+import { format } from 'date-fns';
+
+function formatMonthYear(val?: string) {
+  if (!val) return '—';
+  const [year, month] = val.split('-');
+  if (!year || !month) return val;
+  return `${month}/${year.slice(-2)}`;
+}
 
 type ViewProductProps = {
   product: Product;
@@ -196,7 +204,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
 
             <div className="view-info-group">
               <label>EXPIRY DATE</label>
-              <p>{product.expiry}</p>
+              <p>{formatMonthYear(product.expiry)}</p>
             </div>
 
             <div className="view-info-group">
@@ -250,7 +258,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
 
             <div className="view-info-group">
               <label>MANUFACTURING DATE</label>
-              <p>{product.mfg}</p>
+              <p>{formatMonthYear(product.mfg)}</p>
             </div>
 
             <div className="view-info-group">

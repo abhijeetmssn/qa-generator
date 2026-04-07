@@ -37,6 +37,21 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
   }
 });
 
+// Get public company info (no auth required - used for company-branded login)
+router.get('/:id/public', async (req: Request, res: Response) => {
+  try {
+    const company = await getCompanyById(Number(req.params.id));
+    if (!company) {
+      return res.status(404).json({ error: 'Company not found' });
+    }
+    // Only return public-safe fields
+    res.json({ id: company.id, name: company.name });
+  } catch (error) {
+    console.error('Error fetching public company info:', error);
+    res.status(500).json({ error: 'Failed to fetch company info' });
+  }
+});
+
 // Get company logo image (no auth required - can be accessed by public)
 router.get('/:id/logo', async (req: Request, res: Response) => {
   try {

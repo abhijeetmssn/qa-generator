@@ -1,6 +1,14 @@
 import React, { useState, useRef } from 'react';
 import type { Product } from '../services/api';
 import { apiUploadProductImage } from '../services/api';
+import { format } from 'date-fns';
+
+function formatMonthYear(val?: string) {
+  if (!val) return '—';
+  const [year, month] = val.split('-');
+  if (!year || !month) return val;
+  return `${month}/${year.slice(-2)}`;
+}
 
 interface EditProductProps {
   product: Product;
@@ -73,10 +81,12 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
             <div className="form-group">
               <label>Manufacturing Date</label>
               <input name="mfg" value={form.mfg} onChange={handleChange} placeholder="e.g. 03/26" />
+              <span>{formatMonthYear(form.mfg)}</span>
             </div>
             <div className="form-group">
               <label>Expiry Date</label>
               <input name="expiry" value={form.expiry} onChange={handleChange} placeholder="e.g. 02/28" />
+              <span>{formatMonthYear(form.expiry)}</span>
             </div>
             <div className="form-group">
               <label>Manufacturer</label>

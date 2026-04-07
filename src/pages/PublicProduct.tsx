@@ -98,8 +98,15 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
 
   const logoUrl = product.companyId ? `${API_BASE}/companies/${product.companyId}/logo` : undefined;
 
+  function formatMonthYear(val?: string) {
+    if (!val) return '—';
+    const [year, month] = val.split('-');
+    if (!year || !month) return val;
+    return `${month}/${year.slice(-2)}`;
+  }
+
   return (
-    <div className="view-product-page">
+    <div className="view-product-page public-product-page">
       <div className="view-product-header">
         <div className="view-logo-section">
           {logoUrl && !logoError ? (
@@ -132,44 +139,48 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
 
             <div className="view-info-group">
               <label>EXPIRY DATE</label>
-              <p>{product.expiry}</p>
+              <p>{formatMonthYear(product.expiry)}</p>
             </div>
 
             <div className="view-info-group">
               <label>MANUFACTURER LICENCE NO.</label>
-              <p>{product.manufacturerLicence || 'PB/AGRI/PP/2021/4'}</p>
+              <p>{product.manufacturerLicence || '—'}</p>
+            </div>
+
+            <div className="view-info-group">
+              <label>PACKING SIZE</label>
+              <p>{product.packingSize || '—'}</p>
             </div>
 
             <div className="view-info-group">
               <label>CAUTIONARY SYMBOL AS PER THE TOXICITY CLASSIFICATION</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div className="cautionary-symbol-row">
                 {product.hazardId ? (
-                  <div style={{ background: '#fff', padding: '4px', borderRadius: '6px', display: 'inline-block' }}>
+                  <div className="hazard-symbol-box">
                     <img
                       src={`${API_BASE}/hazards/${product.hazardId}/image`}
                       alt="Hazard Symbol"
-                      style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'contain', display: 'block' }}
+                      className="hazard-symbol-img"
                     />
                   </div>
                 ) : (
-                  <div className="safety-symbol">
-                    <div className="symbol-yellow">⚠️</div>
-                    <p>YELLOW</p>
+                  <div className="hazard-symbol-box hazard-fallback">
+                    <div className="symbol-triangle">
+                      <span>DANGER</span>
+                    </div>
+                    <p className="symbol-label">YELLOW</p>
                   </div>
                 )}
                 {(product.productImage || product.imageUrl) && (
-                  <img
-                    src={product.productImage ? `${API_BASE.replace('/api', '')}${product.productImage}` : product.imageUrl}
-                    alt={product.name}
-                    style={{ maxWidth: '120px', maxHeight: '120px', objectFit: 'contain', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#f8fafb' }}
-                  />
+                  <div className="product-image-box">
+                    <img
+                      src={product.productImage ? `${API_BASE.replace('/api', '')}${product.productImage}` : product.imageUrl}
+                      alt={product.name}
+                      className="product-detail-img"
+                    />
+                  </div>
                 )}
               </div>
-            </div>
-
-            <div className="view-info-group">
-              <label>LEAFLETS INFORMATION</label>
-              <p><a href="#">CLICK TO VIEW INFORMATION</a></p>
             </div>
           </div>
 
@@ -181,43 +192,54 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
 
             <div className="view-info-group">
               <label>TECHNICAL NAME</label>
-              <p>{product.technicalName || 'Emamectin Benzoate 5% SG'}</p>
+              <p>{product.technicalName || '—'}</p>
             </div>
 
             <div className="view-info-group">
               <label>MANUFACTURING DATE</label>
-              <p>{product.mfg}</p>
+              <p>{formatMonthYear(product.mfg)}</p>
             </div>
 
             <div className="view-info-group">
               <label>REGISTRATION NUMBER</label>
-              <p>{product.registrationNumber || 'CIR-1B7889/2021-Emamectin Benzoate (SG) (4325)-2288'}</p>
+              <p>{product.registrationNumber || '—'}</p>
             </div>
+          </div>
+        </div>
 
-            <div className="view-info-group">
-              <label>PACKING SIZE</label>
-              <p>{product.packingSize || '1 KG'}</p>
-            </div>
-
-            <div className="view-info-group">
-              <label>CUSTOMER CARE CONTACT DETAILS</label>
-              <div className="contact-details">
-                {product.manufacturerAddress && <p><strong>🏢</strong> {product.manufacturerAddress}</p>}
-                <p><strong>📞</strong> {company?.phone || '—'}</p>
-                <p><strong>📧</strong> {company?.email || '—'}</p>
-                <p><strong>🌐</strong> {company?.website ? <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer">{company.website}</a> : '—'}</p>
-                <div className="social-links">
-                  <a href="#" className="fb-btn">Facebook</a>
-                  <a href="#" className="ig-btn">Instagram</a>
-                </div>
+        {/* Customer Care & Manufacturer - shown below the grid */}
+        <div className="public-bottom-section">
+          <div className="view-info-group">
+            <label>CUSTOMER CARE CONTACT DETAILS</label>
+            <div className="contact-details">
+              {product.manufacturerAddress && <p>🏠 - Regd. Office: {product.manufacturerAddress}</p>}
+              {company?.phone && <p>📞 - <a href={`tel:${company.phone}`}>{company.phone}</a></p>}
+              {company?.email && <p>✉️ - <a href={`mailto:${company.email}`}>{company.email}</a></p>}
+              {company?.website && (
+                <p>🌐 - <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer">{company.website}</a></p>
+              )}
+              <div className="social-links">
+                <a href="#" className="fb-btn">f &nbsp; Facebook</a>
+                <a href="#" className="ig-btn">◎ &nbsp; Instagram</a>
               </div>
             </div>
+          </div>
+
+          <div className="view-info-group">
+            <label>NAME OF THE MANUFACTURER</label>
+            <p>{product.manufacturer || product.companyName || company?.name || '—'}</p>
+            <small>{product.manufacturerAddress || ''}</small>
+          </div>
+
+          <div className="view-info-group">
+            <label>LEAFLETS INFORMATION</label>
+            <p><a href="#">CLICK TO VIEW INFORMATION</a></p>
           </div>
         </div>
       </div>
 
       <div className="view-footer">
-        <p>Developed by <strong>AP Solutions</strong></p>
+        <p>Developed by <a href="#" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>Webbird Solutions</a></p>
       </div>
     </div>
   );

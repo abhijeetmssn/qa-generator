@@ -2,12 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { apiGetMasterProducts, apiGetHazards } from '../services/api';
 import type { Product, Hazard } from '../services/api';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { setMonth, setYear } from 'date-fns';
 
 type AddProductProps = {
   onProductAdded?: (product: any) => Promise<void> | void;
+  onProductsList?: () => void;
 };
 
-const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
+const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList }) => {
   const [masterProducts, setMasterProducts] = useState<Product[]>([]);
   const [hazards, setHazards] = useState<Hazard[]>([]);
   const [selectedMasterId, setSelectedMasterId] = useState('');
@@ -125,7 +129,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
       <div className="add-product-header">
         <h1>Add A New Product</h1>
         <div className="header-actions">
-          <button type="button" className="secondary-btn">Products List</button>
+          <button type="button" className="secondary-btn" onClick={onProductsList}>Products List</button>
         </div>
       </div>
       <div className="content-card">
@@ -179,11 +183,27 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
               <div className="form-row">
                 <div className="form-group">
                   <label>DATE OF MANUFACTURE</label>
-                  <input name="manufacturer" type="month" value={form.manufacturer} onChange={handleChange} />
+                  <DatePicker
+                    selected={form.manufacturer ? new Date(form.manufacturer + '-01') : null}
+                    onChange={date => setForm(prev => ({ ...prev, manufacturer: date ? date.toISOString().slice(0, 7) : '' }))}
+                    dateFormat="yyyy-MM"
+                    showMonthYearPicker
+                    showFullMonthYearPicker
+                    placeholderText="Select month and year"
+                    className="form-control"
+                  />
                 </div>
                 <div className="form-group">
                   <label>EXPIRY DATE</label>
-                  <input name="expiry" type="month" value={form.expiry} onChange={handleChange} />
+                  <DatePicker
+                    selected={form.expiry ? new Date(form.expiry + '-01') : null}
+                    onChange={date => setForm(prev => ({ ...prev, expiry: date ? date.toISOString().slice(0, 7) : '' }))}
+                    dateFormat="yyyy-MM"
+                    showMonthYearPicker
+                    showFullMonthYearPicker
+                    placeholderText="Select month and year"
+                    className="form-control"
+                  />
                 </div>
               </div>
 

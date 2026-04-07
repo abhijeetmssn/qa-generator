@@ -3,6 +3,11 @@ import { apiLogin } from '../services/api';
 import type { UserRole } from '../services/api';
 import '../styles/Login.css';
 
+interface CompanyInfo {
+  id: number;
+  name: string;
+}
+
 interface LoginProps {
   onLoginSuccess: (user: {
     email: string;
@@ -12,13 +17,16 @@ interface LoginProps {
     companyAddress?: string;
     role?: UserRole;
   }) => void;
+  companyInfo?: CompanyInfo | null;
 }
 
-const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
+const Login: React.FC<LoginProps> = ({ onLoginSuccess, companyInfo }) => {
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,18 +43,54 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setLoading(false);
   };
 
+  const logoUrl = companyInfo ? `${API_BASE}/companies/${companyInfo.id}/logo` : null;
+
   return (
     <div className="login-container">
       <div className="login-wrapper">
         {/* Left Side - Branding */}
         <div className="login-left">
           <div className="login-branding">
-            <div className="login-logo">
-              <div className="logo-q">A</div>
-              <div className="logo-a">P</div>
-            </div>
-            <h1 className="login-title">AP Solutions</h1>
-            <p className="login-subtitle">Pharmaceutical Quality Assurance</p>
+            {companyInfo ? (
+              <>
+                {logoUrl && !logoError ? (
+                  <img
+                    src={logoUrl}
+                    alt={companyInfo.name}
+                    onError={() => setLogoError(true)}
+                    style={{ maxWidth: '120px', maxHeight: '120px', objectFit: 'contain', marginBottom: '16px', borderRadius: '12px' }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '100px',
+                    height: '100px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '16px',
+                    fontSize: '36px',
+                    fontWeight: 700,
+                    color: 'white',
+                    letterSpacing: '2px',
+                  }}>
+                    {companyInfo.name.substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <h1 className="login-title">{companyInfo.name}</h1>
+                <p className="login-subtitle">Sign in to your company portal</p>
+              </>
+            ) : (
+              <>
+                <div className="login-logo">
+                  <div className="logo-q">A</div>
+                  <div className="logo-a">P</div>
+                </div>
+                <h1 className="login-title">AP Solutions</h1>
+                <p className="login-subtitle">Pharmaceutical Quality Assurance</p>
+              </>
+            )}
             <div style={{ marginTop: '20px', padding: '12px', background: '#f3f4f6', borderRadius: '8px', fontSize: '13px', color: '#666' }}>
               <strong>Note:</strong> Self-registration is disabled. Please contact your administrator to create an account.
             </div>
