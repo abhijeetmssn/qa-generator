@@ -9,6 +9,7 @@ import pool from './pool';
 import authRoutes from './routes/auth';
 import productRoutes from './routes/products';
 import companiesRoutes from './routes/companies';
+import hazardsRoutes from './routes/hazards';
 
 const __filename_local = fileURLToPath(import.meta.url);
 const __dirname_local = path.dirname(__filename_local);
@@ -43,6 +44,7 @@ app.use('/uploads', express.static(path.join(__dirname_local, '..', 'uploads')))
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/companies', companiesRoutes);
+app.use('/api/hazards', hazardsRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
@@ -140,6 +142,7 @@ async function initDB() {
         manufacturer_licence  VARCHAR(255),
         image_url             VARCHAR(500),
         hazard_symbol         VARCHAR(255),
+        hazard_id             INTEGER,
         quantity              VARCHAR(100),
         product_image         BYTEA,
         is_master             BOOLEAN DEFAULT false,
@@ -150,12 +153,23 @@ async function initDB() {
       );
     `);
 
+    // Create hazards table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS hazards (
+        id          SERIAL PRIMARY KEY,
+        name        VARCHAR(255) NOT NULL,
+        image       BYTEA,
+        created_at  TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
     // Migrate products table: add columns if table already existed without them
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS is_master BOOLEAN DEFAULT false');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS quantity VARCHAR(100)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS product_image BYTEA');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_symbol VARCHAR(255)');
+    await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_id INTEGER');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id)');
 
     // Backfill company_id on existing products from owner_uid → users.company_id

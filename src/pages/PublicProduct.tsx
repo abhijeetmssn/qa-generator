@@ -126,10 +126,18 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
             <div className="view-info-group">
               <label>CAUTIONARY SYMBOL AS PER THE TOXICITY CLASSIFICATION</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div className="safety-symbol">
-                  <div className="symbol-yellow">⚠️</div>
-                  <p>YELLOW</p>
-                </div>
+                {product.hazardId ? (
+                  <img
+                    src={`${API_BASE}/hazards/${product.hazardId}/image`}
+                    alt="Hazard Symbol"
+                    style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'contain' }}
+                  />
+                ) : (
+                  <div className="safety-symbol">
+                    <div className="symbol-yellow">⚠️</div>
+                    <p>YELLOW</p>
+                  </div>
+                )}
                 {(product.productImage || product.imageUrl) && (
                   <img
                     src={product.productImage ? `${API_BASE.replace('/api', '')}${product.productImage}` : product.imageUrl}

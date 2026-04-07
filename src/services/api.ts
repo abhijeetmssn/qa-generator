@@ -151,6 +151,7 @@ export interface Product {
   manufacturerLicence?: string;
   imageUrl?: string;
   hazardSymbol?: string;
+  hazardId?: number;
   quantity?: string;
   productImage?: string;
   companyId?: number;
@@ -286,4 +287,50 @@ export async function apiUpdateCompany(id: number, updates: Partial<Company>): P
 
 export async function apiDeleteCompany(id: number): Promise<void> {
   await request(`/companies/${id}`, { method: 'DELETE' });
+}
+
+// ── Hazards ──
+export interface Hazard {
+  id?: number;
+  name: string;
+  hasImage?: boolean;
+}
+
+export async function apiGetHazards(): Promise<Hazard[]> {
+  const data = await request<{ hazards: Hazard[] }>('/hazards');
+  return data.hazards;
+}
+
+export async function apiCreateHazard(name: string, imageFile?: File): Promise<Hazard> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('name', name);
+  if (imageFile) formData.append('image', imageFile);
+  const res = await fetch(`${API_BASE}/hazards`, {
+    method: 'POST',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to create hazard');
+  return data as Hazard;
+}
+
+export async function apiUpdateHazard(id: number, name: string, imageFile?: File): Promise<Hazard> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('name', name);
+  if (imageFile) formData.append('image', imageFile);
+  const res = await fetch(`${API_BASE}/hazards/${id}`, {
+    method: 'PUT',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update hazard');
+  return data as Hazard;
+}
+
+export async function apiDeleteHazard(id: number): Promise<void> {
+  await request(`/hazards/${id}`, { method: 'DELETE' });
 }

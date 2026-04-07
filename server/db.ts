@@ -30,6 +30,7 @@ export interface Product {
   manufacturerLicence?: string;
   imageUrl?: string;
   hazardSymbol?: string; // e.g. '☠️ Toxic', '🔥 Flammable'
+  hazardId?: number;
   quantity?: string;
   productImage?: string; // URL path to serve the image
   owner_uid?: string;
@@ -69,6 +70,7 @@ function rowToProduct(row: any): Product {
     manufacturerLicence: row.manufacturer_licence,
     imageUrl: row.image_url,
     hazardSymbol: row.hazard_symbol,
+    hazardId: row.hazard_id ?? undefined,
     quantity: row.quantity,
     productImage: row.product_image ? `/api/products/${row.unique_id}/image` : undefined,
     owner_uid: row.owner_uid,
@@ -139,8 +141,8 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
 
 export async function addProduct(product: Product & { is_master?: boolean }): Promise<Product> {
   const { rows } = await pool.query(
-    `INSERT INTO products (unique_id, name, batch, mfg, expiry, short_url, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, hazard_symbol, quantity, owner_uid, is_master, company_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+    `INSERT INTO products (unique_id, name, batch, mfg, expiry, short_url, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, hazard_symbol, hazard_id, quantity, owner_uid, is_master, company_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
      RETURNING *`,
     [
       product.uniqueId,
@@ -157,6 +159,7 @@ export async function addProduct(product: Product & { is_master?: boolean }): Pr
       product.manufacturerLicence || null,
       product.imageUrl || null,
       product.hazardSymbol || null,
+      product.hazardId || null,
       product.quantity || null,
       product.owner_uid || null,
       product.is_master || false,
@@ -433,4 +436,58 @@ export async function getProductImage(uniqueId: string): Promise<Buffer | null> 
   const { rows } = await pool.query('SELECT product_image FROM products WHERE unique_id = $1', [uniqueId]);
   if (rows.length === 0 || !rows[0].product_image) return null;
   return rows[0].product_image;
+}
+
+// ── Hazards ──
+export interface Hazard {
+  id?: number;
+  name: string;
+  hasImage?: boolean;
+}
+
+export async function getHazards(): Promise<Hazard[]> {
+  const { rows } = await pool.query('SELECT id, name, (image IS NOT NULL) as has_image FROM hazards ORDER BY name');
+  return rows.map((r: any) => ({ id: r.id, name: r.name, hasImage: r.has_image }));
+}
+
+export async function getHazardById(id: number): Promise<Hazard | null> {
+  const { rows } = await pool.query('SELECT id, name, (image IS NOT NULL) as has_image FROM hazards WHERE id = $1', [id]);
+  if (rows.length === 0) return null;
+  return { id: rows[0].id, name: rows[0].name, hasImage: rows[0].has_image };
+}
+
+export async function addHazard(name: string, image?: Buffer): Promise<Hazard> {
+  const { rows } = await pool.query(
+    'INSERT INTO hazards (name, image) VALUES ($1, $2) RETURNING id, name',
+    [name, image || null]
+  );
+  return { id: rows[0].id, name: rows[0].name, hasImage: !!image };
+}
+
+export async function updateHazard(id: number, name: string, image?: Buffer | null): Promise<Hazard | null> {
+  if (image !== undefined) {
+    const { rows } = await pool.query(
+      'UPDATE hazards SET name = $1, image = $2 WHERE id = $3 RETURNING id, name',
+      [name, image, id]
+    );
+    if (rows.length === 0) return null;
+    return { id: rows[0].id, name: rows[0].name, hasImage: !!image };
+  }
+  const { rows } = await pool.query(
+    'UPDATE hazards SET name = $1 WHERE id = $2 RETURNING id, name, (image IS NOT NULL) as has_image',
+    [name, id]
+  );
+  if (rows.length === 0) return null;
+  return { id: rows[0].id, name: rows[0].name, hasImage: rows[0].has_image };
+}
+
+export async function deleteHazard(id: number): Promise<boolean> {
+  const result = await pool.query('DELETE FROM hazards WHERE id = $1', [id]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function getHazardImage(id: number): Promise<Buffer | null> {
+  const { rows } = await pool.query('SELECT image FROM hazards WHERE id = $1', [id]);
+  if (rows.length === 0 || !rows[0].image) return null;
+  return rows[0].image;
 }

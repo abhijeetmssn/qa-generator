@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { apiGetMasterProducts } from '../services/api';
-import type { Product } from '../services/api';
+import { apiGetMasterProducts, apiGetHazards } from '../services/api';
+import type { Product, Hazard } from '../services/api';
 
 type AddProductProps = {
   onProductAdded?: (product: any) => Promise<void> | void;
@@ -9,6 +9,7 @@ type AddProductProps = {
 
 const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
   const [masterProducts, setMasterProducts] = useState<Product[]>([]);
+  const [hazards, setHazards] = useState<Hazard[]>([]);
   const [selectedMasterId, setSelectedMasterId] = useState('');
   const [loadingMaster, setLoadingMaster] = useState(true);
   const [form, setForm] = useState({
@@ -23,24 +24,28 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
     registrationNumber: '',
     manufacturerLicence: '',
     imageUrl: '',
-    hazardSymbol: '',
+    hazardId: '',
   });
   const [productImageFile, setProductImageFile] = useState<File | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [addedProduct, setAddedProduct] = useState<any>(null);
 
   useEffect(() => {
-    const loadMaster = async () => {
+    const loadData = async () => {
       try {
-        const products = await apiGetMasterProducts();
+        const [products, hazardList] = await Promise.all([
+          apiGetMasterProducts(),
+          apiGetHazards(),
+        ]);
         setMasterProducts(products);
+        setHazards(hazardList);
       } catch (err) {
-        console.error('Failed to load master products:', err);
+        console.error('Failed to load data:', err);
       } finally {
         setLoadingMaster(false);
       }
     };
-    loadMaster();
+    loadData();
   }, []);
 
   const handleMasterSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -48,7 +53,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
     setSelectedMasterId(masterId);
 
     if (!masterId) {
-      setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', quantity: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardSymbol: '' });
+      setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', quantity: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
       return;
     }
 
@@ -66,7 +71,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
         registrationNumber: master.registrationNumber || '',
         manufacturerLicence: master.manufacturerLicence || '',
         imageUrl: master.imageUrl || '',
-        hazardSymbol: master.hazardSymbol || '',
+        hazardId: master.hazardId ? String(master.hazardId) : '',
       });
     }
   };
@@ -103,7 +108,8 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
       quantity: form.quantity || '',
       manufacturerLicence: form.manufacturerLicence || '',
       imageUrl: form.imageUrl || '',
-      hazardSymbol: form.hazardSymbol || '',
+      hazardSymbol: '',
+      hazardId: form.hazardId ? Number(form.hazardId) : undefined,
       _imageFile: productImageFile,
     };
     
@@ -114,7 +120,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
     setSelectedMasterId('');
     setProductImageFile(null);
     if (imageInputRef.current) imageInputRef.current.value = '';
-    setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', quantity: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardSymbol: '' });
+    setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', quantity: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
   };
 
   return (
@@ -191,14 +197,11 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
               <div className="form-row">
                 <div className="form-group single">
                   <label>HAZARD SYMBOL</label>
-                  <select name="hazardSymbol" value={form.hazardSymbol} onChange={handleChange}>
+                  <select name="hazardId" value={form.hazardId} onChange={handleChange}>
                     <option value="">--Select--</option>
-                    <option value="☠️ Toxic">☠️ Toxic</option>
-                    <option value="⚠️ Health Hazard">⚠️ Health Hazard</option>
-                    <option value="🧪 Irritant">🧪 Irritant</option>
-                    <option value="🔥 Flammable">🔥 Flammable</option>
-                    <option value="⚛️ Reactive">⚛️ Reactive</option>
-                    <option value="🌍 Environmental">🌍 Environmental</option>
+                    {hazards.map((h) => (
+                      <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
                   </select>
                 </div>
               </div>
