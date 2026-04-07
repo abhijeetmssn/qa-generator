@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
+import sharp from 'sharp';
 import { authenticateToken, requireRole } from '../middleware';
 import { getHazards, getHazardById, addHazard, updateHazard, deleteHazard, getHazardImage } from '../db';
 
@@ -23,14 +24,21 @@ router.get('/:id/image', async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     const image = await getHazardImage(id);
     if (!image) return res.status(404).json({ error: 'Image not found' });
-    // Detect content type from magic bytes
-    let contentType = 'image/png';
-    if (image[0] === 0xFF && image[1] === 0xD8) contentType = 'image/jpeg';
-    else if (image[0] === 0x47 && image[1] === 0x49) contentType = 'image/gif';
-    else if (image[0] === 0x52 && image[1] === 0x49) contentType = 'image/webp';
-    res.set('Content-Type', contentType);
-    res.set('Cache-Control', 'public, max-age=86400');
-    return res.send(image);
+    // Flatten PNG transparency onto white background using sharp
+    try {
+      const flattened = await sharp(image)
+        .flatten({ background: { r: 255, g: 255, b: 255 } })
+        .png()
+        .toBuffer();
+      res.set('Content-Type', 'image/png');
+      res.set('Cache-Control', 'public, max-age=86400');
+      return res.send(flattened);
+    } catch {
+      // Fallback: serve original image if sharp fails
+      res.set('Content-Type', 'image/png');
+      res.set('Cache-Control', 'public, max-age=86400');
+      return res.send(image);
+    }
   } catch (err) {
     return res.status(500).json({ error: 'Failed to fetch hazard image' });
   }
