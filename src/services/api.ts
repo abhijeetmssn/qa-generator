@@ -234,10 +234,11 @@ export interface BulkUploadResult {
   totalRows: number;
 }
 
-export async function apiBulkUploadProducts(file: File): Promise<BulkUploadResult> {
+export async function apiBulkUploadProducts(file: File, companyId?: number): Promise<BulkUploadResult> {
   const token = getToken();
   const formData = new FormData();
   formData.append('file', file);
+  if (companyId) formData.append('companyId', String(companyId));
 
   const res = await fetch(`${API_BASE}/products/bulk-upload`, {
     method: 'POST',

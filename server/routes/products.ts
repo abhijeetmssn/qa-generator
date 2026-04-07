@@ -278,9 +278,11 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Resolve admin's company_id
+    // Use companyId from form data (admin selects company), fall back to admin's own company
+    const formCompanyId = req.body?.companyId ? Number(req.body.companyId) : undefined;
     const dbUser = user?.email ? await findUserByEmail(user.email) : null;
-    const companyId = dbUser?.companyId || undefined;
+    const companyId = formCompanyId || dbUser?.companyId || undefined;
+    console.log('[bulk-upload] user email:', user?.email, 'formCompanyId:', formCompanyId, 'dbUser companyId:', dbUser?.companyId, 'resolved companyId:', companyId);
 
     // Parse the Excel file from memory buffer
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -381,6 +383,7 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
       skipped: results.skipped,
       errors: results.errors,
       totalRows: rows.length,
+      resolvedCompanyId: companyId || null,
     });
   } catch (err) {
     console.error('Bulk upload error:', err);

@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { apiBulkUploadProducts } from '../services/api';
-import type { BulkUploadResult } from '../services/api';
+import { apiBulkUploadProducts, apiGetAllCompanies } from '../services/api';
+import type { BulkUploadResult, Company } from '../services/api';
 
 interface BulkUploadProps {
   onUploadComplete: () => void;
@@ -28,6 +28,12 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
   const [error, setError] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | ''>('');
+
+  useEffect(() => {
+    apiGetAllCompanies().then(setCompanies).catch(console.error);
+  }, []);
 
   const handleDownloadTemplate = () => {
     const sampleRow: Record<string, string> = {};
@@ -79,13 +85,13 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
   };
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (!file || !selectedCompanyId) return;
     setLoading(true);
     setError('');
     setResult(null);
 
     try {
-      const data = await apiBulkUploadProducts(file);
+      const data = await apiBulkUploadProducts(file, selectedCompanyId);
       setResult(data);
       if (data.inserted > 0) {
         onUploadComplete();
@@ -123,9 +129,28 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
         </div>
       </div>
 
-      {/* Step 2: Upload File */}
+      {/* Step 2: Select Company */}
       <div className="bulk-step">
         <div className="bulk-step-number">2</div>
+        <div className="bulk-step-content">
+          <h3>Select Company</h3>
+          <p>Choose the company these products belong to.</p>
+          <select
+            value={selectedCompanyId}
+            onChange={(e) => setSelectedCompanyId(e.target.value ? Number(e.target.value) : '')}
+            style={{ marginTop: '8px', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', minWidth: '250px' }}
+          >
+            <option value="">-- Select a Company --</option>
+            {companies.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Step 3: Upload File */}
+      <div className="bulk-step">
+        <div className="bulk-step-number">3</div>
         <div className="bulk-step-content">
           <h3>Upload Your File</h3>
           <p>Fill in the template and upload it here.</p>
@@ -167,15 +192,15 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
         </div>
       </div>
 
-      {/* Step 3: Import */}
+      {/* Step 4: Import */}
       <div className="bulk-step">
-        <div className="bulk-step-number">3</div>
+        <div className="bulk-step-number">4</div>
         <div className="bulk-step-content">
           <h3>Import Products</h3>
           <button
             className="primary-btn"
             onClick={handleUpload}
-            disabled={!file || loading}
+            disabled={!file || !selectedCompanyId || loading}
             style={{ marginTop: '8px' }}
           >
             {loading ? '⏳ Uploading...' : '🚀 Upload & Import'}
