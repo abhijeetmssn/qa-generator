@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import type { Product } from '../services/api';
+import type { Product, Company } from '../services/api';
+import { apiGetAllCompanies } from '../services/api';
 
 interface ProductsListProps {
   products: Product[];
@@ -9,18 +10,41 @@ interface ProductsListProps {
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
   canEdit?: boolean;
+  isAdmin?: boolean;
 }
 
-const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, onEdit, onDelete, canEdit = true }) => {
+const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, onEdit, onDelete, canEdit = true, isAdmin = false }) => {
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [companySearch, setCompanySearch] = useState('');
+
+  useEffect(() => {
+    if (isAdmin) {
+      apiGetAllCompanies().then(setCompanies).catch(console.error);
+    }
+  }, [isAdmin]);
+
+  // Filter companies by search
+  const filteredCompanies = useMemo(() => {
+    if (!companySearch.trim()) return companies;
+    const q = companySearch.toLowerCase();
+    return companies.filter(c => c.name.toLowerCase().includes(q));
+  }, [companies, companySearch]);
+
+  // Filter products by selected company (admin only)
+  const companyFilteredProducts = useMemo(() => {
+    if (!isAdmin || !selectedCompanyId) return products;
+    return products.filter(p => p.companyId === selectedCompanyId);
+  }, [products, selectedCompanyId, isAdmin]);
 
   // Filter products by search term
   const filtered = useMemo(() => {
-    if (!search.trim()) return products;
+    if (!search.trim()) return companyFilteredProducts;
     const q = search.toLowerCase();
-    return products.filter(
+    return companyFilteredProducts.filter(
       (p) =>
         p.name?.toLowerCase().includes(q) ||
         p.uniqueId?.toLowerCase().includes(q) ||
@@ -30,7 +54,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
         p.shortUrl?.toLowerCase().includes(q) ||
         p.manufacturer?.toLowerCase().includes(q)
     );
-  }, [products, search]);
+  }, [companyFilteredProducts, search]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -48,7 +72,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
   };
 
   const handleExport = () => {
-    const rows = products.map((p, i) => ({
+    const rows = companyFilteredProducts.map((p, i) => ({
       'S.N.': i + 1,
       'Unique Id': p.uniqueId,
       'Product Name': p.name,
@@ -86,6 +110,47 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
           <button className="primary-btn" onClick={goAdd}>Add Product +</button>
         </div>
       </div>
+
+      {/* Company filter for admin */}
+      {isAdmin && (
+        <div style={{ background: '#fff', borderRadius: '12px', padding: '16px 20px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+          <label style={{ fontWeight: 600, fontSize: '14px', color: '#334155', marginBottom: '8px', display: 'block' }}>
+            Filter by Company
+          </label>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+              <input
+                type="text"
+                placeholder="Search company..."
+                value={companySearch}
+                onChange={(e) => setCompanySearch(e.target.value)}
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px', outline: 'none' }}
+              />
+            </div>
+            <select
+              value={selectedCompanyId ?? ''}
+              onChange={(e) => {
+                setSelectedCompanyId(e.target.value ? Number(e.target.value) : null);
+                setCurrentPage(1);
+              }}
+              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px', minWidth: '200px', outline: 'none' }}
+            >
+              <option value="">All Companies</option>
+              {filteredCompanies.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            {selectedCompanyId && (
+              <button
+                onClick={() => { setSelectedCompanyId(null); setCompanySearch(''); setCurrentPage(1); }}
+                style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f1f5f9', cursor: 'pointer', fontSize: '13px', color: '#64748b' }}
+              >
+                ✕ Clear
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="products-table-card">
         <div className="table-top">
