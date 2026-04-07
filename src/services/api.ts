@@ -153,6 +153,8 @@ export interface Product {
   hazardSymbol?: string;
   quantity?: string;
   productImage?: string;
+  companyId?: number;
+  companyName?: string;
 }
 
 export async function apiGetProducts(): Promise<Product[]> {

@@ -41,7 +41,7 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
 router.get('/:id/logo', async (req: Request, res: Response) => {
   try {
     const logoBuffer = await getCompanyLogo(Number(req.params.id));
-    if (!logoBuffer) {
+    if (!logoBuffer || logoBuffer.length < 100) {
       return res.status(404).json({ error: 'Logo not found' });
     }
     

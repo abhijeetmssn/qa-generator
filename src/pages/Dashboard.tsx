@@ -128,7 +128,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         return <ProductsList products={allProducts} goAdd={() => setPage('add')} onView={handleViewProduct} onEdit={handleEditProduct} onDelete={handleDeleteProduct} canEdit={canEdit} />;
       case 'view':
         return selectedProduct ? (
-          <ViewProduct product={selectedProduct} goBack={() => setPage('list')} />
+          <ViewProduct product={selectedProduct} goBack={() => setPage('list')} companyId={selectedProduct.companyId || user.companyId} companyName={selectedProduct.companyName || user.companyName} />
         ) : null;
       case 'users':
         return <ManageUsers adminCompanyName={user.companyName} />;

@@ -1,15 +1,29 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import '../ViewProduct.css';
-import type { Product } from '../services/api';
+import type { Product, Company } from '../services/api';
+import { apiGetCompanyById } from '../services/api';
 
 type ViewProductProps = {
   product: Product;
   goBack: () => void;
+  companyId?: number;
+  companyName?: string;
 };
 
-const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack }) => {
+const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, companyName }) => {
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+  const logoUrl = companyId ? `${API_BASE}/companies/${companyId}/logo` : undefined;
   const qrRef = useRef<HTMLDivElement>(null);
+  const [company, setCompany] = useState<Company | null>(null);
+
+  const [logoError, setLogoError] = useState(false);
+
+  useEffect(() => {
+    if (companyId) {
+      apiGetCompanyById(companyId).then(setCompany).catch(console.error);
+    }
+  }, [companyId]);
 
   // Build the public product view URL
   const productUrl = `${window.location.origin}/#product/${product.uniqueId}`;
@@ -121,7 +135,11 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack }) => {
       
       <div className="view-product-header">
         <div className="view-logo-section">
-          <div className="view-logo">FAS</div>
+          {logoUrl && !logoError ? (
+            <img src={logoUrl} alt={companyName || 'Company Logo'} className="view-logo-img" onError={() => setLogoError(true)} />
+          ) : (
+            <div className="view-logo">{companyName?.substring(0, 3).toUpperCase() || 'FAS'}</div>
+          )}
         </div>
         <h1>Agri Input Information System (AIIS)</h1>
       </div>
@@ -210,9 +228,9 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack }) => {
               <label>CUSTOMER CARE CONTACT DETAILS</label>
               <div className="contact-details">
                 {product.manufacturerAddress && <p><strong>🏢</strong> {product.manufacturerAddress}</p>}
-                <p><strong>📞</strong> —</p>
-                <p><strong>📧</strong> —</p>
-                <p><strong>🌐</strong> —</p>
+                <p><strong>📞</strong> {company?.phone || '—'}</p>
+                <p><strong>📧</strong> {company?.email || '—'}</p>
+                <p><strong>🌐</strong> {company?.website ? <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer">{company.website}</a> : '—'}</p>
                 <div className="social-links">
                   <a href="#" className="fb-btn">Facebook</a>
                   <a href="#" className="ig-btn">Instagram</a>

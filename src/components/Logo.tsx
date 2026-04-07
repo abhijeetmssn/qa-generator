@@ -21,7 +21,7 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true, companyId
           return null;
         })
         .then(blob => {
-          if (blob) {
+          if (blob && blob.size > 100) {
             setLogoUrl(URL.createObjectURL(blob));
           }
         })

@@ -34,6 +34,8 @@ export interface Product {
   productImage?: string; // URL path to serve the image
   owner_uid?: string;
   active?: string; // 'Y' or 'N'
+  companyId?: number;
+  companyName?: string;
 }
 
 // ── User type ──
@@ -70,6 +72,8 @@ function rowToProduct(row: any): Product {
     productImage: row.product_image ? `/api/products/${row.unique_id}/image` : undefined,
     owner_uid: row.owner_uid,
     active: row.active || 'Y',
+    companyId: row.company_id ?? undefined,
+    companyName: row.company_name ?? undefined,
   };
 }
 
@@ -77,7 +81,7 @@ function rowToProduct(row: any): Product {
 export async function getProducts(companyName?: string): Promise<Product[]> {
   if (companyName) {
     const { rows } = await pool.query(
-      `SELECT p.* FROM products p
+      `SELECT p.*, u.company_id, c.name as company_name FROM products p
        JOIN users u ON p.owner_uid = u.uid
        JOIN companies c ON u.company_id = c.id
        WHERE p.active = 'Y' AND (p.is_master = false OR p.is_master IS NULL) AND c.name = $1
@@ -86,7 +90,13 @@ export async function getProducts(companyName?: string): Promise<Product[]> {
     );
     return rows.map(rowToProduct);
   }
-  const { rows } = await pool.query("SELECT * FROM products WHERE active = 'Y' AND (is_master = false OR is_master IS NULL) ORDER BY id");
+  const { rows } = await pool.query(
+    `SELECT p.*, u.company_id, c.name as company_name FROM products p
+     LEFT JOIN users u ON p.owner_uid = u.uid
+     LEFT JOIN companies c ON u.company_id = c.id
+     WHERE p.active = 'Y' AND (p.is_master = false OR p.is_master IS NULL)
+     ORDER BY p.id`
+  );
   return rows.map(rowToProduct);
 }
 
