@@ -324,8 +324,7 @@
   gap: 16px;
 }
 
-.products-list-header,
-.add-product-header {
+.products-list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -333,6 +332,14 @@
   max-width: 1200px;
   flex-wrap: wrap;
   gap: 12px;
+}
+.add-product-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1024px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .products-list-header h1,
