@@ -26,7 +26,6 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
     hazardSymbol: '',
   });
   const [productImageFile, setProductImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [addedProduct, setAddedProduct] = useState<any>(null);
 
