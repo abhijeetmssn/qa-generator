@@ -188,7 +188,7 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
               {(product.productImage || product.imageUrl) && (
                 <div className="product-image-box">
                   <img
-                    src={product.productImage ? `${product.productImage}?quality=50` : product.imageUrl}
+                    src={product.productImage ? `${API_BASE.replace('/api', '')}${product.productImage}?quality=50` : product.imageUrl}
                     alt={product.name}
                     className="product-detail-img"
                   />
@@ -225,7 +225,7 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
       </div>
 
       <div className="view-footer">
-        <p>Developed by <a href="#" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>Webbird Solutions</a></p>
+        <p>Developed by <a href="#" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>AP Solutions</a></p>
       </div>
     </div>
   );
