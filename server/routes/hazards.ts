@@ -23,7 +23,12 @@ router.get('/:id/image', async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     const image = await getHazardImage(id);
     if (!image) return res.status(404).json({ error: 'Image not found' });
-    res.set('Content-Type', 'image/png');
+    // Detect content type from magic bytes
+    let contentType = 'image/png';
+    if (image[0] === 0xFF && image[1] === 0xD8) contentType = 'image/jpeg';
+    else if (image[0] === 0x47 && image[1] === 0x49) contentType = 'image/gif';
+    else if (image[0] === 0x52 && image[1] === 0x49) contentType = 'image/webp';
+    res.set('Content-Type', contentType);
     res.set('Cache-Control', 'public, max-age=86400');
     return res.send(image);
   } catch (err) {

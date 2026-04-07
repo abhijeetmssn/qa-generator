@@ -130,7 +130,8 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
                   <img
                     src={`${API_BASE}/hazards/${product.hazardId}/image`}
                     alt="Hazard Symbol"
-                    style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'contain' }}
+                    style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'contain', background: 'white' }}
+                    loading="lazy"
                   />
                 ) : (
                   <div className="safety-symbol">
@@ -142,7 +143,8 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
                   <img
                     src={product.productImage ? `${API_BASE.replace('/api', '')}${product.productImage}` : product.imageUrl}
                     alt={product.name}
-                    style={{ maxWidth: '120px', maxHeight: '120px', objectFit: 'contain', borderRadius: '6px', border: '1px solid #e2e8f0' }}
+                    loading="lazy"
+                    style={{ maxWidth: '120px', maxHeight: '120px', objectFit: 'contain', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#f8fafb' }}
                   />
                 )}
               </div>
