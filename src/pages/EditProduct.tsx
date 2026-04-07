@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import type { Product } from '../services/api';
 import { apiUploadProductImage } from '../services/api';
-import { format } from 'date-fns';
 
 function formatMonthYear(val?: string) {
   if (!val) return '—';

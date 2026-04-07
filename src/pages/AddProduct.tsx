@@ -4,7 +4,6 @@ import { apiGetMasterProducts, apiGetHazards } from '../services/api';
 import type { Product, Hazard } from '../services/api';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { setMonth, setYear } from 'date-fns';
 
 type AddProductProps = {
   onProductAdded?: (product: any) => Promise<void> | void;
@@ -185,7 +184,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
                   <label>DATE OF MANUFACTURE</label>
                   <DatePicker
                     selected={form.manufacturer ? new Date(form.manufacturer + '-01') : null}
-                    onChange={date => setForm(prev => ({ ...prev, manufacturer: date ? date.toISOString().slice(0, 7) : '' }))}
+                    onChange={(date: Date | null) => setForm(prev => ({ ...prev, manufacturer: date ? date.toISOString().slice(0, 7) : '' }))}
                     dateFormat="yyyy-MM"
                     showMonthYearPicker
                     showFullMonthYearPicker
@@ -197,7 +196,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
                   <label>EXPIRY DATE</label>
                   <DatePicker
                     selected={form.expiry ? new Date(form.expiry + '-01') : null}
-                    onChange={date => setForm(prev => ({ ...prev, expiry: date ? date.toISOString().slice(0, 7) : '' }))}
+                    onChange={(date: Date | null) => setForm(prev => ({ ...prev, expiry: date ? date.toISOString().slice(0, 7) : '' }))}
                     dateFormat="yyyy-MM"
                     showMonthYearPicker
                     showFullMonthYearPicker

@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import { format } from 'date-fns';
 import type { Product, Company } from '../services/api';
 import { apiGetAllCompanies } from '../services/api';
 

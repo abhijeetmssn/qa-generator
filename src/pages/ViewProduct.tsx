@@ -3,7 +3,6 @@ import { QRCodeSVG } from 'qrcode.react';
 import '../ViewProduct.css';
 import type { Product, Company } from '../services/api';
 import { apiGetCompanyById } from '../services/api';
-import { format } from 'date-fns';
 
 function formatMonthYear(val?: string) {
   if (!val) return '—';
