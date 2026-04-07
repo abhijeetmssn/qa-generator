@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import React, { useState, useEffect } from 'react';
 import { apiGetProductByUniqueId, apiGetCompanyById } from '../services/api';
 import type { Product, Company } from '../services/api';
 import '../ViewProduct.css';
@@ -15,7 +14,6 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
-  const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -82,83 +80,6 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
   }
 
   const logoUrl = product.companyId ? `${API_BASE}/companies/${product.companyId}/logo` : undefined;
-  const productUrl = `${window.location.origin}/#product/${product.uniqueId}`;
-
-  const handleDownloadQR = () => {
-    const svg = qrRef.current?.querySelector('svg');
-    if (!svg) return;
-
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx?.drawImage(img, 0, 0);
-      const link = document.createElement('a');
-      link.download = `QR-${product.name}-${product.uniqueId}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    };
-    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-  };
-
-  const handlePrintQR = () => {
-    const printWindow = window.open('', '', 'width=600,height=700');
-    if (!printWindow) return;
-
-    const svg = qrRef.current?.querySelector('svg');
-    if (!svg) return;
-
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Print QR Code - ${product.name}</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              min-height: 100vh;
-              margin: 0;
-              padding: 20px;
-              background: white;
-            }
-            .print-container { text-align: center; }
-            h1 { font-size: 24px; margin-bottom: 20px; color: #333; }
-            .product-info { margin-bottom: 20px; font-size: 14px; color: #666; }
-            svg { border: 2px solid #ccc; padding: 10px; background: white; }
-            .product-url { margin-top: 20px; font-size: 12px; color: #999; word-break: break-all; }
-            @media print { body { background: white; } }
-          </style>
-        </head>
-        <body>
-          <div class="print-container">
-            <h1>QR Code</h1>
-            <div class="product-info">
-              <p><strong>${product.name}</strong></p>
-              <p>Batch: ${product.batch}</p>
-              <p>ID: ${product.uniqueId}</p>
-            </div>
-            ${svgData}
-            <div class="product-url">${productUrl}</div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    printWindow.onload = () => {
-      printWindow.print();
-    };
-  };
 
   return (
     <div className="view-product-page">
@@ -262,38 +183,6 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
                   <a href="#" className="fb-btn">Facebook</a>
                   <a href="#" className="ig-btn">Instagram</a>
                 </div>
-              </div>
-            </div>
-
-            {/* QR Code Section */}
-            <div className="view-info-group qr-section">
-              <label>PRODUCT QR CODE</label>
-              <div ref={qrRef} className="qr-code-box">
-                <QRCodeSVG
-                  value={productUrl}
-                  size={180}
-                  level="H"
-                  includeMargin={true}
-                  bgColor="#ffffff"
-                  fgColor="#1e3a8a"
-                />
-              </div>
-              <p className="qr-url">{productUrl}</p>
-              <div className="qr-button-group">
-                <button
-                  type="button"
-                  className="download-qr-btn"
-                  onClick={handleDownloadQR}
-                >
-                  ⬇ Download QR Code
-                </button>
-                <button
-                  type="button"
-                  className="print-qr-btn"
-                  onClick={handlePrintQR}
-                >
-                  🖨 Print QR Code
-                </button>
               </div>
             </div>
           </div>
