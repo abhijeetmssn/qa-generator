@@ -36,6 +36,7 @@ export interface Product {
   active?: string; // 'Y' or 'N'
   companyId?: number;
   companyName?: string;
+  is_master?: boolean;
 }
 
 // ── User type ──
@@ -78,37 +79,37 @@ function rowToProduct(row: any): Product {
 }
 
 // ── Products ──
-export async function getProducts(companyName?: string): Promise<Product[]> {
-  if (companyName) {
+export async function getProducts(companyId?: number, isAdmin?: boolean): Promise<Product[]> {
+  const masterFilter = isAdmin
+    ? 'p.is_master = true'
+    : '(p.is_master = false OR p.is_master IS NULL)';
+  if (companyId) {
     const { rows } = await pool.query(
-      `SELECT p.*, u.company_id, c.name as company_name FROM products p
-       JOIN users u ON p.owner_uid = u.uid
-       JOIN companies c ON u.company_id = c.id
-       WHERE p.active = 'Y' AND (p.is_master = false OR p.is_master IS NULL) AND c.name = $1
+      `SELECT p.*, c.name as company_name FROM products p
+       LEFT JOIN companies c ON p.company_id = c.id
+       WHERE p.active = 'Y' AND ${masterFilter} AND p.company_id = $1
        ORDER BY p.id`,
-      [companyName]
+      [companyId]
     );
     return rows.map(rowToProduct);
   }
   const { rows } = await pool.query(
-    `SELECT p.*, u.company_id, c.name as company_name FROM products p
-     LEFT JOIN users u ON p.owner_uid = u.uid
-     LEFT JOIN companies c ON u.company_id = c.id
-     WHERE p.active = 'Y' AND (p.is_master = false OR p.is_master IS NULL)
+    `SELECT p.*, c.name as company_name FROM products p
+     LEFT JOIN companies c ON p.company_id = c.id
+     WHERE p.active = 'Y' AND ${masterFilter}
      ORDER BY p.id`
   );
   return rows.map(rowToProduct);
 }
 
-export async function getMasterProducts(companyName?: string): Promise<Product[]> {
-  if (companyName) {
+export async function getMasterProducts(companyId?: number): Promise<Product[]> {
+  if (companyId) {
     const { rows } = await pool.query(
-      `SELECT p.* FROM products p
-       JOIN users u ON p.owner_uid = u.uid
-       JOIN companies c ON u.company_id = c.id
-       WHERE p.active = 'Y' AND p.is_master = true AND c.name = $1
+      `SELECT p.*, c.name as company_name FROM products p
+       LEFT JOIN companies c ON p.company_id = c.id
+       WHERE p.active = 'Y' AND p.is_master = true AND p.company_id = $1
        ORDER BY p.name`,
-      [companyName]
+      [companyId]
     );
     return rows.map(rowToProduct);
   }
@@ -116,15 +117,14 @@ export async function getMasterProducts(companyName?: string): Promise<Product[]
   return rows.map(rowToProduct);
 }
 
-export async function getTrashProducts(companyName?: string): Promise<Product[]> {
-  if (companyName) {
+export async function getTrashProducts(companyId?: number): Promise<Product[]> {
+  if (companyId) {
     const { rows } = await pool.query(
-      `SELECT p.* FROM products p
-       JOIN users u ON p.owner_uid = u.uid
-       JOIN companies c ON u.company_id = c.id
-       WHERE p.active = 'N' AND c.name = $1
+      `SELECT p.*, c.name as company_name FROM products p
+       LEFT JOIN companies c ON p.company_id = c.id
+       WHERE p.active = 'N' AND p.company_id = $1
        ORDER BY p.id`,
-      [companyName]
+      [companyId]
     );
     return rows.map(rowToProduct);
   }
@@ -139,8 +139,8 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
 
 export async function addProduct(product: Product & { is_master?: boolean }): Promise<Product> {
   const { rows } = await pool.query(
-    `INSERT INTO products (unique_id, name, batch, mfg, expiry, short_url, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, hazard_symbol, quantity, owner_uid, is_master)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+    `INSERT INTO products (unique_id, name, batch, mfg, expiry, short_url, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, hazard_symbol, quantity, owner_uid, is_master, company_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
      RETURNING *`,
     [
       product.uniqueId,
@@ -160,9 +160,25 @@ export async function addProduct(product: Product & { is_master?: boolean }): Pr
       product.quantity || null,
       product.owner_uid || null,
       product.is_master || false,
+      product.companyId || null,
     ]
   );
-  return rowToProduct(rows[0]);
+  const saved = rowToProduct(rows[0]);
+
+  // If non-master product, copy image from its master product (same name + same company)
+  if (!product.is_master && product.companyId) {
+    await pool.query(
+      `UPDATE products p
+       SET product_image = m.product_image
+       FROM products m
+       WHERE m.is_master = true AND m.product_image IS NOT NULL
+         AND m.name = p.name AND m.company_id = p.company_id
+         AND p.unique_id = $1 AND p.product_image IS NULL`,
+      [product.uniqueId]
+    );
+  }
+
+  return saved;
 }
 
 export async function updateProduct(uniqueId: string, updates: Partial<Product>): Promise<Product | null> {
@@ -395,7 +411,22 @@ export async function updateProductImage(uniqueId: string, imageBuffer: Buffer):
     'UPDATE products SET product_image = $1 WHERE unique_id = $2',
     [imageBuffer, uniqueId]
   );
-  return (result.rowCount ?? 0) > 0;
+  if ((result.rowCount ?? 0) === 0) return false;
+
+  // If this is a master product, propagate image to all non-master products
+  // with the same name and same company_id
+  const { rows } = await pool.query(
+    'SELECT name, company_id, is_master FROM products WHERE unique_id = $1',
+    [uniqueId]
+  );
+  if (rows.length > 0 && rows[0].is_master && rows[0].company_id) {
+    await pool.query(
+      `UPDATE products SET product_image = $1
+       WHERE name = $2 AND company_id = $3 AND (is_master = false OR is_master IS NULL) AND active = 'Y'`,
+      [imageBuffer, rows[0].name, rows[0].company_id]
+    );
+  }
+  return true;
 }
 
 export async function getProductImage(uniqueId: string): Promise<Buffer | null> {

@@ -144,23 +144,12 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
         <h1>Agri Input Information System (AIIS)</h1>
       </div>
 
-      {/* Product Image */}
-      {(product.productImage || product.imageUrl) && (
-        <div style={{ maxWidth: '800px', margin: '0 auto 16px', padding: '0 16px', textAlign: 'center' }}>
-          <img
-            src={product.productImage || product.imageUrl}
-            alt={product.name}
-            style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e2e8f0' }}
-          />
-        </div>
-      )}
-
       <div className="view-product-content">
         <div className="view-info-grid">
           <div className="view-info-column">
             <div className="view-info-group">
               <label>NAME OF THE MANUFACTURER</label>
-              <p>{product.manufacturer || '—'}</p>
+              <p>{product.manufacturer || companyName || '—'}</p>
               <small>{product.manufacturerAddress || ''}</small>
             </div>
 
@@ -186,9 +175,18 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
 
             <div className="view-info-group">
               <label>CAUTIONARY SYMBOL AS PER THE TOXICITY CLASSIFICATION</label>
-              <div className="safety-symbol">
-                <div className="symbol-yellow">⚠️</div>
-                <p>YELLOW</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div className="safety-symbol">
+                  <div className="symbol-yellow">⚠️</div>
+                  <p>YELLOW</p>
+                </div>
+                {(product.productImage || product.imageUrl) && (
+                  <img
+                    src={product.productImage ? `${API_BASE.replace('/api', '')}${product.productImage}` : product.imageUrl}
+                    alt={product.name}
+                    style={{ maxWidth: '120px', maxHeight: '120px', objectFit: 'contain', borderRadius: '6px', border: '1px solid #e2e8f0' }}
+                  />
+                )}
               </div>
             </div>
 

@@ -143,6 +143,7 @@ async function initDB() {
         quantity              VARCHAR(100),
         product_image         BYTEA,
         is_master             BOOLEAN DEFAULT false,
+        company_id            INTEGER REFERENCES companies(id),
         owner_uid             VARCHAR(100) REFERENCES users(uid),
         active                VARCHAR(1) DEFAULT 'Y',
         created_at            TIMESTAMPTZ DEFAULT NOW()
@@ -155,6 +156,15 @@ async function initDB() {
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS product_image BYTEA');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_symbol VARCHAR(255)');
+    await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id)');
+
+    // Backfill company_id on existing products from owner_uid → users.company_id
+    await client.query(`
+      UPDATE products p
+      SET company_id = u.company_id
+      FROM users u
+      WHERE p.owner_uid = u.uid AND p.company_id IS NULL AND u.company_id IS NOT NULL
+    `);
 
     await client.query('COMMIT');
     console.log('✅ Database tables ready');
@@ -212,21 +222,29 @@ async function initDB() {
     const { rows: prodRows } = await pool.query('SELECT COUNT(*) FROM products');
     if (parseInt(prodRows[0].count) === 0) {
       const products = [
-        ['881946515','ETIUS','FASPO647','08/25','07/27','qr-1.in/a.php?x=57afe','AP Demo Manufacturer','123 Industrial Area, Chandigarh','Emamectin Benzoate 5% SG','CIR-1B7889/2021-Emamectin Benzoate (SG) (4325)-2288','1 KG','PB/AGRI/PP/2021/4','demo-admin-001'],
-        ['229847361','NEXGROW','NXG-2026-A1','01/26','12/27','qr-1.in/a.php?x=83bcd','AP Demo Manufacturer','123 Industrial Area, Chandigarh','Thiamethoxam 25% WG','CIR-2245/2022-Thiamethoxam (WG) (5610)-3102','500 GM','PB/AGRI/PP/2022/8','demo-admin-001'],
-        ['339471829','CROPSHIELD','CSH-2026-B3','03/26','02/28','qr-1.in/a.php?x=a29ef','AP Demo Manufacturer','123 Industrial Area, Chandigarh','Imidacloprid 17.8% SL','CIR-3367/2023-Imidacloprid (SL) (1127)-4415','250 ML','PB/AGRI/PP/2023/12','demo-admin-001'],
-        ['447291053','VITACURE','VTC-2025-D1','11/25','10/27','qr-1.in/a.php?x=f10ab','Pharma Mfg Corp','456 Pharma Road, Mumbai','Mancozeb 75% WP','CIR-4489/2024-Mancozeb (WP) (7821)-5503','2 KG','MH/AGRI/PP/2024/2','demo-admin-002'],
-        ['558103947','GREENMAX','GMX-2026-E2','02/26','01/28','qr-1.in/a.php?x=d72fc','Pharma Mfg Corp','456 Pharma Road, Mumbai','Chlorpyrifos 20% EC','CIR-5591/2025-Chlorpyrifos (EC) (2034)-6691','1 LTR','MH/AGRI/PP/2025/6','demo-admin-002'],
+        ['881946515','ETIUS','FASPO647','08/25','07/27','qr-1.in/a.php?x=57afe','AP Demo Manufacturer','123 Industrial Area, Chandigarh','Emamectin Benzoate 5% SG','CIR-1B7889/2021-Emamectin Benzoate (SG) (4325)-2288','1 KG','PB/AGRI/PP/2021/4','demo-admin-001', apDemoId],
+        ['229847361','NEXGROW','NXG-2026-A1','01/26','12/27','qr-1.in/a.php?x=83bcd','AP Demo Manufacturer','123 Industrial Area, Chandigarh','Thiamethoxam 25% WG','CIR-2245/2022-Thiamethoxam (WG) (5610)-3102','500 GM','PB/AGRI/PP/2022/8','demo-admin-001', apDemoId],
+        ['339471829','CROPSHIELD','CSH-2026-B3','03/26','02/28','qr-1.in/a.php?x=a29ef','AP Demo Manufacturer','123 Industrial Area, Chandigarh','Imidacloprid 17.8% SL','CIR-3367/2023-Imidacloprid (SL) (1127)-4415','250 ML','PB/AGRI/PP/2023/12','demo-admin-001', apDemoId],
+        ['447291053','VITACURE','VTC-2025-D1','11/25','10/27','qr-1.in/a.php?x=f10ab','Pharma Mfg Corp','456 Pharma Road, Mumbai','Mancozeb 75% WP','CIR-4489/2024-Mancozeb (WP) (7821)-5503','2 KG','MH/AGRI/PP/2024/2','demo-admin-002', pharmaId],
+        ['558103947','GREENMAX','GMX-2026-E2','02/26','01/28','qr-1.in/a.php?x=d72fc','Pharma Mfg Corp','456 Pharma Road, Mumbai','Chlorpyrifos 20% EC','CIR-5591/2025-Chlorpyrifos (EC) (2034)-6691','1 LTR','MH/AGRI/PP/2025/6','demo-admin-002', pharmaId],
       ];
       for (const p of products) {
         await pool.query(
-          `INSERT INTO products (unique_id,name,batch,mfg,expiry,short_url,manufacturer,manufacturer_address,technical_name,registration_number,packing_size,manufacturer_licence,owner_uid)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+          `INSERT INTO products (unique_id,name,batch,mfg,expiry,short_url,manufacturer,manufacturer_address,technical_name,registration_number,packing_size,manufacturer_licence,owner_uid,company_id,is_master)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,true)`,
           p
         );
       }
       console.log('✅ Demo products seeded');
     }
+
+    // Backfill company_id on any products that are missing it
+    await pool.query(`
+      UPDATE products p
+      SET company_id = u.company_id
+      FROM users u
+      WHERE p.owner_uid = u.uid AND p.company_id IS NULL AND u.company_id IS NOT NULL
+    `);
   } catch (err) {
     console.error('Seed failed:', err);
   }

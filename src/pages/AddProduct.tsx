@@ -192,34 +192,6 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded }) => {
 
               <div className="form-row">
                 <div className="form-group single">
-                  <label>PRODUCT IMAGE</label>
-                  <input
-                    ref={imageInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] || null;
-                      setProductImageFile(file);
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onloadend = () => setImagePreview(reader.result as string);
-                        reader.readAsDataURL(file);
-                      } else {
-                        setImagePreview(null);
-                      }
-                    }}
-                    style={{ padding: '8px' }}
-                  />
-                  {imagePreview && (
-                    <div style={{ marginTop: '8px' }}>
-                      <img src={imagePreview} alt="Preview" style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '6px', border: '1px solid #e2e8f0' }} />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group single">
                   <label>HAZARD SYMBOL</label>
                   <select name="hazardSymbol" value={form.hazardSymbol} onChange={handleChange}>
                     <option value="">--Select--</option>

@@ -15,7 +15,6 @@ import {
   getMasterProducts,
   updateProductImage,
   getProductImage,
-  getCompanyById,
 } from '../db';
 import { authenticateToken, requireRole } from '../middleware';
 import type { Request, Response, NextFunction } from 'express';
@@ -44,13 +43,10 @@ router.get('/', authenticateToken, async (_req, res) => {
   try {
     const decoded = (_req as any).user;
     const user = decoded?.email ? await findUserByEmail(decoded.email) : null;
-    let companyName: string | undefined;
-    if (user?.companyId) {
-      const company = await getCompanyById(user.companyId);
-      companyName = company?.name;
-    }
-    console.log('[GET /products] user:', user?.email, 'companyId:', user?.companyId, 'companyName:', companyName);
-    const products = await getProducts(companyName);
+    const companyId = user?.companyId;
+    const isAdmin = user?.role === 'admin';
+    console.log('[GET /products] user:', user?.email, 'companyId:', companyId, 'isAdmin:', isAdmin);
+    const products = await getProducts(companyId, isAdmin);
     console.log('[GET /products] returned', products.length, 'products');
     return res.json({ products });
   } catch (err) {
@@ -64,12 +60,8 @@ router.get('/trash/list', authenticateToken, async (_req, res) => {
   try {
     const decoded = (_req as any).user;
     const user = decoded?.email ? await findUserByEmail(decoded.email) : null;
-    let companyName: string | undefined;
-    if (user?.companyId) {
-      const company = await getCompanyById(user.companyId);
-      companyName = company?.name;
-    }
-    const products = await getTrashProducts(companyName);
+    const companyId = user?.companyId;
+    const products = await getTrashProducts(companyId);
     return res.json({ products });
   } catch (err) {
     console.error('Get trash error:', err);
@@ -95,10 +87,13 @@ router.get('/debug', async (_req, res) => {
   }
 });
 
-// GET /api/products/master — list master catalog products (for dropdown)
+// GET /api/products/master — list master catalog products (for dropdown, filtered by user's company)
 router.get('/master', authenticateToken, async (_req, res) => {
   try {
-    const products = await getMasterProducts();
+    const decoded = (_req as any).user;
+    const user = decoded?.email ? await findUserByEmail(decoded.email) : null;
+    const companyId = user?.companyId;
+    const products = await getMasterProducts(companyId);
     return res.json({ products });
   } catch (err) {
     console.error('Get master products error:', err);
@@ -107,7 +102,7 @@ router.get('/master', authenticateToken, async (_req, res) => {
 });
 
 // POST /api/products/:uniqueId/upload-image — upload product image
-router.post('/:uniqueId/upload-image', authenticateToken, requireRole('admin', 'editor'), productImageUpload.single('productImage'), async (req: Request, res: Response) => {
+router.post('/:uniqueId/upload-image', authenticateToken, productImageUpload.single('productImage'), async (req: Request, res: Response) => {
   try {
     const { uniqueId } = req.params;
     if (!req.file) {
@@ -165,6 +160,11 @@ router.post('/', authenticateToken, async (req, res) => {
     const user = (req as any).user;
     console.log('[POST /products] user from JWT:', JSON.stringify(user));
     console.log('[POST /products] body:', JSON.stringify(body));
+    
+    // Resolve user's company_id
+    const dbUser = user?.email ? await findUserByEmail(user.email) : null;
+    const companyId = dbUser?.companyId || undefined;
+    
     const product = {
       id: body.id || Date.now(),
       uniqueId: body.uniqueId || uuidv4().replace(/-/g, '').slice(0, 9),
@@ -183,6 +183,7 @@ router.post('/', authenticateToken, async (req, res) => {
       hazardSymbol: body.hazardSymbol,
       quantity: body.quantity,
       owner_uid: user.uid,
+      companyId: companyId,
     };
 
     const saved = await addProduct(product);
@@ -277,6 +278,10 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    // Resolve admin's company_id
+    const dbUser = user?.email ? await findUserByEmail(user.email) : null;
+    const companyId = dbUser?.companyId || undefined;
+
     // Parse the Excel file from memory buffer
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
@@ -361,6 +366,7 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
           manufacturerLicence: mapped.manufacturerLicence || undefined,
           owner_uid: user.uid,
           is_master: true,
+          companyId: companyId,
         });
         results.inserted++;
       } catch (err: any) {
