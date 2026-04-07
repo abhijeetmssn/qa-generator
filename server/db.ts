@@ -135,7 +135,12 @@ export async function getTrashProducts(companyId?: number): Promise<Product[]> {
 }
 
 export async function getProductByUniqueId(uniqueId: string): Promise<Product | undefined> {
-  const { rows } = await pool.query('SELECT * FROM products WHERE unique_id = $1', [uniqueId]);
+  const { rows } = await pool.query(
+    `SELECT p.*, c.name as company_name FROM products p
+     LEFT JOIN companies c ON p.company_id = c.id
+     WHERE p.unique_id = $1`,
+    [uniqueId]
+  );
   return rows.length > 0 ? rowToProduct(rows[0]) : undefined;
 }
 
