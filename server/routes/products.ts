@@ -130,6 +130,26 @@ router.get('/:uniqueId/image', async (req: Request, res: Response) => {
     if (!imageBuffer) {
       return res.status(404).json({ error: 'No image found' });
     }
+
+    // Reduce resolution by 50% if ?quality=50 is passed
+    const quality = req.query.quality;
+    if (quality === '50') {
+      try {
+        const sharp = (await import('sharp')).default;
+        const metadata = await sharp(imageBuffer).metadata();
+        const newWidth = Math.round((metadata.width || 400) / 2);
+        const resized = await sharp(imageBuffer)
+          .resize(newWidth)
+          .jpeg({ quality: 60 })
+          .toBuffer();
+        res.set('Content-Type', 'image/jpeg');
+        res.set('Cache-Control', 'public, max-age=86400');
+        return res.send(resized);
+      } catch {
+        // Fallback to original if sharp fails
+      }
+    }
+
     res.set('Content-Type', 'image/png');
     res.set('Cache-Control', 'public, max-age=86400');
     return res.send(imageBuffer);

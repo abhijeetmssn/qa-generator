@@ -297,6 +297,73 @@
 .public-product-page {
   max-height: none;
   border-radius: 0;
+  min-height: 100vh;
+}
+
+.public-header {
+  background: linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #4ade80 100%);
+  padding: 0;
+  flex-direction: column;
+  gap: 0;
+}
+
+.public-header-logo {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 50px;
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.public-logo-img {
+  max-width: 36px;
+  max-height: 36px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: white;
+}
+
+.public-company-name {
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.public-header h1 {
+  font-size: 1.8rem;
+  line-height: 1.3;
+}
+
+.public-content {
+  flex-direction: column;
+}
+
+.public-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 700px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.public-info-list .view-info-group {
+  text-align: left;
+  align-items: flex-start;
+}
+
+.public-info-list .view-info-group label {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #111;
+}
+
+.public-info-list .view-info-group p {
+  font-size: 1rem;
+  color: #444;
 }
 
 .public-bottom-section {
@@ -313,7 +380,7 @@
 .cautionary-symbol-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 20px;
   flex-wrap: wrap;
   margin-top: 8px;
@@ -479,22 +546,40 @@
   }
 
   /* Public product mobile styles */
-  .public-product-page .view-info-grid {
-    grid-template-columns: 1fr;
-    gap: 0;
+  .public-product-page .view-product-header {
+    padding: 24px 16px;
   }
 
-  .public-product-page .view-info-group {
-    text-align: left;
-    align-items: flex-start;
+  .public-header h1 {
+    font-size: 1.4rem;
   }
 
-  .public-product-page .view-info-group label {
+  .public-header-logo {
+    padding: 6px 16px;
+  }
+
+  .public-company-name {
+    font-size: 0.75rem;
+  }
+
+  .public-logo-img {
+    max-width: 28px;
+    max-height: 28px;
+  }
+
+  .public-content {
+    padding: 20px 16px;
+  }
+
+  .public-info-list {
+    gap: 20px;
+  }
+
+  .public-info-list .view-info-group label {
     font-size: 0.85rem;
-    font-weight: 800;
   }
 
-  .public-product-page .view-info-group p {
+  .public-info-list .view-info-group p {
     font-size: 0.95rem;
   }
 

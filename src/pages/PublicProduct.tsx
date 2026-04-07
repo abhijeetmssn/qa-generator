@@ -107,117 +107,100 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
 
   return (
     <div className="view-product-page public-product-page">
-      <div className="view-product-header">
-        <div className="view-logo-section">
+      <div className="view-product-header public-header">
+        <div className="public-header-logo">
           {logoUrl && !logoError ? (
-            <img src={logoUrl} alt={product.companyName || 'Company Logo'} className="view-logo-img" onError={() => setLogoError(true)} />
-          ) : (
-            <div className="view-logo">{product.companyName?.substring(0, 3).toUpperCase() || 'FAS'}</div>
-          )}
+            <img src={logoUrl} alt={product.companyName || 'Company Logo'} className="public-logo-img" onError={() => setLogoError(true)} />
+          ) : null}
+          <span className="public-company-name">{product.companyName || company?.name || ''}</span>
         </div>
         <h1>Agri Input Information System (AIIS)</h1>
       </div>
 
-      <div className="view-product-content">
-        <div className="view-info-grid">
-          <div className="view-info-column">
-            <div className="view-info-group">
-              <label>NAME OF THE MANUFACTURER</label>
-              <p>{product.manufacturer || product.companyName || company?.name || '—'}</p>
-              <small>{product.manufacturerAddress || ''}</small>
-            </div>
+      <div className="view-product-content public-content">
+        <div className="public-info-list">
+          <div className="view-info-group">
+            <label>MARKETED BY</label>
+            <p>{product.companyName || company?.name || product.manufacturer || '—'}</p>
+          </div>
 
-            <div className="view-info-group">
-              <label>NAME OF THE PRODUCT</label>
-              <p>{product.name}</p>
-            </div>
+          <div className="view-info-group">
+            <label>NAME OF THE PRODUCT</label>
+            <p>{product.name}</p>
+          </div>
 
-            <div className="view-info-group">
-              <label>BATCH NUMBER</label>
-              <p>{product.batch}</p>
-            </div>
+          <div className="view-info-group">
+            <label>TECHNICAL NAME</label>
+            <p>{product.technicalName || '—'}</p>
+          </div>
 
-            <div className="view-info-group">
-              <label>EXPIRY DATE</label>
-              <p>{formatMonthYear(product.expiry)}</p>
-            </div>
+          <div className="view-info-group">
+            <label>BATCH NUMBER</label>
+            <p>{product.batch}</p>
+          </div>
 
-            <div className="view-info-group">
-              <label>MANUFACTURER LICENCE NO.</label>
-              <p>{product.manufacturerLicence || '—'}</p>
-            </div>
+          <div className="view-info-group">
+            <label>MANUFACTURING DATE</label>
+            <p>{formatMonthYear(product.mfg)}</p>
+          </div>
 
-            <div className="view-info-group">
-              <label>PACKING SIZE</label>
-              <p>{product.packingSize || '—'}</p>
-            </div>
+          <div className="view-info-group">
+            <label>EXPIRY DATE</label>
+            <p>{formatMonthYear(product.expiry)}</p>
+          </div>
 
-            <div className="view-info-group">
-              <label>CAUTIONARY SYMBOL AS PER THE TOXICITY CLASSIFICATION</label>
-              <div className="cautionary-symbol-row">
-                {product.hazardId ? (
-                  <div className="hazard-symbol-box">
-                    <img
-                      src={`${API_BASE}/hazards/${product.hazardId}/image`}
-                      alt="Hazard Symbol"
-                      className="hazard-symbol-img"
-                    />
+          <div className="view-info-group">
+            <label>REGISTRATION NUMBER</label>
+            <p>{product.registrationNumber || '—'}</p>
+          </div>
+
+          <div className="view-info-group">
+            <label>MANUFACTURER LICENCE NO.</label>
+            <p>{product.manufacturerLicence || '—'}</p>
+          </div>
+
+          <div className="view-info-group">
+            <label>PACKING SIZE</label>
+            <p>{product.packingSize || '—'}</p>
+          </div>
+
+          <div className="view-info-group">
+            <label>CAUTIONARY SYMBOL AS PER THE TOXICITY CLASSIFICATION</label>
+            <div className="cautionary-symbol-row">
+              {product.hazardId ? (
+                <div className="hazard-symbol-box">
+                  <img
+                    src={`${API_BASE}/hazards/${product.hazardId}/image`}
+                    alt="Hazard Symbol"
+                    className="hazard-symbol-img"
+                  />
+                </div>
+              ) : (
+                <div className="hazard-symbol-box hazard-fallback">
+                  <div className="symbol-triangle">
+                    <span>DANGER</span>
                   </div>
-                ) : (
-                  <div className="hazard-symbol-box hazard-fallback">
-                    <div className="symbol-triangle">
-                      <span>DANGER</span>
-                    </div>
-                    <p className="symbol-label">YELLOW</p>
-                  </div>
-                )}
-                {(product.productImage || product.imageUrl) && (
-                  <div className="product-image-box">
-                    <img
-                      src={product.productImage ? `${API_BASE.replace('/api', '')}${product.productImage}` : product.imageUrl}
-                      alt={product.name}
-                      className="product-detail-img"
-                    />
-                  </div>
-                )}
-              </div>
+                  <p className="symbol-label">YELLOW</p>
+                </div>
+              )}
+              {(product.productImage || product.imageUrl) && (
+                <div className="product-image-box">
+                  <img
+                    src={product.productImage ? `${product.productImage}?quality=50` : product.imageUrl}
+                    alt={product.name}
+                    className="product-detail-img"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="view-info-column">
-            <div className="view-info-group">
-              <label>UNIQUE PRODUCT IDENTIFICATION NUMBER</label>
-              <p>{product.uniqueId}</p>
-            </div>
-
-            <div className="view-info-group">
-              <label>TECHNICAL NAME</label>
-              <p>{product.technicalName || '—'}</p>
-            </div>
-
-            <div className="view-info-group">
-              <label>MANUFACTURING DATE</label>
-              <p>{formatMonthYear(product.mfg)}</p>
-            </div>
-
-            <div className="view-info-group">
-              <label>REGISTRATION NUMBER</label>
-              <p>{product.registrationNumber || '—'}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Customer Care & Manufacturer - shown below the grid */}
-        <div className="public-bottom-section">
           <div className="view-info-group">
             <label>CUSTOMER CARE CONTACT DETAILS</label>
             <div className="contact-details">
               {product.manufacturerAddress && <p>🏠 - Regd. Office: {product.manufacturerAddress}</p>}
-              {company?.phone && <p>📞 - <a href={`tel:${company.phone}`}>{company.phone}</a></p>}
+              {company?.phone && <p>📱 - <a href={`tel:${company.phone}`}>{company.phone}</a></p>}
               {company?.email && <p>✉️ - <a href={`mailto:${company.email}`}>{company.email}</a></p>}
-              {company?.website && (
-                <p>🌐 - <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer">{company.website}</a></p>
-              )}
               <div className="social-links">
                 <a href="#" className="fb-btn">f &nbsp; Facebook</a>
                 <a href="#" className="ig-btn">◎ &nbsp; Instagram</a>
