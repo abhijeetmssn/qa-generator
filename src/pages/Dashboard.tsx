@@ -11,7 +11,7 @@ import EditCompany from './EditCompany';
 import ManageHazards from './ManageHazards';
 import Trash from './Trash';
 import Logo from '../components/Logo';
-import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct, apiUploadProductImage } from '../services/api';
+import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct, apiUploadProductImage, apiExportDatabase } from '../services/api';
 import type { Product } from '../services/api';
 import type { UserRole } from '../services/api';
 
@@ -38,8 +38,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const [exportingDb, setExportingDb] = useState(false);
+
   useEffect(() => {
-    // Load products from the API
     const loadProducts = async () => {
       try {
         const products = await apiGetProducts();
@@ -116,6 +117,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     }
   };
 
+  const handleExportDb = async () => {
+    setExportingDb(true);
+    try {
+      await apiExportDatabase();
+    } catch (err: any) {
+      alert('Export failed: ' + err.message);
+    } finally {
+      setExportingDb(false);
+    }
+  };
+
   const canEdit = user.role === 'admin' || user.role === 'editor';
 
   const renderPage = () => {
@@ -156,12 +168,29 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         }} />;
       default:
         return (
-          <div className="card">
-            <div className="card-icon">📋</div>
-            <div>
-              <div className="card-title">Total Products</div>
-              <div className="card-value">{allProducts.length}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+            <div className="card">
+              <div className="card-icon">📋</div>
+              <div>
+                <div className="card-title">Total Products</div>
+                <div className="card-value">{allProducts.length}</div>
+              </div>
             </div>
+            {user.role === 'admin' && (
+              <div className="card" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ fontWeight: 700, color: '#1e3a8a', fontSize: '1rem' }}>🗄️ Database Export</div>
+                <p style={{ margin: 0, fontSize: '0.88rem', color: '#64748b' }}>Download a full .sql backup of all tables and data. Use it to restore or migrate the database.</p>
+                <button
+                  type="button"
+                  className="export-btn"
+                  onClick={handleExportDb}
+                  disabled={exportingDb}
+                  style={{ marginTop: '4px' }}
+                >
+                  {exportingDb ? '⏳ Exporting...' : '⬇ Export Database (.sql)'}
+                </button>
+              </div>
+            )}
           </div>
         );
     }

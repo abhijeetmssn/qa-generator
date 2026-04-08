@@ -10,6 +10,7 @@ import authRoutes from './routes/auth';
 import productRoutes from './routes/products';
 import companiesRoutes from './routes/companies';
 import hazardsRoutes from './routes/hazards';
+import adminRoutes from './routes/admin';
 
 const __filename_local = fileURLToPath(import.meta.url);
 const __dirname_local = path.dirname(__filename_local);
@@ -45,6 +46,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/companies', companiesRoutes);
 app.use('/api/hazards', hazardsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

@@ -298,6 +298,27 @@ export async function apiDeleteCompany(id: number): Promise<void> {
   await request(`/companies/${id}`, { method: 'DELETE' });
 }
 
+// ── Admin ──
+export async function apiExportDatabase(): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`${API_BASE}/admin/export-sql`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || 'Export failed');
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `db-export-${new Date().toISOString().slice(0, 10)}.sql`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ── Hazards ──
 export interface Hazard {
   id?: number;
