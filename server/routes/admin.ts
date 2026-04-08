@@ -14,6 +14,177 @@ router.get('/export-sql', authenticateToken, requireRole('admin'), async (_req: 
     lines.push(`-- Generated: ${new Date().toISOString()}`);
     lines.push('-- =============================================');
     lines.push('');
+    lines.push("SET client_encoding = 'UTF8';");
+    lines.push('SET standard_conforming_strings = on;');
+    lines.push('');
+
+    // ── 1. Get all sequences and emit CREATE SEQUENCE first ──
+    const { rows: allSeqs } = await pool.query<{
+      sequence_name: string;
+      data_type: string;
+      start_value: string;
+      increment: string;
+      min_value: string;
+      max_value: string;
+      cycle_option: string;
+    }>(
+      `SELECT sequence_name, data_type, start_value, increment, minimum_value AS min_value,
+              maximum_value AS max_value, cycle_option
+       FROM information_schema.sequences WHERE sequence_schema = 'public'`
+    );
+
+    if (allSeqs.length > 0) {
+      lines.push('-- ─────────────────────────────────────────');
+      lines.push('-- Sequences');
+      lines.push('-- ─────────────────────────────────────────');
+      for (const s of allSeqs) {
+        lines.push(`CREATE SEQUENCE IF NOT EXISTS "${s.sequence_name}"`);
+        lines.push(`  AS ${s.data_type}`);
+        lines.push(`  START WITH ${s.start_value}`);
+        lines.push(`  INCREMENT BY ${s.increment}`);
+        lines.push(`  MINVALUE ${s.min_value}`);
+        lines.push(`  MAXVALUE ${s.max_value}`);
+        lines.push(`  ${s.cycle_option === 'YES' ? 'CYCLE' : 'NO CYCLE'};`);
+        lines.push('');
+      }
+    }
+
+    // ── 2. Get all user-defined tables ──
+    const { rows: tables } = await pool.query<{ tablename: string }>(
+      `SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`
+    );
+
+    for (const { tablename } of tables) {
+      lines.push('-- ─────────────────────────────────────────');
+      lines.push(`-- Table: ${tablename}`);
+      lines.push('-- ─────────────────────────────────────────');
+
+      // Get column info
+      const { rows: cols } = await pool.query<{
+        column_name: string;
+        data_type: string;
+        character_maximum_length: number | null;
+        is_nullable: string;
+        column_default: string | null;
+      }>(
+        `SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
+         FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = $1
+         ORDER BY ordinal_position`,
+        [tablename]
+      );
+
+      // Build column definitions — replace integer+nextval with SERIAL for portability
+      const colDefs = cols.map(c => {
+        const isSerial =
+          c.column_default?.startsWith('nextval(') &&
+          (c.data_type === 'integer' || c.data_type === 'bigint');
+        let type: string;
+        if (isSerial) {
+          type = c.data_type === 'bigint' ? 'BIGSERIAL' : 'SERIAL';
+        } else {
+          type = c.data_type.toUpperCase();
+          if (c.character_maximum_length) type += `(${c.character_maximum_length})`;
+        }
+        let def = `  "${c.column_name}" ${type}`;
+        if (!isSerial && c.column_default !== null) def += ` DEFAULT ${c.column_default}`;
+        if (c.is_nullable === 'NO') def += ' NOT NULL';
+        return def;
+      });
+
+      // Primary keys
+      const { rows: pks } = await pool.query<{ column_name: string }>(
+        `SELECT kcu.column_name
+         FROM information_schema.table_constraints tc
+         JOIN information_schema.key_column_usage kcu
+           ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
+         WHERE tc.constraint_type = 'PRIMARY KEY'
+           AND tc.table_schema = 'public'
+           AND tc.table_name = $1
+         ORDER BY kcu.ordinal_position`,
+        [tablename]
+      );
+      if (pks.length > 0) {
+        const pkCols = pks.map(p => `"${p.column_name}"`).join(', ');
+        colDefs.push(`  PRIMARY KEY (${pkCols})`);
+      }
+
+      lines.push(`CREATE TABLE IF NOT EXISTS "${tablename}" (`);
+      lines.push(colDefs.join(',\n'));
+      lines.push(');');
+      lines.push('');
+
+      // Data rows
+      const { rows: dataRows, fields } = await pool.query(`SELECT * FROM "${tablename}"`);
+
+      if (dataRows.length > 0) {
+        const colNames = fields.map(f => `"${f.name}"`).join(', ');
+        lines.push(`-- Data for table: ${tablename}`);
+
+        for (const row of dataRows) {
+          const values = fields.map(f => {
+            const val = row[f.name];
+            if (val === null || val === undefined) return 'NULL';
+            if (Buffer.isBuffer(val)) return `'\\x${val.toString('hex')}'`;
+            if (typeof val === 'boolean') return val ? 'TRUE' : 'FALSE';
+            if (typeof val === 'number') return String(val);
+            if (val instanceof Date) return `'${val.toISOString()}'`;
+            return `'${String(val).replace(/'/g, "''")}'`;
+          });
+          lines.push(`INSERT INTO "${tablename}" (${colNames}) VALUES (${values.join(', ')}) ON CONFLICT DO NOTHING;`);
+        }
+        lines.push('');
+      }
+    }
+
+    // ── 3. Reset sequences to max id so auto-increment continues correctly ──
+    lines.push('-- ─────────────────────────────────────────');
+    lines.push('-- Reset sequences to current max values');
+    lines.push('-- ─────────────────────────────────────────');
+    const { rows: seqBindings } = await pool.query<{
+      seq_name: string;
+      table_name: string;
+      col_name: string;
+    }>(
+      `SELECT
+         pg_get_serial_sequence(c.table_name, c.column_name) AS seq_name,
+         c.table_name,
+         c.column_name AS col_name
+       FROM information_schema.columns c
+       WHERE c.table_schema = 'public'
+         AND c.column_default LIKE 'nextval(%'
+         AND pg_get_serial_sequence(c.table_name, c.column_name) IS NOT NULL`
+    );
+    for (const { seq_name, table_name, col_name } of seqBindings) {
+      // seq_name from pg_get_serial_sequence is already schema-qualified (e.g. public.companies_id_seq)
+      lines.push(`SELECT setval('${seq_name}', COALESCE((SELECT MAX("${col_name}") FROM "${table_name}"), 1));`);
+    }
+    lines.push('');
+
+    const sql = lines.join('\n');
+    const filename = `db-export-${new Date().toISOString().slice(0, 10)}.sql`;
+    res.setHeader('Content-Type', 'application/sql');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(sql);
+  } catch (err) {
+    console.error('SQL export error:', err);
+    res.status(500).json({ error: 'Failed to export database' });
+  }
+});
+
+export default router;
+
+
+// GET /api/admin/export-sql — export full DB as .sql (admin only)
+router.get('/export-sql', authenticateToken, requireRole('admin'), async (_req: Request, res: Response) => {
+  try {
+    const lines: string[] = [];
+
+    lines.push('-- =============================================');
+    lines.push('-- Full database export');
+    lines.push(`-- Generated: ${new Date().toISOString()}`);
+    lines.push('-- =============================================');
+    lines.push('');
     lines.push('SET client_encoding = \'UTF8\';');
     lines.push('SET standard_conforming_strings = on;');
     lines.push('');
