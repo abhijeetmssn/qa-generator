@@ -184,7 +184,16 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
                   <label>DATE OF MANUFACTURE</label>
                   <DatePicker
                     selected={form.manufacturer ? new Date(form.manufacturer + '-01') : null}
-                    onChange={(date: Date | null) => setForm(prev => ({ ...prev, manufacturer: date ? date.toISOString().slice(0, 7) : '' }))}
+                    onChange={(date: Date | null) => {
+                      const mfgStr = date ? date.toISOString().slice(0, 7) : '';
+                      let expiryStr = '';
+                      if (date) {
+                        const expDate = new Date(date);
+                        expDate.setFullYear(expDate.getFullYear() + 2);
+                        expiryStr = expDate.toISOString().slice(0, 7);
+                      }
+                      setForm(prev => ({ ...prev, manufacturer: mfgStr, expiry: expiryStr }));
+                    }}
                     dateFormat="yyyy-MM"
                     showMonthYearPicker
                     showFullMonthYearPicker
