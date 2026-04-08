@@ -7,6 +7,7 @@ import ViewProduct from './ViewProduct';
 import ManageUsers from './ManageUsers';
 import BulkUpload from './BulkUpload';
 import CreateCompany from './CreateCompany';
+import EditCompany from './EditCompany';
 import ManageHazards from './ManageHazards';
 import Trash from './Trash';
 import Logo from '../components/Logo';
@@ -14,7 +15,7 @@ import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct, apiU
 import type { Product } from '../services/api';
 import type { UserRole } from '../services/api';
 
-type Page = 'dashboard' | 'add' | 'edit' | 'list' | 'trash' | 'view' | 'users' | 'bulk-upload' | 'create-company' | 'hazards';
+type Page = 'dashboard' | 'add' | 'edit' | 'list' | 'trash' | 'view' | 'users' | 'bulk-upload' | 'create-company' | 'edit-company' | 'hazards';
 
 interface User {
   email: string;
@@ -142,6 +143,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           const products = await apiGetProducts();
           setAllProducts(products);
         }} />;
+      case 'edit-company':
+        return user.role === 'admin' && user.companyId ? (
+          <EditCompany companyId={user.companyId} onSaved={() => {}} />
+        ) : <div className="page-placeholder">Only admins can edit company details.</div>;
       case 'hazards':
         return <ManageHazards />;
       case 'trash':
@@ -254,6 +259,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               >
                 <span className="nav-icon">🏢</span>
                 Create Company
+              </a>
+              <a
+                href="#"
+                className={page === 'edit-company' ? 'active' : ''}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setPage('edit-company');
+                  setSidebarOpen(false);
+                }}
+              >
+                <span className="nav-icon">✏️</span>
+                Edit Company
               </a>
               <a
                 href="#"
