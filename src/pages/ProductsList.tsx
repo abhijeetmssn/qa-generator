@@ -210,28 +210,17 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                       <td>{formatMonthYear(product.mfg)}</td>
                       <td>{formatMonthYear(product.expiry)}</td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: '180px' }}>
-                        <a
-                          href={`${window.location.origin}/#product/${product.uniqueId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ fontSize: '12px', color: '#2563eb', wordBreak: 'break-all', lineHeight: '1.4' }}
-                          title={`${window.location.origin}/#product/${product.uniqueId}`}
-                        >
-                          {`${window.location.origin}/#product/${product.uniqueId}`.replace(/^https?:\/\//, '')}
-                        </a>
-                        <button
-                          className="icon-btn copy"
-                          style={{ flexShrink: 0, background: copiedId === product.uniqueId ? '#16a34a' : undefined, color: copiedId === product.uniqueId ? '#fff' : undefined }}
-                          onClick={() => {
-                            navigator.clipboard.writeText(`${window.location.origin}/#product/${product.uniqueId}`);
-                            setCopiedId(product.uniqueId);
-                            setTimeout(() => setCopiedId(null), 2000);
-                          }}
-                        >
-                          {copiedId === product.uniqueId ? '✓ Copied' : 'Copy'}
-                        </button>
-                      </div>
+                      <button
+                        className="icon-btn copy"
+                        style={{ background: copiedId === product.uniqueId ? '#16a34a' : undefined, color: copiedId === product.uniqueId ? '#fff' : undefined }}
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/#product/${product.uniqueId}`);
+                          setCopiedId(product.uniqueId);
+                          setTimeout(() => setCopiedId(null), 2000);
+                        }}
+                      >
+                        {copiedId === product.uniqueId ? '✓ Copied' : 'Copy URL'}
+                      </button>
                     </td>
                     <td>
                       <button className="icon-btn view" onClick={() => onView(product)}>View</button>
