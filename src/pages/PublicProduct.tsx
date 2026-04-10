@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { apiGetProductByUniqueId, apiGetCompanyById } from '../services/api';
-import type { Product, Company } from '../services/api';
+import { apiGetProductByUniqueId, apiGetCompanyPublic } from '../services/api';
+import type { Product } from '../services/api';
 import '../ViewProduct.css';
 
 type PublicProductProps = {
@@ -10,7 +10,7 @@ type PublicProductProps = {
 const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
   const [product, setProduct] = useState<Product | null>(null);
-  const [company, setCompany] = useState<Company | null>(null);
+  const [company, setCompany] = useState<{ id: number; name: string; phone?: string; email?: string; website?: string; address?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
@@ -24,7 +24,7 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
           setProduct(prod);
           setError(null);
           if (prod.companyId) {
-            apiGetCompanyById(prod.companyId).then(setCompany).catch(console.error);
+            apiGetCompanyPublic(prod.companyId).then(setCompany).catch(console.error);
           }
           // Preload images before showing page
           const imagesToLoad: string[] = [];
