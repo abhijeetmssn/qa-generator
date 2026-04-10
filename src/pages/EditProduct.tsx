@@ -158,7 +158,6 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
       <div className="content-card" style={{ marginTop: '16px', padding: '16px', background: '#f8fafc' }}>
         <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '13px', color: '#64748b' }}>
           <span><strong>Unique ID:</strong> {product.uniqueId}</span>
-          <span><strong>Short URL:</strong> {product.shortUrl}</span>
         </div>
       </div>
     </div>

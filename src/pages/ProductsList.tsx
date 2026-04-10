@@ -60,7 +60,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
         p.batch?.toLowerCase().includes(q) ||
         p.mfg?.toLowerCase().includes(q) ||
         p.expiry?.toLowerCase().includes(q) ||
-        p.shortUrl?.toLowerCase().includes(q) ||
+
         p.manufacturer?.toLowerCase().includes(q)
     );
   }, [companyFilteredProducts, search]);
@@ -88,7 +88,6 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
       'Batch Number': p.batch,
       'Manufacturing Date': p.mfg,
       'Expiry Date': p.expiry,
-      'Short Url': p.shortUrl,
       'Manufacturer': p.manufacturer || '',
       'Manufacturer Address': p.manufacturerAddress || '',
       'Technical Name': p.technicalName || '',

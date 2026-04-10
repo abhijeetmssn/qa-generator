@@ -103,7 +103,6 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
       batch: form.batch,
       mfg: form.manufacturer,
       expiry: form.expiry,
-      shortUrl: `qr-1.in/a.php?x=${uniqueId}`,
       manufacturer: form.manufacturerAddress ? undefined : '',
       manufacturerAddress: form.manufacturerAddress || '',
       technicalName: form.technicalName || '',

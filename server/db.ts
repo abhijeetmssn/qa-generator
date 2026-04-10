@@ -21,7 +21,6 @@ export interface Product {
   batch: string;
   mfg: string;
   expiry: string;
-  shortUrl: string;
   manufacturer?: string;
   manufacturerAddress?: string;
   technicalName?: string;
@@ -61,7 +60,6 @@ function rowToProduct(row: any): Product {
     batch: row.batch,
     mfg: row.mfg,
     expiry: row.expiry,
-    shortUrl: row.short_url,
     manufacturer: row.manufacturer,
     manufacturerAddress: row.manufacturer_address,
     technicalName: row.technical_name,
@@ -146,8 +144,8 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
 
 export async function addProduct(product: Product & { is_master?: boolean }): Promise<Product> {
   const { rows } = await pool.query(
-    `INSERT INTO products (unique_id, name, batch, mfg, expiry, short_url, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, hazard_symbol, hazard_id, quantity, owner_uid, is_master, company_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+    `INSERT INTO products (unique_id, name, batch, mfg, expiry, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, hazard_symbol, hazard_id, quantity, owner_uid, is_master, company_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
      RETURNING *`,
     [
       product.uniqueId,
@@ -155,7 +153,6 @@ export async function addProduct(product: Product & { is_master?: boolean }): Pr
       product.batch,
       product.mfg,
       product.expiry,
-      product.shortUrl,
       product.manufacturer || null,
       product.manufacturerAddress || null,
       product.technicalName || null,

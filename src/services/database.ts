@@ -7,7 +7,6 @@ export type Product = {
   batch: string;
   mfg: string;
   expiry: string;
-  shortUrl: string;
   manufacturer?: string;
   manufacturerAddress?: string;
   technicalName?: string;
