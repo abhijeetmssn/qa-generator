@@ -156,8 +156,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           setAllProducts(products);
         }} />;
       case 'edit-company':
-        return user.role === 'admin' && user.companyId ? (
-          <EditCompany companyId={user.companyId} onSaved={() => {}} />
+        return user.role === 'admin' ? (
+          <EditCompany companyId={user.companyId} isAdmin={true} onSaved={() => {}} />
         ) : <div className="page-placeholder">Only admins can edit company details.</div>;
       case 'hazards':
         return <ManageHazards />;
