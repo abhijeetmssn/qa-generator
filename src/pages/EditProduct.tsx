@@ -16,7 +16,6 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
     batch: product.batch || '',
     mfg: product.mfg || '',
     expiry: product.expiry || '',
-    manufacturer: product.manufacturer || '',
     manufacturerAddress: product.manufacturerAddress || '',
     technicalName: product.technicalName || '',
     registrationNumber: product.registrationNumber || '',
@@ -98,10 +97,6 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
                 placeholderText="Select month and year"
                 className="form-control"
               />
-            </div>
-            <div className="form-group">
-              <label>Manufacturer</label>
-              <input name="manufacturer" value={form.manufacturer} onChange={handleChange} placeholder="Manufacturer name" />
             </div>
             <div className="form-group">
               <label>Manufacturer Address</label>
