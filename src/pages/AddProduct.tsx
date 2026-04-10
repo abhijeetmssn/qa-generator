@@ -225,7 +225,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
                       className="form-control"
                     />
                   </div>
-                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <div className="form-group">
                     <label>HAZARD SYMBOL</label>
                     <select name="hazardId" value={form.hazardId} onChange={handleChange}>
                       <option value="">--Select--</option>
