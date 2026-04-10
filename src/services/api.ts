@@ -151,7 +151,6 @@ export interface Product {
   imageUrl?: string;
   hazardSymbol?: string;
   hazardId?: number;
-  quantity?: string;
   productImage?: string;
   companyId?: number;
   companyName?: string;

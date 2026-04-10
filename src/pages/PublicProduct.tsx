@@ -141,6 +141,13 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
             <p>{product.batch}</p>
           </div>
 
+          {product.packingSize && (
+            <div className="view-info-group">
+              <label>PACKAGING SIZE</label>
+              <p>{product.packingSize}</p>
+            </div>
+          )}
+
           <div className="view-info-group">
             <label>MANUFACTURING DATE</label>
             <p>{formatMonthYear(product.mfg)}</p>

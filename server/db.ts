@@ -30,7 +30,6 @@ export interface Product {
   imageUrl?: string;
   hazardSymbol?: string; // e.g. '☠️ Toxic', '🔥 Flammable'
   hazardId?: number;
-  quantity?: string;
   productImage?: string; // URL path to serve the image
   owner_uid?: string;
   active?: string; // 'Y' or 'N'
@@ -69,7 +68,6 @@ function rowToProduct(row: any): Product {
     imageUrl: row.image_url,
     hazardSymbol: row.hazard_symbol,
     hazardId: row.hazard_id ?? undefined,
-    quantity: row.quantity,
     productImage: row.product_image ? `/api/products/${row.unique_id}/image` : undefined,
     owner_uid: row.owner_uid,
     active: row.active || 'Y',
@@ -144,8 +142,8 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
 
 export async function addProduct(product: Product & { is_master?: boolean }): Promise<Product> {
   const { rows } = await pool.query(
-    `INSERT INTO products (unique_id, name, batch, mfg, expiry, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, hazard_symbol, hazard_id, quantity, owner_uid, is_master, company_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+    `INSERT INTO products (unique_id, name, batch, mfg, expiry, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, hazard_symbol, hazard_id, owner_uid, is_master, company_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
      RETURNING *`,
     [
       product.uniqueId,
@@ -162,7 +160,6 @@ export async function addProduct(product: Product & { is_master?: boolean }): Pr
       product.imageUrl || null,
       product.hazardSymbol || null,
       product.hazardId || null,
-      product.quantity || null,
       product.owner_uid || null,
       product.is_master || false,
       product.companyId || null,
@@ -205,7 +202,6 @@ export async function updateProduct(uniqueId: string, updates: Partial<Product>)
     manufacturerLicence: 'manufacturer_licence',
     imageUrl: 'image_url',
     hazardSymbol: 'hazard_symbol',
-    quantity: 'quantity',
   };
 
   for (const [key, col] of Object.entries(columnMap)) {

@@ -178,6 +178,8 @@ async function initDB() {
 
     // Drop short_url column — no longer used, QR links are built from unique_id at runtime
     await client.query('ALTER TABLE products DROP COLUMN IF EXISTS short_url');
+    // Drop quantity column — replaced by packing_size which serves the same purpose
+    await client.query('ALTER TABLE products DROP COLUMN IF EXISTS quantity');
 
     // Backfill company_id on existing products from owner_uid → users.company_id
     await client.query(`

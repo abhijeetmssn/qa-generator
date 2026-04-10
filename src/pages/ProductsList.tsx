@@ -88,12 +88,11 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
       'Batch Number': p.batch,
       'Manufacturing Date': p.mfg,
       'Expiry Date': p.expiry,
-      'Quantity': p.quantity || '',
+      'Packing Size': p.packingSize || '',
       'Manufacturer': p.manufacturer || '',
       'Manufacturer Address': p.manufacturerAddress || '',
       'Technical Name': p.technicalName || '',
       'Registration Number': p.registrationNumber || '',
-      'Packing Size': p.packingSize || '',
       'Manufacturer Licence': p.manufacturerLicence || '',
     }));
 
@@ -189,7 +188,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                 <th>Batch Number</th>
                 <th>Manufacturing Date</th>
                 <th>Expiry Date</th>
-                <th>Quantity</th>
+                <th>Packing Size</th>
                 <th>Short Url</th>
                 <th>Actions</th>
               </tr>
@@ -210,7 +209,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                     <td>{product.batch}</td>
                       <td>{formatMonthYear(product.mfg)}</td>
                       <td>{formatMonthYear(product.expiry)}</td>
-                    <td>{product.quantity || '—'}</td>
+                    <td>{product.packingSize || '—'}</td>
                     <td>
                       <button
                         className="icon-btn copy"

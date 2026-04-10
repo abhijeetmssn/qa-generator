@@ -202,6 +202,13 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
               <p>{product.batch}</p>
             </div>
 
+            {product.packingSize && (
+              <div className="view-info-group">
+                <label>PACKAGING SIZE</label>
+                <p>{product.packingSize}</p>
+              </div>
+            )}
+
             <div className="view-info-group">
               <label>EXPIRY DATE</label>
               <p>{formatMonthYear(product.expiry)}</p>

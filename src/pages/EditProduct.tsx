@@ -16,6 +16,7 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
     batch: product.batch || '',
     mfg: product.mfg || '',
     expiry: product.expiry || '',
+    packingSize: product.packingSize || '',
     manufacturerAddress: product.manufacturerAddress || '',
     technicalName: product.technicalName || '',
     registrationNumber: product.registrationNumber || '',
@@ -112,6 +113,10 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
             <div className="form-group">
               <label>Manufacturer Licence</label>
               <input name="manufacturerLicence" value={form.manufacturerLicence} onChange={handleChange} placeholder="Licence #" />
+            </div>
+            <div className="form-group">
+              <label>Packaging Size</label>
+              <input name="packingSize" value={form.packingSize} onChange={handleChange} placeholder="e.g. 500 ml, 1 kg" />
             </div>
             <div className="form-group">
               <label>Product Image</label>
