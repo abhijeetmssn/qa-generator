@@ -27,6 +27,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     manufacturerLicence: '',
     imageUrl: '',
     hazardId: '',
+    quantity: '',
   });
   const [productImageFile, setProductImageFile] = useState<File | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +57,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     setSelectedMasterId(masterId);
 
     if (!masterId) {
-      setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
+      setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '', quantity: '' });
       return;
     }
 
@@ -74,6 +75,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
         manufacturerLicence: master.manufacturerLicence || '',
         imageUrl: master.imageUrl || '',
         hazardId: master.hazardId ? String(master.hazardId) : '',
+        quantity: '',
       });
     }
   };
@@ -108,6 +110,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
       technicalName: form.technicalName || '',
       registrationNumber: form.registrationNumber || '',
       manufacturerLicence: form.manufacturerLicence || '',
+      quantity: form.quantity || '',
       imageUrl: form.imageUrl || '',
       hazardSymbol: '',
       hazardId: form.hazardId ? Number(form.hazardId) : undefined,
@@ -118,7 +121,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     setSelectedMasterId('');
     setProductImageFile(null);
     if (imageInputRef.current) imageInputRef.current.value = '';
-    setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
+    setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '', quantity: '' });
     setAddedProduct(product);
 
     try {
@@ -173,6 +176,13 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
                 <div className="form-group">
                   <label>BATCH NUMBER <span style={{ color: '#ef4444' }}>*</span></label>
                   <input name="batch" value={form.batch} onChange={handleChange} placeholder="Enter batch number" required />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>QUANTITY</label>
+                  <input name="quantity" value={form.quantity} onChange={handleChange} placeholder="e.g. 500 ml, 1 kg" />
                 </div>
               </div>
 
