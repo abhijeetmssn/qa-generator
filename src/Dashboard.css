@@ -809,6 +809,11 @@
     align-items: flex-start;
   }
 
+  .products-list-header .products-list-actions,
+  .add-product-header .header-actions {
+    align-self: flex-end;
+  }
+
   .products-list-header h1,
   .add-product-header h1 {
     font-size: 1.3rem;
