@@ -638,9 +638,9 @@
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  padding-top: 8px;
-  border-top: 1px solid #f1f5f9;
-  margin-top: 8px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 12px;
 }
 .add-product-form {
   display: flex;
@@ -671,7 +671,10 @@
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 20px 28px;
+}
+.form-grid .form-group.full-width {
+  grid-column: 1 / -1;
 }
 .form-row {
   display: flex;
@@ -695,6 +698,13 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-align: left;
+}
+.form-group input,
+.form-group select,
+.form-group .react-datepicker-wrapper,
+.form-group .react-datepicker-wrapper input {
+  width: 100%;
+  box-sizing: border-box;
 }
 .form-group input,
 .form-group select {
@@ -748,18 +758,18 @@
 }
 
 .submit-btn {
-  min-width: 180px;
+  min-width: 200px;
   border: none;
   border-radius: 10px;
   background: linear-gradient(135deg, #4caf50, #43a047);
   color: white;
-  padding: 12px 28px;
+  padding: 14px 32px;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 1rem;
   transition: all 0.25s ease;
   box-shadow: 0 2px 8px rgba(76, 175, 80, 0.25);
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
 }
 .submit-btn:hover {
   background: linear-gradient(135deg, #43a047, #388e3c);

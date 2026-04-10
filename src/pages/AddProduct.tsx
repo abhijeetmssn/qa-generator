@@ -238,9 +238,9 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
                       className="form-control"
                     />
                   </div>
-                  <div className="form-group">
+                  <div className="form-group full-width">
                     <label>HAZARD SYMBOL</label>
-                    <select name="hazardId" value={form.hazardId} onChange={handleChange}>
+                    <select name="hazardId" value={form.hazardId} onChange={handleChange} style={{ maxWidth: '50%' }}>
                       <option value="">--Select--</option>
                       {hazards.map((h) => (
                         <option key={h.id} value={h.id}>{h.name}</option>
