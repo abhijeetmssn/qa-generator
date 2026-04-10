@@ -16,7 +16,6 @@ const TEMPLATE_COLUMNS = [
   'Manufacturer Address',
   'Technical Name',
   'Registration Number',
-  'Packing Size',
   'Manufacturer Licence',
 ];
 
@@ -47,7 +46,6 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
       'Manufacturer Address': '123 Industrial Area, City',
       'Technical Name': 'Acetaminophen 500mg',
       'Registration Number': 'REG-12345',
-      'Packing Size': '10x10',
       'Manufacturer Licence': 'LIC-9876',
     };
 

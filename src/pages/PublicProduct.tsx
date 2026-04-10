@@ -162,11 +162,6 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
           </div>
 
           <div className="view-info-group">
-            <label>PACKING SIZE</label>
-            <p>{product.packingSize || '—'}</p>
-          </div>
-
-          <div className="view-info-group">
             <label>CAUTIONARY SYMBOL AS PER THE TOXICITY CLASSIFICATION</label>
             <div className="cautionary-symbol-row">
               {product.hazardId ? (

@@ -267,11 +267,6 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
             </div>
 
             <div className="view-info-group">
-              <label>PACKING SIZE</label>
-              <p>{product.packingSize || '1 KG'}</p>
-            </div>
-
-            <div className="view-info-group">
               <label>CUSTOMER CARE CONTACT DETAILS</label>
               <div className="contact-details">
                 {product.manufacturerAddress && <p><strong>🏢</strong> {product.manufacturerAddress}</p>}

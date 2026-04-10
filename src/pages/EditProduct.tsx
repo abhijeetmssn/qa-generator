@@ -19,7 +19,6 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
     manufacturerAddress: product.manufacturerAddress || '',
     technicalName: product.technicalName || '',
     registrationNumber: product.registrationNumber || '',
-    packingSize: product.packingSize || '',
     manufacturerLicence: product.manufacturerLicence || '',
   });
   const [saving, setSaving] = useState(false);
@@ -109,10 +108,6 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
             <div className="form-group">
               <label>Registration Number</label>
               <input name="registrationNumber" value={form.registrationNumber} onChange={handleChange} placeholder="Registration #" />
-            </div>
-            <div className="form-group">
-              <label>Packing Size</label>
-              <input name="packingSize" value={form.packingSize} onChange={handleChange} placeholder="e.g. 1 KG" />
             </div>
             <div className="form-group">
               <label>Manufacturer Licence</label>

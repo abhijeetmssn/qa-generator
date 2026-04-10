@@ -20,7 +20,6 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     batch: '',
     manufacturer: '',
     expiry: '',
-    packing: '',
     manufacturerName: '',
     manufacturerAddress: '',
     technicalName: '',
@@ -57,7 +56,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     setSelectedMasterId(masterId);
 
     if (!masterId) {
-      setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
+      setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
       return;
     }
 
@@ -68,7 +67,6 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
         batch: '',
         manufacturer: '',
         expiry: '',
-        packing: master.packingSize || '',
         manufacturerName: master.manufacturer || '',
         manufacturerAddress: master.manufacturerAddress || '',
         technicalName: master.technicalName || '',
@@ -121,7 +119,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     setSelectedMasterId('');
     setProductImageFile(null);
     if (imageInputRef.current) imageInputRef.current.value = '';
-    setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
+    setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
     setAddedProduct(product);
 
     try {
