@@ -4,13 +4,6 @@ import { apiUploadProductImage } from '../services/api';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-function formatMonthYear(val?: string) {
-  if (!val) return '—';
-  const [year, month] = val.split('-');
-  if (!year || !month) return val;
-  return `${month}/${year.slice(-2)}`;
-}
-
 interface EditProductProps {
   product: Product;
   onSave: (uniqueId: string, updates: Partial<Product>) => void;
