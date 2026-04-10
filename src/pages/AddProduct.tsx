@@ -22,7 +22,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     expiry: '',
     packing: '',
     manufacturerName: '',
-    manufacturerAddress: '',,
+    manufacturerAddress: '',
     technicalName: '',
     registrationNumber: '',
     manufacturerLicence: '',
