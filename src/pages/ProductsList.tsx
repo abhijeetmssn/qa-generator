@@ -189,7 +189,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                 <th>Manufacturing Date</th>
                 <th>Expiry Date</th>
                 <th>Packing Size</th>
-                <th>Copy URL</th>
+                <th>Short Url</th>
                 <th>Actions</th>
               </tr>
             </thead>
