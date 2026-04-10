@@ -185,7 +185,9 @@ async function seed() {
       });
       console.log(`✅ User created: ${demoUser.email} / ${demoUser.password} (Role: ${demoUser.role}, Company: ${demoUser.companyName})`);
     } else {
-      console.log(`⏩ User already exists: ${demoUser.email}`);
+      // Always ensure the role is correct for existing seed users
+      await pool.query('UPDATE users SET role = $1 WHERE email = $2', [demoUser.role, demoUser.email]);
+      console.log(`✅ Role updated for existing user: ${demoUser.email} → ${demoUser.role}`);
     }
   }
 

@@ -182,6 +182,12 @@ async function initDB() {
       WHERE p.owner_uid = u.uid AND p.company_id IS NULL AND u.company_id IS NOT NULL
     `);
 
+    // Fix roles: migration 003 set DEFAULT 'user' which is not a valid role.
+    // Update any 'user' roles to 'viewer', then restore admin for seed admins.
+    await client.query(`UPDATE users SET role = 'viewer' WHERE role = 'user' OR role IS NULL`);
+    await client.query(`UPDATE users SET role = 'admin' WHERE uid IN ('demo-admin-001', 'demo-admin-002')`);
+    await client.query(`ALTER TABLE users ALTER COLUMN role SET DEFAULT 'viewer'`);
+
     await client.query('COMMIT');
     console.log('✅ Database tables ready');
   } catch (err) {
