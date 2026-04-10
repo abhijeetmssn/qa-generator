@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import type { Product } from '../services/api';
 import { apiUploadProductImage } from '../services/api';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 function formatMonthYear(val?: string) {
   if (!val) return '—';
@@ -26,7 +28,6 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
     technicalName: product.technicalName || '',
     registrationNumber: product.registrationNumber || '',
     packingSize: product.packingSize || '',
-    quantity: product.quantity || '',
     manufacturerLicence: product.manufacturerLicence || '',
   });
   const [saving, setSaving] = useState(false);
@@ -79,13 +80,31 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
             </div>
             <div className="form-group">
               <label>Manufacturing Date</label>
-              <input name="mfg" value={form.mfg} onChange={handleChange} placeholder="e.g. 03/26" />
-              <span>{formatMonthYear(form.mfg)}</span>
+              <DatePicker
+                selected={form.mfg ? new Date(form.mfg + '-01') : null}
+                onChange={(date: Date | null) => {
+                  setForm(prev => ({ ...prev, mfg: date ? date.toISOString().slice(0, 7) : '' }));
+                }}
+                dateFormat="yyyy-MM"
+                showMonthYearPicker
+                showFullMonthYearPicker
+                placeholderText="Select month and year"
+                className="form-control"
+              />
             </div>
             <div className="form-group">
               <label>Expiry Date</label>
-              <input name="expiry" value={form.expiry} onChange={handleChange} placeholder="e.g. 02/28" />
-              <span>{formatMonthYear(form.expiry)}</span>
+              <DatePicker
+                selected={form.expiry ? new Date(form.expiry + '-01') : null}
+                onChange={(date: Date | null) => {
+                  setForm(prev => ({ ...prev, expiry: date ? date.toISOString().slice(0, 7) : '' }));
+                }}
+                dateFormat="yyyy-MM"
+                showMonthYearPicker
+                showFullMonthYearPicker
+                placeholderText="Select month and year"
+                className="form-control"
+              />
             </div>
             <div className="form-group">
               <label>Manufacturer</label>
@@ -106,10 +125,6 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
             <div className="form-group">
               <label>Packing Size</label>
               <input name="packingSize" value={form.packingSize} onChange={handleChange} placeholder="e.g. 1 KG" />
-            </div>
-            <div className="form-group">
-              <label>Quantity</label>
-              <input name="quantity" value={form.quantity} onChange={handleChange} placeholder="e.g. 100, 500 units" />
             </div>
             <div className="form-group">
               <label>Manufacturer Licence</label>
