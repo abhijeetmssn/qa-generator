@@ -433,12 +433,14 @@
 .public-content {
   flex-direction: column;
   width: 100%;
+  background: #f1f5f9;
+  padding: 28px 20px;
 }
 
 .public-info-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 14px;
   max-width: 900px;
   width: 100%;
   margin: 0 auto;
@@ -447,28 +449,41 @@
 .public-info-list .view-info-group {
   text-align: left;
   align-items: flex-start;
-  padding: 14px 18px;
-  background: #fafbfc;
-  border-radius: 10px;
-  border: 1px solid #e8ecf1;
-  transition: box-shadow 0.2s ease;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: none;
+  border-left: 4px solid #2563eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  gap: 4px;
 }
 
 .public-info-list .view-info-group:hover {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.12);
+  transform: translateY(-1px);
 }
 
 .public-info-list .view-info-group label {
   font-weight: 700;
-  font-size: 0.72rem;
-  color: #64748b;
-  letter-spacing: 0.6px;
+  font-size: 0.68rem;
+  color: #2563eb;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
 }
 
 .public-info-list .view-info-group p {
-  font-size: 0.95rem;
-  color: #1e293b;
-  font-weight: 500;
+  font-size: 1.05rem;
+  color: #0f172a;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.public-product-page .view-product-content {
+  padding: 0;
 }
 
 .public-bottom-section {
