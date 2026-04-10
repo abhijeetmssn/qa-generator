@@ -637,7 +637,7 @@
 /* ── Form Actions ── */
 .form-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   padding-top: 24px;
   border-top: 1px solid #e2e8f0;
   margin-top: 12px;
