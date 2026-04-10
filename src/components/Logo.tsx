@@ -150,8 +150,10 @@ const Logo: React.FC<LogoProps> = ({ size = 'medium', showText = true, companyId
               textShadow: '0 2px 4px rgba(0,0,0,0.2)'
             }}
           >
-            <span style={{ color: 'white' }}>AP</span>
-            <span style={{ color: '#fbbf24' }}>Solutions</span>
+            <span style={{ color: 'white' }}>APAS</span>
+          </div>
+          <div style={{ fontSize: `${s.fontSize * 0.38}px`, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.5px', marginTop: '2px' }}>
+            Agri Product Authentication
           </div>
         </div>
       )}

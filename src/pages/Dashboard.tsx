@@ -340,11 +340,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 </div>
               )}
               <div style={{ borderTop: '1px solid #ddd', paddingTop: '8px', marginTop: '8px', fontSize: '11px', color: '#999' }}>
-                Powered By <a href="#">AP Solutions</a>
+                Powered By <a href="#">APAS</a>
               </div>
             </>
           ) : (
-            <>Powered By <a href="#">AP Solutions</a></>
+            <>Powered By <a href="#">APAS</a></>
           )}
         </div>
       </aside>

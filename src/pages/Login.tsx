@@ -74,10 +74,10 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, companyInfo }) => {
             ) : (
               <>
                 <div className="login-logo-box">
-                  <div className="login-logo-fallback">AP</div>
+                  <div className="login-logo-fallback">APAS</div>
                 </div>
-                <h1 className="login-title">AP Solutions</h1>
-                <p className="login-subtitle">Pharmaceutical Quality Assurance</p>
+                <h1 className="login-title">APAS</h1>
+                <p className="login-subtitle">Agri Product Authentication System</p>
                 <div className="login-divider" />
               </>
             )}

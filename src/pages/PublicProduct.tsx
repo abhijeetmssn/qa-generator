@@ -227,7 +227,7 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
       </div>
 
       <div className="view-footer">
-        <p>Developed by <a href="#" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>AP Solutions</a></p>
+        <p>Developed by <a href="#" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>APAS</a></p>
       </div>
     </div>
   );
