@@ -222,11 +222,11 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             Website
           </label>
           <input
-            type="url"
+            type="text"
             name="website"
             value={formData.website || ''}
             onChange={handleChange}
-            placeholder="https://example.com"
+            placeholder="www.example.com"
             disabled={loading}
           />
         </div>
