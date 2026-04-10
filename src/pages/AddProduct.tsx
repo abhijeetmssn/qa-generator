@@ -21,7 +21,8 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     manufacturer: '',
     expiry: '',
     packing: '',
-    manufacturerAddress: '',
+    manufacturerName: '',
+    manufacturerAddress: '',,
     technicalName: '',
     registrationNumber: '',
     manufacturerLicence: '',
@@ -56,7 +57,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     setSelectedMasterId(masterId);
 
     if (!masterId) {
-      setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
+      setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
       return;
     }
 
@@ -68,6 +69,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
         manufacturer: '',
         expiry: '',
         packing: master.packingSize || '',
+        manufacturerName: master.manufacturer || '',
         manufacturerAddress: master.manufacturerAddress || '',
         technicalName: master.technicalName || '',
         registrationNumber: master.registrationNumber || '',
@@ -103,7 +105,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
       batch: form.batch,
       mfg: form.manufacturer,
       expiry: form.expiry,
-      manufacturer: form.manufacturerAddress ? undefined : '',
+      manufacturer: form.manufacturerName || '',
       manufacturerAddress: form.manufacturerAddress || '',
       technicalName: form.technicalName || '',
       registrationNumber: form.registrationNumber || '',
@@ -119,7 +121,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     setSelectedMasterId('');
     setProductImageFile(null);
     if (imageInputRef.current) imageInputRef.current.value = '';
-    setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
+    setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
     setAddedProduct(product);
 
     try {
