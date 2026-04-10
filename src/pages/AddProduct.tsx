@@ -31,6 +31,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
   const [productImageFile, setProductImageFile] = useState<File | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [addedProduct, setAddedProduct] = useState<any>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -84,6 +85,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submitting) return;
     if (!selectedMasterId) {
       alert('Please select a product from the dropdown.');
       return;
@@ -92,6 +94,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
       alert('Please enter a batch number.');
       return;
     }
+    setSubmitting(true);
     const uniqueId = Date.now().toString();
     const product = {
       id: uniqueId,
@@ -112,15 +115,19 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
       hazardId: form.hazardId ? Number(form.hazardId) : undefined,
       _imageFile: productImageFile,
     };
-    
-    setAddedProduct(product);
-    if (onProductAdded) {
-      await onProductAdded(product);
-    }
+
+    // Clear form immediately so fields reset right away
     setSelectedMasterId('');
     setProductImageFile(null);
     if (imageInputRef.current) imageInputRef.current.value = '';
     setForm({ name: '', batch: '', manufacturer: '', expiry: '', packing: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '' });
+    setAddedProduct(product);
+
+    try {
+      if (onProductAdded) await onProductAdded(product);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -227,7 +234,9 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
                 </div>
               </div>
 
-              <button type="submit" className="submit-btn">Submit</button>
+              <button type="submit" className="submit-btn" disabled={submitting}>
+                {submitting ? 'Saving...' : 'Submit'}
+              </button>
             </>
           )}
         </form>
