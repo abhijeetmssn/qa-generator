@@ -22,13 +22,15 @@ const PORT = process.env.PORT || 3001;
 const allowedOrigins = [
   'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175',
   'http://localhost:5176', 'http://localhost:5177',
+  'http://qrgenerators.in', 'https://qrgenerators.in',
+  'http://www.qrgenerators.in', 'https://www.qrgenerators.in',
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ];
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
-    // Allow any *.vercel.app domain
+    // Allow any *.vercel.app domain or known origins
     if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
