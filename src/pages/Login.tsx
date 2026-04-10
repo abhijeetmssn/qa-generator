@@ -53,65 +53,62 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, companyInfo }) => {
           <div className="login-branding">
             {companyInfo ? (
               <>
-                {logoUrl && !logoError ? (
-                  <img
-                    src={logoUrl}
-                    alt={companyInfo.name}
-                    onError={() => setLogoError(true)}
-                    style={{ maxWidth: '120px', maxHeight: '120px', objectFit: 'contain', marginBottom: '16px', borderRadius: '12px' }}
-                  />
-                ) : (
-                  <div style={{
-                    width: '100px',
-                    height: '100px',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '16px',
-                    fontSize: '36px',
-                    fontWeight: 700,
-                    color: 'white',
-                    letterSpacing: '2px',
-                  }}>
-                    {companyInfo.name.substring(0, 2).toUpperCase()}
-                  </div>
-                )}
+                <div className="login-logo-box">
+                  {logoUrl && !logoError ? (
+                    <img
+                      src={logoUrl}
+                      alt={companyInfo.name}
+                      onError={() => setLogoError(true)}
+                      className="login-logo-img"
+                    />
+                  ) : (
+                    <div className="login-logo-fallback">
+                      {companyInfo.name.substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                </div>
                 <h1 className="login-title">{companyInfo.name}</h1>
-                <p className="login-subtitle">Sign in to your company portal</p>
+                <p className="login-subtitle">Welcome to your company portal</p>
+                <div className="login-divider" />
               </>
             ) : (
               <>
-                <div className="login-logo">
-                  <div className="logo-q">A</div>
-                  <div className="logo-a">P</div>
+                <div className="login-logo-box">
+                  <div className="login-logo-fallback">AP</div>
                 </div>
                 <h1 className="login-title">AP Solutions</h1>
                 <p className="login-subtitle">Pharmaceutical Quality Assurance</p>
+                <div className="login-divider" />
               </>
             )}
-            <div style={{ marginTop: '20px', padding: '12px', background: '#f3f4f6', borderRadius: '8px', fontSize: '13px', color: '#666' }}>
-              <strong>Note:</strong> Self-registration is disabled. Please contact your administrator to create an account.
-            </div>
           </div>
 
           <div className="login-features">
             <div className="feature">
-              <div className="feature-icon">📦</div>
-              <h3>Product Management</h3>
-              <p>Manage inventory with ease</p>
+              <div className="feature-icon-wrap">📦</div>
+              <div>
+                <h3>Product Management</h3>
+                <p>Manage inventory with ease</p>
+              </div>
             </div>
             <div className="feature">
-              <div className="feature-icon">🔍</div>
-              <h3>QR Scanning</h3>
-              <p>Quick product lookup</p>
+              <div className="feature-icon-wrap">🔍</div>
+              <div>
+                <h3>QR Scanning</h3>
+                <p>Instant product lookup via QR</p>
+              </div>
             </div>
             <div className="feature">
-              <div className="feature-icon">📊</div>
-              <h3>Analytics</h3>
-              <p>Track expiry & stock</p>
+              <div className="feature-icon-wrap">📊</div>
+              <div>
+                <h3>Analytics</h3>
+                <p>Track expiry &amp; stock levels</p>
+              </div>
             </div>
+          </div>
+
+          <div className="login-note">
+            🔒 Access is restricted to authorised users only. Contact your administrator to get an account.
           </div>
         </div>
 
