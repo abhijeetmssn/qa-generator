@@ -136,107 +136,112 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
       <div className="add-product-header">
         <h1>Add A New Product</h1>
         <div className="header-actions">
-          <button type="button" className="secondary-btn" onClick={onProductsList}>Products List</button>
+          <button type="button" className="secondary-btn" onClick={onProductsList}>← Products List</button>
         </div>
       </div>
       <div className="content-card">
-        <div className="card-section-title">Select Product & Enter Batch Details</div>
         <form className="add-product-form" onSubmit={handleSubmit}>
-          <div className="form-row">
-            <div className="form-group single">
-              <label>SELECT PRODUCT</label>
-              {loadingMaster ? (
-                <select disabled><option>Loading products...</option></select>
-              ) : masterProducts.length === 0 ? (
-                <select disabled><option>No products available — upload via Bulk Upload first</option></select>
-              ) : (
-                <select value={selectedMasterId} onChange={handleMasterSelect}>
-                  <option value="">--Select a Product--</option>
-                  {masterProducts.map(p => (
-                    <option key={p.uniqueId} value={p.uniqueId}>
-                      {p.name}{p.manufacturer ? ` (${p.manufacturer})` : ''}
-                    </option>
-                  ))}
-                </select>
-              )}
+          {/* Step 1: Product Selection */}
+          <div className="form-step">
+            <div className="form-step-header">
+              <span className="step-number">1</span>
+              <span className="step-title">Select Parent Product</span>
+            </div>
+            <div className="form-row">
+              <div className="form-group single">
+                <label>SELECT PRODUCT</label>
+                {loadingMaster ? (
+                  <select disabled><option>Loading products...</option></select>
+                ) : masterProducts.length === 0 ? (
+                  <select disabled><option>No products available — upload via Bulk Upload first</option></select>
+                ) : (
+                  <select value={selectedMasterId} onChange={handleMasterSelect}>
+                    <option value="">--Select a Product--</option>
+                    {masterProducts.map(p => (
+                      <option key={p.uniqueId} value={p.uniqueId}>
+                        {p.name}{p.manufacturer ? ` (${p.manufacturer})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
             </div>
           </div>
 
           {selectedMasterId && (
             <>
-              <div style={{ margin: '16px 0 8px', padding: '12px 16px', backgroundColor: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '13px', color: '#0369a1' }}>
-                <strong>Product:</strong> {form.name} &nbsp;|&nbsp;
-                {form.technicalName && <><strong>Technical:</strong> {form.technicalName} &nbsp;|&nbsp;</>}
-                {form.registrationNumber && <><strong>Reg#:</strong> {form.registrationNumber}</>}
+              {/* Product Info Summary */}
+              <div className="product-summary-bar">
+                <div className="summary-item"><span className="summary-label">Product</span><span className="summary-value">{form.name}</span></div>
+                {form.technicalName && <div className="summary-item"><span className="summary-label">Technical</span><span className="summary-value">{form.technicalName}</span></div>}
+                {form.registrationNumber && <div className="summary-item"><span className="summary-label">Reg#</span><span className="summary-value">{form.registrationNumber}</span></div>}
               </div>
 
-              <div className="card-section-title" style={{ marginTop: '20px' }}>Batch Details</div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>BATCH NUMBER <span style={{ color: '#ef4444' }}>*</span></label>
-                  <input name="batch" value={form.batch} onChange={handleChange} placeholder="Enter batch number" required />
+              {/* Step 2: Batch Details */}
+              <div className="form-step">
+                <div className="form-step-header">
+                  <span className="step-number">2</span>
+                  <span className="step-title">Enter Batch Details</span>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>BATCH NUMBER <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input name="batch" value={form.batch} onChange={handleChange} placeholder="Enter batch number" required />
+                  </div>
+                  <div className="form-group">
+                    <label>PACKAGING SIZE</label>
+                    <input name="packingSize" value={form.packingSize} onChange={handleChange} placeholder="e.g. 500 ml, 1 kg" />
+                  </div>
+                  <div className="form-group">
+                    <label>DATE OF MANUFACTURE</label>
+                    <DatePicker
+                      selected={form.manufacturer ? new Date(form.manufacturer + '-01') : null}
+                      onChange={(date: Date | null) => {
+                        const mfgStr = date ? date.toISOString().slice(0, 7) : '';
+                        let expiryStr = '';
+                        if (date) {
+                          const expDate = new Date(date);
+                          expDate.setFullYear(expDate.getFullYear() + 2);
+                          expiryStr = expDate.toISOString().slice(0, 7);
+                        }
+                        setForm(prev => ({ ...prev, manufacturer: mfgStr, expiry: expiryStr }));
+                      }}
+                      dateFormat="yyyy-MM"
+                      showMonthYearPicker
+                      showFullMonthYearPicker
+                      placeholderText="Select month and year"
+                      className="form-control"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>EXPIRY DATE</label>
+                    <DatePicker
+                      selected={form.expiry ? new Date(form.expiry + '-01') : null}
+                      onChange={(date: Date | null) => setForm(prev => ({ ...prev, expiry: date ? date.toISOString().slice(0, 7) : '' }))}
+                      dateFormat="yyyy-MM"
+                      showMonthYearPicker
+                      showFullMonthYearPicker
+                      placeholderText="Select month and year"
+                      className="form-control"
+                    />
+                  </div>
+                  <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                    <label>HAZARD SYMBOL</label>
+                    <select name="hazardId" value={form.hazardId} onChange={handleChange}>
+                      <option value="">--Select--</option>
+                      {hazards.map((h) => (
+                        <option key={h.id} value={h.id}>{h.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>PACKAGING SIZE</label>
-                  <input name="packingSize" value={form.packingSize} onChange={handleChange} placeholder="e.g. 500 ml, 1 kg" />
-                </div>
+              <div className="form-actions">
+                <button type="submit" className="submit-btn" disabled={submitting}>
+                  {submitting ? 'Saving...' : '✓ Create Product'}
+                </button>
               </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>DATE OF MANUFACTURE</label>
-                  <DatePicker
-                    selected={form.manufacturer ? new Date(form.manufacturer + '-01') : null}
-                    onChange={(date: Date | null) => {
-                      const mfgStr = date ? date.toISOString().slice(0, 7) : '';
-                      let expiryStr = '';
-                      if (date) {
-                        const expDate = new Date(date);
-                        expDate.setFullYear(expDate.getFullYear() + 2);
-                        expiryStr = expDate.toISOString().slice(0, 7);
-                      }
-                      setForm(prev => ({ ...prev, manufacturer: mfgStr, expiry: expiryStr }));
-                    }}
-                    dateFormat="yyyy-MM"
-                    showMonthYearPicker
-                    showFullMonthYearPicker
-                    placeholderText="Select month and year"
-                    className="form-control"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>EXPIRY DATE</label>
-                  <DatePicker
-                    selected={form.expiry ? new Date(form.expiry + '-01') : null}
-                    onChange={(date: Date | null) => setForm(prev => ({ ...prev, expiry: date ? date.toISOString().slice(0, 7) : '' }))}
-                    dateFormat="yyyy-MM"
-                    showMonthYearPicker
-                    showFullMonthYearPicker
-                    placeholderText="Select month and year"
-                    className="form-control"
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group single">
-                  <label>HAZARD SYMBOL</label>
-                  <select name="hazardId" value={form.hazardId} onChange={handleChange}>
-                    <option value="">--Select--</option>
-                    {hazards.map((h) => (
-                      <option key={h.id} value={h.id}>{h.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <button type="submit" className="submit-btn" disabled={submitting}>
-                {submitting ? 'Saving...' : 'Submit'}
-              </button>
             </>
           )}
         </form>
