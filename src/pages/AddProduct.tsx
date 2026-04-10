@@ -172,9 +172,22 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
             <>
               {/* Product Info Summary */}
               <div className="product-summary-bar">
-                <div className="summary-item"><span className="summary-label">Product</span><span className="summary-value">{form.name}</span></div>
-                {form.technicalName && <div className="summary-item"><span className="summary-label">Technical</span><span className="summary-value">{form.technicalName}</span></div>}
-                {form.registrationNumber && <div className="summary-item"><span className="summary-label">Reg#</span><span className="summary-value">{form.registrationNumber}</span></div>}
+                <table className="summary-table">
+                  <tbody>
+                    <tr>
+                      <td className="summary-label">Product Name</td>
+                      <td className="summary-value">{form.name}</td>
+                    </tr>
+                    {form.technicalName && <tr>
+                      <td className="summary-label">Technical Name</td>
+                      <td className="summary-value">{form.technicalName}</td>
+                    </tr>}
+                    {form.registrationNumber && <tr>
+                      <td className="summary-label">Registration No.</td>
+                      <td className="summary-value">{form.registrationNumber}</td>
+                    </tr>}
+                  </tbody>
+                </table>
               </div>
 
               {/* Step 2: Batch Details */}

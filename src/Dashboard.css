@@ -599,37 +599,39 @@
 
 /* ── Product Summary Bar ── */
 .product-summary-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 32px;
-  padding: 20px 24px;
-  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  padding: 0;
+  background: linear-gradient(135deg, #f0f9ff, #e8f4fd);
   border: 1px solid #bae6fd;
   border-radius: 12px;
   margin-bottom: 32px;
+  overflow: hidden;
 }
-.summary-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-right: 32px;
-  border-right: 1.5px solid #93c5fd;
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
 }
-.summary-item:last-child {
-  border-right: none;
-  padding-right: 0;
+.summary-table td {
+  padding: 12px 20px;
+  border-bottom: 1px solid #bae6fd;
 }
-.summary-label {
-  font-size: 0.7rem;
+.summary-table tr:last-child td {
+  border-bottom: none;
+}
+.summary-table .summary-label {
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  font-weight: 600;
+  font-weight: 700;
   color: #0369a1;
+  white-space: nowrap;
+  width: 140px;
+  vertical-align: top;
 }
-.summary-value {
-  font-size: 0.95rem;
+.summary-table .summary-value {
+  font-size: 0.92rem;
   font-weight: 600;
   color: #0c4a6e;
+  word-break: break-word;
 }
 
 /* ── Form Actions ── */
