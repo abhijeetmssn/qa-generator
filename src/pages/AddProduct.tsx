@@ -107,7 +107,6 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
       manufacturerAddress: form.manufacturerAddress || '',
       technicalName: form.technicalName || '',
       registrationNumber: form.registrationNumber || '',
-      packingSize: form.packing,
       manufacturerLicence: form.manufacturerLicence || '',
       imageUrl: form.imageUrl || '',
       hazardSymbol: '',
@@ -165,8 +164,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
               <div style={{ margin: '16px 0 8px', padding: '12px 16px', backgroundColor: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '13px', color: '#0369a1' }}>
                 <strong>Product:</strong> {form.name} &nbsp;|&nbsp;
                 {form.technicalName && <><strong>Technical:</strong> {form.technicalName} &nbsp;|&nbsp;</>}
-                {form.registrationNumber && <><strong>Reg#:</strong> {form.registrationNumber} &nbsp;|&nbsp;</>}
-                {form.packing && <><strong>Packing:</strong> {form.packing}</>}
+                {form.registrationNumber && <><strong>Reg#:</strong> {form.registrationNumber}</>}
               </div>
 
               <div className="card-section-title" style={{ marginTop: '20px' }}>Batch Details</div>
@@ -175,13 +173,6 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
                 <div className="form-group">
                   <label>BATCH NUMBER <span style={{ color: '#ef4444' }}>*</span></label>
                   <input name="batch" value={form.batch} onChange={handleChange} placeholder="Enter batch number" required />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>PACKING SIZE</label>
-                  <input name="packing" value={form.packing} onChange={handleChange} placeholder="Enter packing size" />
                 </div>
               </div>
 
