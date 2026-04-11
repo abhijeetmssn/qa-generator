@@ -9,9 +9,6 @@ interface BulkUploadProps {
 
 const TEMPLATE_COLUMNS = [
   'Product Name',
-  'Batch Number',
-  'Manufacturing Date',
-  'Expiry Date',
   'Manufacturer',
   'Manufacturer Address',
   'Technical Name',
@@ -39,9 +36,6 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
     // Add one example row
     const example: Record<string, string> = {
       'Product Name': 'Example Product',
-      'Batch Number': 'BATCH-001',
-      'Manufacturing Date': '2026-01-15',
-      'Expiry Date': '2028-01-15',
       'Manufacturer': 'Example Pharma Ltd.',
       'Manufacturer Address': '123 Industrial Area, City',
       'Technical Name': 'Acetaminophen 500mg',
