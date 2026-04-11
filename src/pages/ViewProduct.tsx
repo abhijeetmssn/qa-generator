@@ -186,8 +186,11 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
       <div className="view-product-content">
         <div className="view-info-grid">
           <div className="view-info-column">
-            <div className="view-info-group">
-              <label>NAME OF THE MANUFACTURER</label>
+            <div className="view-info-group">              <label>MARKETED BY</label>
+              <p>{product.marketedBy || product.manufacturer || companyName || '\u2014'}</p>
+            </div>
+
+            <div className="view-info-group">              <label>NAME OF THE MANUFACTURER</label>
               <p>{product.manufacturer || companyName || '—'}</p>
               <small>{product.manufacturerAddress || ''}</small>
             </div>

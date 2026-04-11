@@ -21,6 +21,7 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
     technicalName: product.technicalName || '',
     registrationNumber: product.registrationNumber || '',
     manufacturerLicence: product.manufacturerLicence || '',
+    marketedBy: product.marketedBy || '',
   });
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -113,6 +114,10 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
             <div className="form-group">
               <label>Manufacturer Licence</label>
               <input name="manufacturerLicence" value={form.manufacturerLicence} onChange={handleChange} placeholder="Licence #" />
+            </div>
+            <div className="form-group">
+              <label>Marketed By</label>
+              <input name="marketedBy" value={form.marketedBy} onChange={handleChange} placeholder="Company that markets this product" />
             </div>
             <div className="form-group">
               <label>Packaging Size</label>

@@ -27,6 +27,7 @@ export interface Product {
   registrationNumber?: string;
   packingSize?: string;
   manufacturerLicence?: string;
+  marketedBy?: string;
   imageUrl?: string;
   hazardSymbol?: string; // e.g. '☠️ Toxic', '🔥 Flammable'
   hazardId?: number;
@@ -65,6 +66,7 @@ function rowToProduct(row: any): Product {
     registrationNumber: row.registration_number,
     packingSize: row.packing_size,
     manufacturerLicence: row.manufacturer_licence,
+    marketedBy: row.marketed_by,
     imageUrl: row.image_url,
     hazardSymbol: row.hazard_symbol,
     hazardId: row.hazard_id ?? undefined,
@@ -142,8 +144,8 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
 
 export async function addProduct(product: Product & { is_master?: boolean }): Promise<Product> {
   const { rows } = await pool.query(
-    `INSERT INTO products (unique_id, name, batch, mfg, expiry, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, image_url, hazard_symbol, hazard_id, owner_uid, is_master, company_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+    `INSERT INTO products (unique_id, name, batch, mfg, expiry, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, marketed_by, image_url, hazard_symbol, hazard_id, owner_uid, is_master, company_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
      RETURNING *`,
     [
       product.uniqueId,
@@ -157,6 +159,7 @@ export async function addProduct(product: Product & { is_master?: boolean }): Pr
       product.registrationNumber || null,
       product.packingSize || null,
       product.manufacturerLicence || null,
+      product.marketedBy || null,
       product.imageUrl || null,
       product.hazardSymbol || null,
       product.hazardId || null,
@@ -200,6 +203,7 @@ export async function updateProduct(uniqueId: string, updates: Partial<Product>)
     registrationNumber: 'registration_number',
     packingSize: 'packing_size',
     manufacturerLicence: 'manufacturer_licence',
+    marketedBy: 'marketed_by',
     imageUrl: 'image_url',
     hazardSymbol: 'hazard_symbol',
   };

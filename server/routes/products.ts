@@ -347,6 +347,8 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
       manufacturerlicence: 'manufacturerLicence',
       licence: 'manufacturerLicence',
       license: 'manufacturerLicence',
+      marketedby: 'marketedBy',
+      marketed: 'marketedBy',
     };
 
     const results = { inserted: 0, skipped: 0, errors: [] as string[] };
@@ -385,6 +387,7 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
           registrationNumber: mapped.registrationNumber || undefined,
           packingSize: mapped.packingSize || undefined,
           manufacturerLicence: mapped.manufacturerLicence || undefined,
+          marketedBy: mapped.marketedBy || undefined,
           owner_uid: user.uid,
           is_master: true,
           companyId: companyId,

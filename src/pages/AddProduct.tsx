@@ -28,6 +28,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     imageUrl: '',
     hazardId: '',
     packingSize: '',
+    marketedBy: '',
   });
   const [productImageFile, setProductImageFile] = useState<File | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -57,7 +58,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     setSelectedMasterId(masterId);
 
     if (!masterId) {
-      setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '', packingSize: '' });
+      setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '', packingSize: '', marketedBy: '' });
       return;
     }
 
@@ -76,6 +77,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
         imageUrl: master.imageUrl || '',
         hazardId: master.hazardId ? String(master.hazardId) : '',
         packingSize: '',
+        marketedBy: master.marketedBy || '',
       });
     }
   };
@@ -114,6 +116,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
       imageUrl: form.imageUrl || '',
       hazardSymbol: '',
       hazardId: form.hazardId ? Number(form.hazardId) : undefined,
+      marketedBy: form.marketedBy || '',
       _imageFile: productImageFile,
     };
 
@@ -121,7 +124,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
     setSelectedMasterId('');
     setProductImageFile(null);
     if (imageInputRef.current) imageInputRef.current.value = '';
-    setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '', packingSize: '' });
+    setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '', packingSize: '', marketedBy: '' });
     setAddedProduct(product);
 
     try {
@@ -237,6 +240,10 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
                       placeholderText="Select month and year"
                       className="form-control"
                     />
+                  </div>
+                  <div className="form-group full-width">
+                    <label>MARKETED BY</label>
+                    <input name="marketedBy" value={form.marketedBy} onChange={handleChange} placeholder="Company that markets this product" />
                   </div>
                   <div className="form-group full-width">
                     <label>HAZARD SYMBOL</label>

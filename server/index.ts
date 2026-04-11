@@ -176,6 +176,9 @@ async function initDB() {
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS hazard_id INTEGER');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id)');
 
+    // Add marketed_by column
+    await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS marketed_by VARCHAR(500)');
+
     // Drop short_url column — no longer used, QR links are built from unique_id at runtime
     await client.query('ALTER TABLE products DROP COLUMN IF EXISTS short_url');
     // Drop quantity column — replaced by packing_size which serves the same purpose

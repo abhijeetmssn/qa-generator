@@ -123,7 +123,7 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
         <div className="public-info-list">
           <div className="view-info-group">
             <label>MARKETED BY</label>
-            <p>{product.companyName || company?.name || product.manufacturer || '—'}</p>
+            <p>{product.marketedBy || product.companyName || company?.name || product.manufacturer || '\u2014'}</p>
           </div>
 
           <div className="view-info-group">

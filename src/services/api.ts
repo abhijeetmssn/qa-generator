@@ -148,6 +148,7 @@ export interface Product {
   registrationNumber?: string;
   packingSize?: string;
   manufacturerLicence?: string;
+  marketedBy?: string;
   imageUrl?: string;
   hazardSymbol?: string;
   hazardId?: number;
