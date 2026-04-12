@@ -205,6 +205,12 @@ async function initDB() {
     await client.query(`UPDATE hazards SET created_date = created_at WHERE created_date IS NULL AND created_at IS NOT NULL`);
     await client.query(`UPDATE hazards SET updated_date = created_at WHERE updated_date IS NULL AND created_at IS NOT NULL`);
 
+    // Drop old created_at column from all tables (replaced by created_date)
+    await client.query('ALTER TABLE products DROP COLUMN IF EXISTS created_at');
+    await client.query('ALTER TABLE companies DROP COLUMN IF EXISTS created_at');
+    await client.query('ALTER TABLE users DROP COLUMN IF EXISTS created_at');
+    await client.query('ALTER TABLE hazards DROP COLUMN IF EXISTS created_at');
+
     // Drop short_url column — no longer used, QR links are built from unique_id at runtime
     await client.query('ALTER TABLE products DROP COLUMN IF EXISTS short_url');
     // Drop quantity column — replaced by packing_size which serves the same purpose

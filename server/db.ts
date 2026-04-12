@@ -77,7 +77,7 @@ function rowToProduct(row: any): Product {
     active: row.active || 'Y',
     companyId: row.company_id ?? undefined,
     companyName: row.company_name ?? undefined,
-    createdDate: row.created_date ?? row.created_at ?? undefined,
+    createdDate: row.created_date ?? undefined,
     updatedDate: row.updated_date ?? undefined,
   };
 }
@@ -92,7 +92,7 @@ export async function getProducts(companyId?: number, isAdmin?: boolean): Promis
       `SELECT p.*, c.name as company_name FROM products p
        LEFT JOIN companies c ON p.company_id = c.id
        WHERE p.active = 'Y' AND ${masterFilter} AND p.company_id = $1
-       ORDER BY p.id`,
+       ORDER BY p.created_date DESC`,
       [companyId]
     );
     return rows.map(rowToProduct);
@@ -101,7 +101,7 @@ export async function getProducts(companyId?: number, isAdmin?: boolean): Promis
     `SELECT p.*, c.name as company_name FROM products p
      LEFT JOIN companies c ON p.company_id = c.id
      WHERE p.active = 'Y' AND ${masterFilter}
-     ORDER BY p.id`
+     ORDER BY p.created_date DESC`
   );
   return rows.map(rowToProduct);
 }
@@ -127,12 +127,12 @@ export async function getTrashProducts(companyId?: number): Promise<Product[]> {
       `SELECT p.*, c.name as company_name FROM products p
        LEFT JOIN companies c ON p.company_id = c.id
        WHERE p.active = 'N' AND p.company_id = $1
-       ORDER BY p.id`,
+       ORDER BY p.created_date DESC`,
       [companyId]
     );
     return rows.map(rowToProduct);
   }
-  const { rows } = await pool.query("SELECT * FROM products WHERE active = 'N' ORDER BY id");
+  const { rows } = await pool.query("SELECT * FROM products WHERE active = 'N' ORDER BY created_date DESC");
   return rows.map(rowToProduct);
 }
 
