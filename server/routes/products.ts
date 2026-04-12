@@ -198,6 +198,7 @@ router.post('/', authenticateToken, async (req, res) => {
       registrationNumber: body.registrationNumber,
       packingSize: body.packingSize,
       manufacturerLicence: body.manufacturerLicence,
+      marketedBy: body.marketedBy,
       imageUrl: body.imageUrl,
       hazardSymbol: body.hazardSymbol,
       hazardId: body.hazardId ? Number(body.hazardId) : undefined,
