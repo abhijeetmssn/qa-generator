@@ -134,8 +134,17 @@ export async function getTrashProducts(companyId?: number): Promise<Product[]> {
 
 export async function getProductByUniqueId(uniqueId: string): Promise<Product | undefined> {
   const { rows } = await pool.query(
-    `SELECT p.*, c.name as company_name FROM products p
+    `SELECT p.*,
+       c.name as company_name,
+       COALESCE(NULLIF(TRIM(p.manufacturer_licence), ''), m.manufacturer_licence) as manufacturer_licence,
+       COALESCE(NULLIF(TRIM(p.technical_name), ''), m.technical_name) as technical_name,
+       COALESCE(NULLIF(TRIM(p.registration_number), ''), m.registration_number) as registration_number,
+       COALESCE(NULLIF(TRIM(p.manufacturer), ''), m.manufacturer) as manufacturer,
+       COALESCE(NULLIF(TRIM(p.manufacturer_address), ''), m.manufacturer_address) as manufacturer_address,
+       COALESCE(NULLIF(TRIM(p.marketed_by), ''), m.marketed_by) as marketed_by
+     FROM products p
      LEFT JOIN companies c ON p.company_id = c.id
+     LEFT JOIN products m ON m.is_master = true AND m.name = p.name AND m.company_id = p.company_id
      WHERE p.unique_id = $1`,
     [uniqueId]
   );
