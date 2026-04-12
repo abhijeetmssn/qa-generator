@@ -209,6 +209,27 @@ async function initDB() {
       }
     }
 
+    // One-time fix: spread existing product dates from April 1-13 based on ID order
+    // (runs only when all products share the same created_date, i.e. from DEFAULT NOW() migration)
+    const { rows: distinctDates } = await client.query(
+      `SELECT COUNT(DISTINCT created_date) AS cnt FROM products`
+    );
+    if (parseInt(distinctDates[0].cnt) <= 1) {
+      await client.query(`
+        WITH ranked AS (
+          SELECT id, ROW_NUMBER() OVER (ORDER BY id) - 1 AS rn,
+                 COUNT(*) OVER () AS total
+          FROM products
+        )
+        UPDATE products p
+        SET created_date = '2026-04-01T00:00:00+05:30'::timestamptz + (r.rn::float / GREATEST(r.total - 1, 1)) * INTERVAL '12 days',
+            updated_date = '2026-04-01T00:00:00+05:30'::timestamptz + (r.rn::float / GREATEST(r.total - 1, 1)) * INTERVAL '12 days'
+        FROM ranked r
+        WHERE p.id = r.id
+      `);
+      console.log('✅ Backfilled product dates (April 1–13 spread by ID)');
+    }
+
     // Drop short_url column — no longer used, QR links are built from unique_id at runtime
     await client.query('ALTER TABLE products DROP COLUMN IF EXISTS short_url');
     // Drop quantity column — replaced by packing_size which serves the same purpose
