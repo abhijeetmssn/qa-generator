@@ -28,7 +28,6 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [companySearch, setCompanySearch] = useState('');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAdmin) {
@@ -189,14 +188,13 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                 <th>Manufacturing Date</th>
                 <th>Expiry Date</th>
                 <th>Packing Size</th>
-                <th>Short Url</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {paged.length === 0 ? (
                 <tr>
-                  <td colSpan={9} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>
                     {search ? 'No products match your search.' : 'No products found.'}
                   </td>
                 </tr>
@@ -210,19 +208,6 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                       <td>{formatMonthYear(product.mfg)}</td>
                       <td>{formatMonthYear(product.expiry)}</td>
                     <td>{product.packingSize || '—'}</td>
-                    <td>
-                      <button
-                        className="icon-btn copy"
-                        style={{ background: copiedId === product.uniqueId ? '#16a34a' : undefined, color: copiedId === product.uniqueId ? '#fff' : undefined }}
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${window.location.origin}/#product/${product.uniqueId}`);
-                          setCopiedId(product.uniqueId);
-                          setTimeout(() => setCopiedId(null), 2000);
-                        }}
-                      >
-                        {copiedId === product.uniqueId ? '✓ Copied' : 'Copy URL'}
-                      </button>
-                    </td>
                     <td>
                       <button className="icon-btn view" onClick={() => onView(product)}>View</button>
                       {canEdit && <button className="icon-btn edit" onClick={() => onEdit?.(product)}>Edit</button>}

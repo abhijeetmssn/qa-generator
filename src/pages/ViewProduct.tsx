@@ -222,7 +222,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
 
             <div className="view-info-group">
               <label>MANUFACTURER LICENCE NO.</label>
-              <p>{product.manufacturerLicence || 'PB/AGRI/PP/2021/4'}</p>
+              <p>{product.manufacturerLicence || '—'}</p>
             </div>
 
             <div className="view-info-group">
@@ -266,7 +266,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
 
             <div className="view-info-group">
               <label>TECHNICAL NAME</label>
-              <p>{product.technicalName || 'Emamectin Benzoate 5% SG'}</p>
+              <p>{product.technicalName || '—'}</p>
             </div>
 
             <div className="view-info-group">
@@ -276,7 +276,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
 
             <div className="view-info-group">
               <label>REGISTRATION NUMBER</label>
-              <p>{product.registrationNumber || 'CIR-1B7889/2021-Emamectin Benzoate (SG) (4325)-2288'}</p>
+              <p>{product.registrationNumber || '—'}</p>
             </div>
 
             <div className="view-info-group">
