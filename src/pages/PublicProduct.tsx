@@ -123,6 +123,11 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
         <div className="public-info-list">
 
           <div className="view-info-group">
+            <label>MARKETED BY</label>
+            <p>{product.marketedBy || product.companyName || company?.name || product.manufacturer || '\u2014'}</p>
+          </div>
+
+          <div className="view-info-group">
             <label>NAME OF THE PRODUCT</label>
             <p>{product.name}</p>
           </div>
@@ -155,10 +160,7 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
             <p>{formatMonthYear(product.expiry)}</p>
           </div>
 
-          <div className="view-info-group">
-            <label>MARKETED BY</label>
-            <p>{product.marketedBy || product.companyName || company?.name || product.manufacturer || '\u2014'}</p>
-          </div>
+          
 
           <div className="view-info-group">
             <label>REGISTRATION NUMBER</label>
