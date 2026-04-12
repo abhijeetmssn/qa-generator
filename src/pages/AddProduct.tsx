@@ -99,7 +99,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
       return;
     }
     setSubmitting(true);
-    const uniqueId = Date.now().toString();
+    const uniqueId = String(Math.floor(100000 + Math.random() * 900000));
     const product = {
       id: uniqueId,
       uniqueId: uniqueId,

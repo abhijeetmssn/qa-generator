@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import {
@@ -187,7 +186,7 @@ router.post('/', authenticateToken, async (req, res) => {
     
     const product = {
       id: body.id || Date.now(),
-      uniqueId: body.uniqueId || uuidv4().replace(/-/g, '').slice(0, 9),
+      uniqueId: body.uniqueId || String(Math.floor(100000 + Math.random() * 900000)),
       name: body.name,
       batch: body.batch,
       mfg: body.mfg,
@@ -377,7 +376,7 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
       try {
         await addProduct({
           id: Date.now() + i,
-          uniqueId: uuidv4().replace(/-/g, '').slice(0, 9),
+          uniqueId: String(Math.floor(100000 + Math.random() * 900000)),
           name: mapped.name,
           batch: mapped.batch || '',
           mfg: mapped.mfg || '',
