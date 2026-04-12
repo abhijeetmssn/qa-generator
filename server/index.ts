@@ -230,6 +230,24 @@ async function initDB() {
       console.log('✅ Backfilled product dates (April 1–13 spread by ID)');
     }
 
+    // Migrate existing unique_ids to 6 digits (one-time)
+    const { rows: longIds } = await client.query(
+      `SELECT id FROM products WHERE LENGTH(unique_id) > 6`
+    );
+    if (longIds.length > 0) {
+      for (const row of longIds) {
+        let newId: string;
+        let exists = true;
+        while (exists) {
+          newId = String(Math.floor(100000 + Math.random() * 900000));
+          const { rows: dup } = await client.query('SELECT 1 FROM products WHERE unique_id = $1', [newId]);
+          exists = dup.length > 0;
+        }
+        await client.query('UPDATE products SET unique_id = $1 WHERE id = $2', [newId!, row.id]);
+      }
+      console.log(`✅ Migrated ${longIds.length} products to 6-digit unique IDs`);
+    }
+
     // Drop short_url column — no longer used, QR links are built from unique_id at runtime
     await client.query('ALTER TABLE products DROP COLUMN IF EXISTS short_url');
     // Drop quantity column — replaced by packing_size which serves the same purpose
