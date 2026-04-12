@@ -192,15 +192,15 @@ async function initDB() {
       WHERE p.owner_uid = u.uid AND p.company_id IS NULL AND u.company_id IS NOT NULL
     `);
 
-    // Backfill child products: copy master fields (manufacturer_licence, technical_name, registration_number, manufacturer, manufacturer_address) to child products that are missing them
+    // Backfill child products: copy master fields (manufacturer_licence, technical_name, registration_number, manufacturer, manufacturer_address, marketed_by) to child products that are missing them
     await client.query(`
       UPDATE products child
       SET
-        manufacturer_licence = COALESCE(NULLIF(child.manufacturer_licence, ''), master.manufacturer_licence),
-        technical_name = COALESCE(NULLIF(child.technical_name, ''), master.technical_name),
-        registration_number = COALESCE(NULLIF(child.registration_number, ''), master.registration_number),
-        manufacturer = COALESCE(NULLIF(child.manufacturer, ''), master.manufacturer),
-        manufacturer_address = COALESCE(NULLIF(child.manufacturer_address, ''), master.manufacturer_address)
+        manufacturer_licence = COALESCE(NULLIF(TRIM(child.manufacturer_licence), ''), master.manufacturer_licence),
+        technical_name = COALESCE(NULLIF(TRIM(child.technical_name), ''), master.technical_name),
+        registration_number = COALESCE(NULLIF(TRIM(child.registration_number), ''), master.registration_number),
+        manufacturer = COALESCE(NULLIF(TRIM(child.manufacturer), ''), master.manufacturer),
+        manufacturer_address = COALESCE(NULLIF(TRIM(child.manufacturer_address), ''), master.manufacturer_address)
       FROM products master
       WHERE master.is_master = true
         AND (child.is_master = false OR child.is_master IS NULL)
