@@ -179,6 +179,32 @@ async function initDB() {
     // Add marketed_by column
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS marketed_by VARCHAR(500)');
 
+    // Add created_date and updated_date to all tables
+    // Products
+    await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS created_date TIMESTAMPTZ DEFAULT NOW()');
+    await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS updated_date TIMESTAMPTZ DEFAULT NOW()');
+    // Backfill from created_at for existing rows
+    await client.query(`UPDATE products SET created_date = created_at WHERE created_date IS NULL AND created_at IS NOT NULL`);
+    await client.query(`UPDATE products SET updated_date = created_at WHERE updated_date IS NULL AND created_at IS NOT NULL`);
+
+    // Companies
+    await client.query('ALTER TABLE companies ADD COLUMN IF NOT EXISTS created_date TIMESTAMPTZ DEFAULT NOW()');
+    await client.query('ALTER TABLE companies ADD COLUMN IF NOT EXISTS updated_date TIMESTAMPTZ DEFAULT NOW()');
+    await client.query(`UPDATE companies SET created_date = created_at WHERE created_date IS NULL AND created_at IS NOT NULL`);
+    await client.query(`UPDATE companies SET updated_date = created_at WHERE updated_date IS NULL AND created_at IS NOT NULL`);
+
+    // Users
+    await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS created_date TIMESTAMPTZ DEFAULT NOW()');
+    await client.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_date TIMESTAMPTZ DEFAULT NOW()');
+    await client.query(`UPDATE users SET created_date = created_at WHERE created_date IS NULL AND created_at IS NOT NULL`);
+    await client.query(`UPDATE users SET updated_date = created_at WHERE updated_date IS NULL AND created_at IS NOT NULL`);
+
+    // Hazards
+    await client.query('ALTER TABLE hazards ADD COLUMN IF NOT EXISTS created_date TIMESTAMPTZ DEFAULT NOW()');
+    await client.query('ALTER TABLE hazards ADD COLUMN IF NOT EXISTS updated_date TIMESTAMPTZ DEFAULT NOW()');
+    await client.query(`UPDATE hazards SET created_date = created_at WHERE created_date IS NULL AND created_at IS NOT NULL`);
+    await client.query(`UPDATE hazards SET updated_date = created_at WHERE updated_date IS NULL AND created_at IS NOT NULL`);
+
     // Drop short_url column — no longer used, QR links are built from unique_id at runtime
     await client.query('ALTER TABLE products DROP COLUMN IF EXISTS short_url');
     // Drop quantity column — replaced by packing_size which serves the same purpose

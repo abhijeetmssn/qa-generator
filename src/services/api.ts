@@ -155,6 +155,8 @@ export interface Product {
   productImage?: string;
   companyId?: number;
   companyName?: string;
+  createdDate?: string;
+  updatedDate?: string;
 }
 
 export async function apiGetProducts(): Promise<Product[]> {

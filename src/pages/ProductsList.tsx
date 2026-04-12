@@ -11,6 +11,12 @@ function formatMonthYear(val?: string) {
   return `${month}/${year.slice(-2)}`;
 }
 
+function formatIST(val?: string) {
+  if (!val) return '—';
+  const d = new Date(val);
+  return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
 interface ProductsListProps {
   products: Product[];
   goAdd: () => void;
@@ -93,6 +99,8 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
       'Technical Name': p.technicalName || '',
       'Registration Number': p.registrationNumber || '',
       'Manufacturer Licence': p.manufacturerLicence || '',
+      'Created Date': formatIST(p.createdDate),
+      'Updated Date': formatIST(p.updatedDate),
     }));
 
     const ws = XLSX.utils.json_to_sheet(rows);
@@ -188,13 +196,15 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                 <th>Manufacturing Date</th>
                 <th>Expiry Date</th>
                 <th>Packing Size</th>
+                <th>Created Date</th>
+                <th>Updated Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {paged.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>
+                  <td colSpan={10} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>
                     {search ? 'No products match your search.' : 'No products found.'}
                   </td>
                 </tr>
@@ -208,6 +218,8 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                       <td>{formatMonthYear(product.mfg)}</td>
                       <td>{formatMonthYear(product.expiry)}</td>
                     <td>{product.packingSize || '—'}</td>
+                    <td>{formatIST(product.createdDate)}</td>
+                    <td>{formatIST(product.updatedDate)}</td>
                     <td>
                       <button className="icon-btn view" onClick={() => onView(product)}>View</button>
                       {canEdit && <button className="icon-btn edit" onClick={() => onEdit?.(product)}>Edit</button>}

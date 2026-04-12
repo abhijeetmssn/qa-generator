@@ -37,6 +37,8 @@ export interface Product {
   companyId?: number;
   companyName?: string;
   is_master?: boolean;
+  createdDate?: string;
+  updatedDate?: string;
 }
 
 // ── User type ──
@@ -75,6 +77,8 @@ function rowToProduct(row: any): Product {
     active: row.active || 'Y',
     companyId: row.company_id ?? undefined,
     companyName: row.company_name ?? undefined,
+    createdDate: row.created_date ?? row.created_at ?? undefined,
+    updatedDate: row.updated_date ?? undefined,
   };
 }
 
@@ -153,8 +157,8 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
 
 export async function addProduct(product: Product & { is_master?: boolean }): Promise<Product> {
   const { rows } = await pool.query(
-    `INSERT INTO products (unique_id, name, batch, mfg, expiry, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, marketed_by, image_url, hazard_symbol, hazard_id, owner_uid, is_master, company_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+    `INSERT INTO products (unique_id, name, batch, mfg, expiry, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, marketed_by, image_url, hazard_symbol, hazard_id, owner_uid, is_master, company_id, created_date, updated_date)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18, NOW() AT TIME ZONE 'Asia/Kolkata', NOW() AT TIME ZONE 'Asia/Kolkata')
      RETURNING *`,
     [
       product.uniqueId,
@@ -225,6 +229,9 @@ export async function updateProduct(uniqueId: string, updates: Partial<Product>)
   }
 
   if (fields.length === 0) return null;
+
+  // Always update the updated_date in IST
+  fields.push(`updated_date = NOW() AT TIME ZONE 'Asia/Kolkata'`);
 
   values.push(uniqueId);
   const { rows } = await pool.query(
