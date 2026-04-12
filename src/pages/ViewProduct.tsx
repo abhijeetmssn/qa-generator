@@ -212,9 +212,15 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
               </div>
             )}
 
+
             <div className="view-info-group">
               <label>EXPIRY DATE</label>
               <p>{formatMonthYear(product.expiry)}</p>
+            </div>
+
+            <div className="view-info-group">
+              <label>MARKETED BY</label>
+              <p>{product.marketedBy || product.manufacturer || companyName || '\u2014'}</p>
             </div>
 
             <div className="view-info-group">
