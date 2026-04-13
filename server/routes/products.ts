@@ -14,6 +14,7 @@ import {
   getMasterProducts,
   updateProductImage,
   getProductImage,
+  generateUniqueId,
 } from '../db';
 import { authenticateToken, requireRole } from '../middleware';
 import type { Request, Response, NextFunction } from 'express';
@@ -185,8 +186,8 @@ router.post('/', authenticateToken, async (req, res) => {
     const companyId = dbUser?.companyId || undefined;
     
     const product = {
-      id: body.id || Date.now(),
-      uniqueId: body.uniqueId || String(Math.floor(100000 + Math.random() * 900000)),
+      id: Date.now(),
+      uniqueId: await generateUniqueId(),
       name: body.name,
       batch: body.batch,
       mfg: body.mfg,
@@ -376,7 +377,7 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
       try {
         await addProduct({
           id: Date.now() + i,
-          uniqueId: String(Math.floor(100000 + Math.random() * 900000)),
+          uniqueId: await generateUniqueId(),
           name: mapped.name,
           batch: mapped.batch || '',
           mfg: mapped.mfg || '',

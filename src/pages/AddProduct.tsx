@@ -7,7 +7,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import SearchableSelect from '../components/SearchableSelect';
 
 type AddProductProps = {
-  onProductAdded?: (product: any) => Promise<void> | void;
+  onProductAdded?: (product: any) => Promise<any>;
   onProductsList?: () => void;
 };
 
@@ -100,10 +100,9 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
       return;
     }
     setSubmitting(true);
-    const uniqueId = String(Math.floor(100000 + Math.random() * 900000));
+
+    // ID is generated server-side — do not generate or send one from the client
     const product = {
-      id: uniqueId,
-      uniqueId: uniqueId,
       name: form.name,
       batch: form.batch,
       mfg: form.manufacturer,
@@ -121,15 +120,19 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
       _imageFile: productImageFile,
     };
 
-    // Clear form immediately so fields reset right away
-    setSelectedMasterId('');
-    setProductImageFile(null);
-    if (imageInputRef.current) imageInputRef.current.value = '';
-    setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '', packingSize: '', marketedBy: '' });
-    setAddedProduct(product);
-
     try {
-      if (onProductAdded) await onProductAdded(product);
+      if (onProductAdded) {
+        const saved = await onProductAdded(product);
+        // Clear form only after confirmed successful save
+        setAddedProduct(saved ?? product);
+        setSelectedMasterId('');
+        setProductImageFile(null);
+        if (imageInputRef.current) imageInputRef.current.value = '';
+        setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '', packingSize: '', marketedBy: '' });
+      }
+    } catch (err) {
+      console.error('Failed to save product:', err);
+      alert('Failed to save product. Please try again.');
     } finally {
       setSubmitting(false);
     }

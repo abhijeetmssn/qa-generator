@@ -97,24 +97,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   };
 
   const handleProductAdded = async (newProduct: any) => {
-    try {
-      const imageFile = newProduct._imageFile;
-      delete newProduct._imageFile;
-      const saved = await apiAddProduct(newProduct);
-      // Upload image if provided
-      if (imageFile && saved.uniqueId) {
-        try {
-          const imgResult = await apiUploadProductImage(saved.uniqueId, imageFile);
-          saved.productImage = imgResult.productImage;
-        } catch (imgErr) {
-          console.error('Failed to upload product image:', imgErr);
-        }
+    const imageFile = newProduct._imageFile;
+    delete newProduct._imageFile;
+    const saved = await apiAddProduct(newProduct);
+    // Upload image if provided
+    if (imageFile && saved.uniqueId) {
+      try {
+        const imgResult = await apiUploadProductImage(saved.uniqueId, imageFile);
+        saved.productImage = imgResult.productImage;
+      } catch (imgErr) {
+        console.error('Failed to upload product image:', imgErr);
       }
-      setAllProducts(prev => [...prev, saved]);
-    } catch (error) {
-      console.error('Failed to add product:', error);
-      alert('Failed to add product. Please try again.');
     }
+    setAllProducts(prev => [...prev, saved]);
+    return saved;
   };
 
   const handleExportDb = async () => {

@@ -155,6 +155,35 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
   return rows.length > 0 ? rowToProduct(rows[0]) : undefined;
 }
 
+/**
+ * Generate a unique product ID that does not already exist in the database.
+ * Starts at 6 digits. After 10 failed attempts expands to 7 digits, and after
+ * 15 failed attempts expands to 8 digits, so it never exhausts.
+ */
+export async function generateUniqueId(): Promise<string> {
+  const MAX_ATTEMPTS = 20;
+  let digits = 6;
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    if (attempt >= 15) digits = 8;
+    else if (attempt >= 10) digits = 7;
+
+    const min = Math.pow(10, digits - 1);
+    const range = Math.pow(10, digits) - min;
+    const candidate = String(Math.floor(min + Math.random() * range));
+
+    const { rows } = await pool.query(
+      'SELECT 1 FROM products WHERE unique_id = $1',
+      [candidate]
+    );
+
+    if (rows.length === 0) return candidate;
+  }
+
+  // Ultimate fallback: timestamp suffix guaranteed to be unique enough
+  return String(Date.now()).slice(-9);
+}
+
 export async function addProduct(product: Product & { is_master?: boolean }): Promise<Product> {
   const { rows } = await pool.query(
     `INSERT INTO products (unique_id, name, batch, mfg, expiry, manufacturer, manufacturer_address, technical_name, registration_number, packing_size, manufacturer_licence, marketed_by, image_url, hazard_symbol, hazard_id, owner_uid, is_master, company_id, created_date, updated_date)
