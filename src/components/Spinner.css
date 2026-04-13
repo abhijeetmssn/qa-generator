@@ -1,0 +1,58 @@
+/* ── Spinner ring ── */
+.spinner {
+  display: inline-block;
+  border-radius: 50%;
+  border-style: solid;
+  border-color: rgba(37, 99, 235, 0.15);
+  border-top-color: #2563eb;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Sizes */
+.spinner-small  { width: 16px; height: 16px; border-width: 2px; }
+.spinner-medium { width: 36px; height: 36px; border-width: 3px; }
+.spinner-large  { width: 56px; height: 56px; border-width: 4px; }
+
+/* ── Full-area (fills parent, centers content) ── */
+.spinner-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 220px;
+  padding: 40px 20px;
+}
+
+.spinner-label {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+/* ── Inline (sits next to text inside a button / sentence) ── */
+.spinner-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  vertical-align: middle;
+}
+
+.spinner-label-inline {
+  font-size: inherit;
+  color: inherit;
+}
+
+/* White variant — used inside coloured buttons */
+.spinner-white {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+}
