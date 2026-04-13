@@ -11,10 +11,11 @@ function formatMonthYear(val?: string) {
   return `${month}/${year.slice(-2)}`;
 }
 
-function formatIST(val?: string) {
+function formatISTDate(val?: string) {
   if (!val) return '—';
   const d = new Date(val);
-  return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+  // Only show date in DD/MM/YYYY format
+  return d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 interface ProductsListProps {
@@ -99,8 +100,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
       'Technical Name': p.technicalName || '',
       'Registration Number': p.registrationNumber || '',
       'Manufacturer Licence': p.manufacturerLicence || '',
-      'Created Date': formatIST(p.createdDate),
-      'Updated Date': formatIST(p.updatedDate),
+      'Created Date': formatISTDate(p.createdDate),
     }));
 
     const ws = XLSX.utils.json_to_sheet(rows);
@@ -197,7 +197,6 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                 <th>Expiry Date</th>
                 <th>Packing Size</th>
                 <th>Created Date</th>
-                <th>Updated Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -218,8 +217,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                       <td>{formatMonthYear(product.mfg)}</td>
                       <td>{formatMonthYear(product.expiry)}</td>
                     <td>{product.packingSize || '—'}</td>
-                    <td>{formatIST(product.createdDate)}</td>
-                    <td>{formatIST(product.updatedDate)}</td>
+                    <td>{formatISTDate(product.createdDate)}</td>
                     <td>
                       <button className="icon-btn view" onClick={() => onView(product)}>View</button>
                       {canEdit && <button className="icon-btn edit" onClick={() => onEdit?.(product)}>Edit</button>}
