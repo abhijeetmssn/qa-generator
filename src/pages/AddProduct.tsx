@@ -4,6 +4,7 @@ import { apiGetMasterProducts, apiGetHazards } from '../services/api';
 import type { Product, Hazard } from '../services/api';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import SearchableSelect from '../components/SearchableSelect';
 
 type AddProductProps = {
   onProductAdded?: (product: any) => Promise<void> | void;
@@ -154,18 +155,21 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
               <div className="form-group single">
                 <label>SELECT PRODUCT</label>
                 {loadingMaster ? (
-                  <select disabled><option>Loading products...</option></select>
+                  <SearchableSelect options={[]} value="" onChange={() => {}} placeholder="Loading products…" disabled />
                 ) : masterProducts.length === 0 ? (
-                  <select disabled><option>No products available — upload via Bulk Upload first</option></select>
+                  <SearchableSelect options={[]} value="" onChange={() => {}} placeholder="No products available — upload via Bulk Upload first" disabled />
                 ) : (
-                  <select value={selectedMasterId} onChange={handleMasterSelect}>
-                    <option value="">--Select a Product--</option>
-                    {masterProducts.map(p => (
-                      <option key={p.uniqueId} value={p.uniqueId}>
-                        {p.name}{p.manufacturer ? ` (${p.manufacturer})` : ''}
-                      </option>
-                    ))}
-                  </select>
+                  <SearchableSelect
+                    options={masterProducts.map(p => ({
+                      value: p.uniqueId,
+                      label: p.name + (p.manufacturer ? ` (${p.manufacturer})` : ''),
+                    }))}
+                    value={selectedMasterId}
+                    onChange={val => handleMasterSelect({ target: { value: val } } as React.ChangeEvent<HTMLSelectElement>)}
+                    placeholder="-- Select a Product --"
+                    title="Select Product"
+                    emptyMessage="No products match your search"
+                  />
                 )}
               </div>
             </div>
@@ -247,12 +251,16 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
                   </div>
                   <div className="form-group full-width">
                     <label>HAZARD SYMBOL</label>
-                    <select name="hazardId" value={form.hazardId} onChange={handleChange} style={{ maxWidth: '50%' }}>
-                      <option value="">--Select--</option>
-                      {hazards.map((h) => (
-                        <option key={h.id} value={h.id}>{h.name}</option>
-                      ))}
-                    </select>
+                    <div style={{ maxWidth: '50%' }}>
+                      <SearchableSelect
+                        options={hazards.map(h => ({ value: String(h.id), label: h.name }))}
+                        value={form.hazardId}
+                        onChange={val => setForm(prev => ({ ...prev, hazardId: val }))}
+                        placeholder="-- Select --"
+                        title="Select Hazard Symbol"
+                        emptyMessage="No hazard symbols found"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

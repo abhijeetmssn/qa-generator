@@ -27,6 +27,25 @@ button, a, input, select, textarea {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ── Mobile: prevent iOS input auto-zoom (requires font-size ≥ 16px) ── */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="date"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* ── Remove tap highlight on interactive elements ── */
+button, a, input, select, textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;

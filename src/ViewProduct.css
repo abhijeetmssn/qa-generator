@@ -7,7 +7,7 @@
   background: white;
   border-radius: 16px;
   overflow-y: auto;
-  max-height: calc(100vh - 100px);
+  max-height: calc(100dvh - 100px);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   border: 1px solid #e5e7eb;
 }
@@ -240,6 +240,7 @@
 .fb-btn,
 .ig-btn {
   padding: 11px 30px;
+  min-height: 44px;
   border-radius: 24px;
   color: #fff !important;
   text-decoration: none;
@@ -247,11 +248,15 @@
   font-weight: 600;
   border: none;
   cursor: pointer;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   letter-spacing: 0.3px;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .fb-btn:hover,
@@ -270,6 +275,7 @@
 
 .view-footer {
   padding: 20px 24px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
   border-top: 1px solid #e2e8f0;
   text-align: center;
   color: #94a3b8;
@@ -359,7 +365,7 @@
 /* ── Public Product Page Styles ── */
 .public-product-page {
   max-height: none;
-  min-height: 100vh;
+  min-height: 100dvh;
   border-radius: 0;
   box-shadow: none;
   border: none;
@@ -748,6 +754,8 @@
     padding: 12px 32px;
     border-radius: 24px;
     font-size: 1rem;
+    flex: 1;
+    min-width: 120px;
   }
 
   .contact-details p {
