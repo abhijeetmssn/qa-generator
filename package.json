@@ -8,10 +8,7 @@
     "dev:client": "vite",
     "dev:api": "tsx watch server/index.ts",
     "start": "node --import tsx server/index.ts",
-    "db:migrate": "tsx server/migrate.ts",
-    "db:seed": "tsx server/seed.ts",
-    "db:setup": "npm run db:migrate && npm run db:seed",
-    "build": "tsc -b && vite build",
+"build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
