@@ -11,6 +11,7 @@ import EditCompany from './EditCompany';
 import ManageHazards from './ManageHazards';
 import Trash from './Trash';
 import Logo from '../components/Logo';
+import Spinner from '../components/Spinner';
 import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct, apiUploadProductImage, apiExportDatabase } from '../services/api';
 import type { Product } from '../services/api';
 import type { UserRole } from '../services/api';
@@ -39,6 +40,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [exportingDb, setExportingDb] = useState(false);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -47,6 +50,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         setAllProducts(products);
       } catch (error) {
         console.error('Failed to load products:', error);
+      } finally {
+        setLoadingProducts(false);
       }
     };
     loadProducts();
@@ -76,12 +81,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   };
 
   const handleDeleteProduct = async (product: Product) => {
+    setDeletingId(product.uniqueId);
     try {
       await apiDeleteProduct(product.uniqueId);
       setAllProducts(prev => prev.filter(p => p.uniqueId !== product.uniqueId));
     } catch (error) {
       console.error('Failed to delete product:', error);
       alert('Failed to delete product');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -135,7 +143,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           <EditProduct product={selectedProduct} onSave={handleSaveProduct} onCancel={() => setPage('list')} />
         ) : <div className="page-placeholder">You don't have permission to edit products.</div>;
       case 'list':
-        return <ProductsList products={allProducts} goAdd={() => setPage('add')} onView={handleViewProduct} onEdit={handleEditProduct} onDelete={handleDeleteProduct} canEdit={canEdit} isAdmin={user.role === 'admin'} />;
+        return <ProductsList products={allProducts} goAdd={() => setPage('add')} onView={handleViewProduct} onEdit={handleEditProduct} onDelete={handleDeleteProduct} canEdit={canEdit} isAdmin={user.role === 'admin'} deletingId={deletingId} />;
       case 'view':
         return selectedProduct ? (
           <ViewProduct product={selectedProduct} goBack={() => setPage('list')} companyId={selectedProduct.companyId || user.companyId} companyName={selectedProduct.companyName || user.companyName} />
@@ -169,7 +177,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               <div className="card-icon">📋</div>
               <div>
                 <div className="card-title">Total Products</div>
-                <div className="card-value">{allProducts.length}</div>
+                <div className="card-value">
+                  {loadingProducts
+                    ? <Spinner size="small" />
+                    : allProducts.length}
+                </div>
               </div>
             </div>
             {user.role === 'admin' && (

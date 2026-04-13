@@ -3,6 +3,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import '../ViewProduct.css';
 import type { Product, Company } from '../services/api';
 import { apiGetCompanyById } from '../services/api';
+import Spinner from '../components/Spinner';
 
 function formatMonthYear(val?: string) {
   if (!val) return '—';
@@ -158,11 +159,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
   };
 
   if (!imagesReady) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <p style={{ fontSize: '18px', color: '#666', fontWeight: '500' }}>Loading product details...</p>
-      </div>
-    );
+    return <Spinner size="large" label="Loading product details…" fullArea />;
   }
 
   return (

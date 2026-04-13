@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import type { Product, Company } from '../services/api';
 import { apiGetAllCompanies } from '../services/api';
+import Spinner from '../components/Spinner';
 
 function formatMonthYear(val?: string) {
   if (!val) return '—';
@@ -26,9 +27,10 @@ interface ProductsListProps {
   onDelete?: (product: Product) => void;
   canEdit?: boolean;
   isAdmin?: boolean;
+  deletingId?: string | null;
 }
 
-const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, onEdit, onDelete, canEdit = true, isAdmin = false }) => {
+const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, onEdit, onDelete, canEdit = true, isAdmin = false, deletingId = null }) => {
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -221,11 +223,21 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                     <td>
                       <button className="icon-btn view" onClick={() => onView(product)}>View</button>
                       {canEdit && <button className="icon-btn edit" onClick={() => onEdit?.(product)}>Edit</button>}
-                      {canEdit && <button className="icon-btn delete" onClick={() => {
-                        if (window.confirm(`Move "${product.name}" to trash?`)) {
-                          onDelete?.(product);
-                        }
-                      }}>Delete</button>}
+                      {canEdit && (
+                        <button
+                          className="icon-btn delete"
+                          disabled={deletingId === product.uniqueId}
+                          onClick={() => {
+                            if (window.confirm(`Move "${product.name}" to trash?`)) {
+                              onDelete?.(product);
+                            }
+                          }}
+                        >
+                          {deletingId === product.uniqueId
+                            ? <Spinner size="small" />
+                            : 'Delete'}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
