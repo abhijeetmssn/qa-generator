@@ -194,6 +194,12 @@ async function initDB() {
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_scan_events_company_id ON scan_events (company_id);
     `);
+    // Add location columns if not present (safe to run repeatedly)
+    await client.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS country VARCHAR(100)`);
+    await client.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS region VARCHAR(100)`);
+    await client.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS city VARCHAR(100)`);
+    await client.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS latitude FLOAT`);
+    await client.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS longitude FLOAT`);
 
     // Migrate products table: add columns if table already existed without them
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS is_master BOOLEAN DEFAULT false');

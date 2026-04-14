@@ -555,6 +555,11 @@ export interface ScanEvent {
   scannedAt?: string;
   userAgent?: string;
   ipAddress?: string;
+  country?: string;
+  region?: string;
+  city?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface ScanSummary {
@@ -562,14 +567,28 @@ export interface ScanSummary {
   productName: string;
   totalScans: number;
   lastScanned: string | null;
-  recentScans: { scannedAt: string; userAgent: string | null; ipAddress: string | null }[];
+  recentScans: {
+    scannedAt: string;
+    userAgent: string | null;
+    ipAddress: string | null;
+    country: string | null;
+    region: string | null;
+    city: string | null;
+    latitude: number | null;
+    longitude: number | null;
+  }[];
 }
 
 export async function logScanEvent(event: ScanEvent): Promise<void> {
   await pool.query(
-    `INSERT INTO scan_events (product_id, company_id, product_name, user_agent, ip_address)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [event.productId, event.companyId || null, event.productName || null, event.userAgent || null, event.ipAddress || null]
+    `INSERT INTO scan_events (product_id, company_id, product_name, user_agent, ip_address, country, region, city, latitude, longitude)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+    [
+      event.productId, event.companyId || null, event.productName || null,
+      event.userAgent || null, event.ipAddress || null,
+      event.country || null, event.region || null, event.city || null,
+      event.latitude ?? null, event.longitude ?? null,
+    ]
   );
 }
 
@@ -598,7 +617,8 @@ export async function getScanAnalytics(companyId?: number): Promise<{ summary: S
   const summary: ScanSummary[] = await Promise.all(
     summaryRows.map(async (row: any) => {
       const { rows: recent } = await pool.query(
-        `SELECT se.scanned_at, se.user_agent, se.ip_address
+        `SELECT se.scanned_at, se.user_agent, se.ip_address,
+                se.country, se.region, se.city, se.latitude, se.longitude
          FROM scan_events se
          JOIN companies c ON c.id = se.company_id
          WHERE se.product_id = $1 AND c.scan_analytics_enabled = true
@@ -615,6 +635,11 @@ export async function getScanAnalytics(companyId?: number): Promise<{ summary: S
           scannedAt: new Date(r.scanned_at).toISOString(),
           userAgent: r.user_agent || null,
           ipAddress: r.ip_address || null,
+          country: r.country || null,
+          region: r.region || null,
+          city: r.city || null,
+          latitude: r.latitude ?? null,
+          longitude: r.longitude ?? null,
         })),
       };
     })

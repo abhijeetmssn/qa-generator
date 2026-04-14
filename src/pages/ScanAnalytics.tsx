@@ -130,20 +130,38 @@ const ScanAnalytics: React.FC = () => {
                       <thead>
                         <tr style={{ background: '#f8fafc' }}>
                           <th style={{ padding: '8px 18px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>Date & Time</th>
+                          <th style={{ padding: '8px 18px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>Location</th>
                           <th style={{ padding: '8px 18px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>IP Address</th>
                           <th style={{ padding: '8px 18px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>Device / Browser</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {item.recentScans.map((scan, idx) => (
+                        {item.recentScans.map((scan, idx) => {
+                          const locationParts = [scan.city, scan.region, scan.country].filter(Boolean);
+                          const location = locationParts.length > 0 ? locationParts.join(', ') : '—';
+                          return (
                           <tr key={idx} style={{ borderTop: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '8px 18px', color: '#334155' }}>{formatDate(scan.scannedAt)}</td>
+                            <td style={{ padding: '8px 18px', color: '#334155', whiteSpace: 'nowrap' }}>{formatDate(scan.scannedAt)}</td>
+                            <td style={{ padding: '8px 18px', color: '#334155' }}>
+                              {location}
+                              {scan.latitude && scan.longitude && (
+                                <a
+                                  href={`https://www.google.com/maps?q=${scan.latitude},${scan.longitude}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ marginLeft: '6px', fontSize: '0.8rem', color: '#3b82f6' }}
+                                >
+                                  📍
+                                </a>
+                              )}
+                            </td>
                             <td style={{ padding: '8px 18px', color: '#64748b' }}>{scan.ipAddress || '—'}</td>
-                            <td style={{ padding: '8px 18px', color: '#64748b', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <td style={{ padding: '8px 18px', color: '#64748b', maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {scan.userAgent || '—'}
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   )}

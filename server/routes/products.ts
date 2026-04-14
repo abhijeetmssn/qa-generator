@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import geoip from 'geoip-lite';
 import multer from 'multer';
 import * as XLSX from 'xlsx';
 import {
@@ -452,12 +453,20 @@ router.post('/:uniqueId/scan', async (req, res) => {
       null;
     const userAgent = req.headers['user-agent'] || null;
 
+    // Geo-lookup from IP
+    const geo = ipAddress ? geoip.lookup(ipAddress) : null;
+
     await logScanEvent({
       productId: uniqueId,
       companyId: product.companyId,
       productName: product.name,
       ipAddress: ipAddress ?? undefined,
       userAgent: userAgent ?? undefined,
+      country: geo?.country ?? undefined,
+      region: geo?.region ?? undefined,
+      city: geo?.city ?? undefined,
+      latitude: geo?.ll?.[0] ?? undefined,
+      longitude: geo?.ll?.[1] ?? undefined,
     });
 
     return res.json({ ok: true });
