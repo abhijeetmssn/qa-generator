@@ -290,7 +290,7 @@ export async function addCompany(company: Company): Promise<Company> {
   const { rows } = await pool.query(
     `INSERT INTO companies (name, logo, address, phone, email, website)
      VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING id, name, logo, address, phone, email, website, created_at`,
+     RETURNING id, name, logo, address, phone, email, website, created_date`,
     [company.name, company.logo || null, company.address || null, company.phone || null, company.email || null, company.website || null]
   );
   return {
@@ -301,7 +301,7 @@ export async function addCompany(company: Company): Promise<Company> {
     phone: rows[0].phone,
     email: rows[0].email,
     website: rows[0].website,
-    createdAt: rows[0].created_at,
+    createdAt: rows[0].created_date,
   };
 }
 
@@ -316,7 +316,7 @@ export async function getCompanyByName(name: string): Promise<Company | undefine
     phone: rows[0].phone,
     email: rows[0].email,
     website: rows[0].website,
-    createdAt: rows[0].created_at,
+    createdAt: rows[0].created_date,
   };
 }
 
@@ -332,7 +332,7 @@ export async function getCompanyById(id: number): Promise<Company | undefined> {
     phone: rows[0].phone,
     email: rows[0].email,
     website: rows[0].website,
-    createdAt: rows[0].created_at,
+    createdAt: rows[0].created_date,
   };
 }
 
@@ -346,7 +346,7 @@ export async function getAllCompanies(): Promise<Company[]> {
     phone: row.phone,
     email: row.email,
     website: row.website,
-    createdAt: row.created_at,
+    createdAt: row.created_date,
   }));
 }
 
@@ -390,7 +390,7 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
     phone: rows[0].phone,
     email: rows[0].email,
     website: rows[0].website,
-    createdAt: rows[0].created_at,
+    createdAt: rows[0].created_date,
   };
 }
 
@@ -441,7 +441,7 @@ export async function findUserByEmail(email: string): Promise<User | undefined> 
     uid: rows[0].uid,
     email: rows[0].email,
     password: rows[0].password,
-    createdAt: rows[0].created_at,
+    createdAt: rows[0].created_date,
     companyId: rows[0].company_id,
     role: rows[0].role || 'user',
   };
