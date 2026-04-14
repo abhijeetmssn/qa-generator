@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import geoip from 'geoip-lite';
 import multer from 'multer';
+import sharp from 'sharp';
 import * as XLSX from 'xlsx';
 import {
   getProducts,
@@ -116,7 +117,13 @@ router.post('/:uniqueId/upload-image', authenticateToken, productImageUpload.sin
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
-    const success = await updateProductImage(uniqueId, req.file.buffer);
+    // Resize to max 800×800, convert to WebP at 80% quality before storing
+    const resizedBuffer = await sharp(req.file.buffer)
+      .resize({ width: 800, height: 800, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    const success = await updateProductImage(uniqueId, resizedBuffer);
     if (!success) {
       return res.status(500).json({ error: 'Failed to save image' });
     }
