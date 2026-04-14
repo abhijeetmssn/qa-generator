@@ -447,14 +447,20 @@ router.post('/:uniqueId/scan', async (req, res) => {
       }
     }
 
-    const ipAddress =
+    const rawIp =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      (req.headers['x-real-ip'] as string)?.trim() ||
       req.socket.remoteAddress ||
       null;
+
+    // Normalise IPv4-mapped IPv6 (::ffff:1.2.3.4 → 1.2.3.4)
+    const ipAddress = rawIp?.replace(/^::ffff:/, '') || null;
+
     const userAgent = req.headers['user-agent'] || null;
 
-    // Geo-lookup from IP
+    // Geo-lookup — geoip-lite returns null for private/loopback IPs
     const geo = ipAddress ? geoip.lookup(ipAddress) : null;
+    console.log(`[scan] ip=${ipAddress} geo=${JSON.stringify(geo)}`);
 
     await logScanEvent({
       productId: uniqueId,
