@@ -33,144 +33,137 @@ const ScanAnalytics: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}>
-        <div style={{ fontSize: '1.1rem', color: '#64748b' }}>Loading scan data...</div>
-      </div>
-    );
+    return <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading scan data...</div>;
   }
 
   if (error) {
     return (
-      <div style={{ padding: '24px', color: '#dc2626', background: '#fef2f2', borderRadius: '8px' }}>
-        {error}
+      <div className="products-list-page">
+        <div className="products-list-header"><h1>📲 Scan Analytics</h1></div>
+        <div className="products-table-card">
+          <div style={{ padding: '24px', color: '#dc2626' }}>{error}</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Summary card */}
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-        <div className="card" style={{ flex: '1', minWidth: '160px' }}>
-          <div className="card-icon">📲</div>
-          <div>
-            <div className="card-title">Total Scans</div>
-            <div className="card-value">{totalScans}</div>
-          </div>
-        </div>
-        <div className="card" style={{ flex: '1', minWidth: '160px' }}>
-          <div className="card-icon">📦</div>
-          <div>
-            <div className="card-title">Products Scanned</div>
-            <div className="card-value">{summary.length}</div>
-          </div>
-        </div>
+    <div className="products-list-page">
+      <div className="products-list-header">
+        <h1>📲 Scan Analytics</h1>
+        <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
+          {totalScans} total scan{totalScans !== 1 ? 's' : ''} across {summary.length} product{summary.length !== 1 ? 's' : ''}
+        </p>
       </div>
 
-      {summary.length === 0 ? (
-        <div style={{
-          textAlign: 'center', padding: '48px 24px',
-          background: '#f8fafc', borderRadius: '12px',
-          color: '#64748b', fontSize: '1rem',
-        }}>
-          No scans recorded yet. Share your product QR codes to start tracking.
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ fontWeight: 700, color: '#1e3a8a', fontSize: '1rem' }}>
-            Scan Details by Product
-          </div>
-          {summary.map((item) => (
-            <div key={item.productId} style={{
-              background: '#fff', border: '1px solid #e2e8f0',
-              borderRadius: '10px', overflow: 'hidden',
-            }}>
-              {/* Row header */}
-              <div
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '14px 18px', cursor: 'pointer',
-                  background: expandedProduct === item.productId ? '#eff6ff' : '#fff',
-                }}
-                onClick={() => setExpandedProduct(expandedProduct === item.productId ? null : item.productId)}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{
-                    background: '#dbeafe', color: '#1e40af',
-                    fontWeight: 700, fontSize: '0.8rem', padding: '2px 8px', borderRadius: '20px',
-                  }}>
-                    #{item.productId}
-                  </span>
-                  <span style={{ fontWeight: 600, color: '#1e293b' }}>{item.productName}</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <span style={{
-                    background: '#dcfce7', color: '#166534',
-                    fontWeight: 700, padding: '3px 12px', borderRadius: '20px', fontSize: '0.9rem',
-                  }}>
-                    {item.totalScans} scan{item.totalScans !== 1 ? 's' : ''}
-                  </span>
-                  <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>
-                    {item.lastScanned ? `Last: ${formatDate(item.lastScanned)}` : 'No scans yet'}
-                  </span>
-                  <span style={{ color: '#94a3b8' }}>{expandedProduct === item.productId ? '▲' : '▼'}</span>
-                </div>
-              </div>
+      <div className="products-table-card">
+        <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
+          <table className="products-table">
+            <thead>
+              <tr>
+                <th>S.N.</th>
+                <th>Product Name</th>
+                <th>Product ID</th>
+                <th>Total Scans</th>
+                <th>Last Scanned</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {summary.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                    No scans recorded yet. Share your product QR codes to start tracking.
+                  </td>
+                </tr>
+              ) : (
+                summary.map((item, idx) => (
+                  <React.Fragment key={item.productId}>
+                    <tr>
+                      <td>{idx + 1}</td>
+                      <td>{item.productName}</td>
+                      <td>{item.productId}</td>
+                      <td>
+                        <span style={{
+                          background: '#dcfce7', color: '#166534',
+                          fontWeight: 700, padding: '2px 10px',
+                          borderRadius: '20px', fontSize: '0.85rem',
+                        }}>
+                          {item.totalScans}
+                        </span>
+                      </td>
+                      <td style={{ color: '#64748b', fontSize: '0.875rem' }}>
+                        {item.lastScanned ? formatDate(item.lastScanned) : '—'}
+                      </td>
+                      <td>
+                        <button
+                          className="icon-btn edit"
+                          onClick={() => setExpandedProduct(expandedProduct === item.productId ? null : item.productId)}
+                        >
+                          {expandedProduct === item.productId ? '▲ Hide' : '▼ View'}
+                        </button>
+                      </td>
+                    </tr>
 
-              {/* Expanded recent scans */}
-              {expandedProduct === item.productId && (
-                <div style={{ borderTop: '1px solid #e2e8f0' }}>
-                  {item.recentScans.length === 0 ? (
-                    <div style={{ padding: '14px 18px', color: '#94a3b8', fontSize: '0.88rem' }}>
-                      No recent scan details.
-                    </div>
-                  ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                      <thead>
-                        <tr style={{ background: '#f8fafc' }}>
-                          <th style={{ padding: '8px 18px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>Date & Time</th>
-                          <th style={{ padding: '8px 18px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>Location</th>
-                          <th style={{ padding: '8px 18px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>IP Address</th>
-                          <th style={{ padding: '8px 18px', textAlign: 'left', color: '#64748b', fontWeight: 600 }}>Device / Browser</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {item.recentScans.map((scan, idx) => {
-                          const locationParts = [scan.city, scan.region, scan.country].filter(Boolean);
-                          const location = locationParts.length > 0 ? locationParts.join(', ') : '—';
-                          return (
-                          <tr key={idx} style={{ borderTop: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '8px 18px', color: '#334155', whiteSpace: 'nowrap' }}>{formatDate(scan.scannedAt)}</td>
-                            <td style={{ padding: '8px 18px', color: '#334155' }}>
-                              {location}
-                              {scan.latitude && scan.longitude && (
-                                <a
-                                  href={`https://www.google.com/maps?q=${scan.latitude},${scan.longitude}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{ marginLeft: '6px', fontSize: '0.8rem', color: '#3b82f6' }}
-                                >
-                                  📍
-                                </a>
-                              )}
-                            </td>
-                            <td style={{ padding: '8px 18px', color: '#64748b' }}>{scan.ipAddress || '—'}</td>
-                            <td style={{ padding: '8px 18px', color: '#64748b', maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {scan.userAgent || '—'}
-                            </td>
-                          </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
+                    {expandedProduct === item.productId && (
+                      <tr>
+                        <td colSpan={6} style={{ padding: 0, background: '#f8fafc' }}>
+                          {item.recentScans.length === 0 ? (
+                            <div style={{ padding: '16px 24px', color: '#94a3b8', fontSize: '0.88rem' }}>
+                              No recent scan details available.
+                            </div>
+                          ) : (
+                            <table className="products-table" style={{ margin: 0, borderTop: '1px solid #e2e8f0' }}>
+                              <thead>
+                                <tr>
+                                  <th>#</th>
+                                  <th>Date & Time</th>
+                                  <th>Location</th>
+                                  <th>IP Address</th>
+                                  <th>Device / Browser</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {item.recentScans.map((scan, i) => {
+                                  const locationParts = [scan.city, scan.region, scan.country].filter(Boolean);
+                                  const location = locationParts.length > 0 ? locationParts.join(', ') : '—';
+                                  return (
+                                    <tr key={i}>
+                                      <td>{i + 1}</td>
+                                      <td style={{ whiteSpace: 'nowrap' }}>{formatDate(scan.scannedAt)}</td>
+                                      <td>
+                                        {location}
+                                        {scan.latitude && scan.longitude && (
+                                          <a
+                                            href={`https://www.google.com/maps?q=${scan.latitude},${scan.longitude}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ marginLeft: '6px', fontSize: '0.85rem' }}
+                                          >
+                                            📍
+                                          </a>
+                                        )}
+                                      </td>
+                                      <td>{scan.ipAddress || '—'}</td>
+                                      <td style={{ maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {scan.userAgent || '—'}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))
               )}
-            </div>
-          ))}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </div>
   );
 };
