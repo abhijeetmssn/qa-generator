@@ -306,6 +306,22 @@ export async function apiRenewSubscription(id: number): Promise<Company> {
 }
 
 // ── Admin ──
+export interface LockedUser {
+  uid: string;
+  email: string;
+  lockedAt: string;
+  companyId?: number;
+}
+
+export async function apiGetLockedUsers(): Promise<LockedUser[]> {
+  const data = await request<{ users: LockedUser[] }>('/admin/locked-users');
+  return data.users;
+}
+
+export async function apiUnlockUser(uid: string): Promise<void> {
+  await request(`/admin/users/${uid}/unlock`, { method: 'POST' });
+}
+
 export async function apiExportDatabase(): Promise<void> {
   const token = getToken();
   const res = await fetch(`${API_BASE}/admin/export-sql`, {

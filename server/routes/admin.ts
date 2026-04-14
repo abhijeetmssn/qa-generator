@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken, requireRole } from '../middleware';
 import pool from '../pool';
+import { getLockedUsers, unlockUser } from '../db';
 
 const router = Router();
 
@@ -153,6 +154,29 @@ router.get('/export-sql', authenticateToken, requireRole('admin'), async (_req: 
   } catch (err) {
     console.error('SQL export error:', err);
     res.status(500).json({ error: 'Failed to export database' });
+  }
+});
+
+// GET /api/admin/locked-users — list all locked user accounts (admin only)
+router.get('/locked-users', authenticateToken, requireRole('admin'), async (_req: Request, res: Response) => {
+  try {
+    const users = await getLockedUsers();
+    res.json({ users });
+  } catch (err) {
+    console.error('Get locked users error:', err);
+    res.status(500).json({ error: 'Failed to fetch locked users' });
+  }
+});
+
+// POST /api/admin/users/:uid/unlock — unlock a user account (admin only)
+router.post('/users/:uid/unlock', authenticateToken, requireRole('admin'), async (req: Request, res: Response) => {
+  try {
+    const { uid } = req.params;
+    await unlockUser(uid);
+    res.json({ message: 'User unlocked successfully' });
+  } catch (err) {
+    console.error('Unlock user error:', err);
+    res.status(500).json({ error: 'Failed to unlock user' });
   }
 });
 

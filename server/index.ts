@@ -329,6 +329,10 @@ async function initDB() {
     await client.query(`UPDATE users SET role = 'admin' WHERE uid IN ('demo-admin-001', 'demo-admin-002')`);
     await client.query(`ALTER TABLE users ALTER COLUMN role SET DEFAULT 'viewer'`);
 
+    // Add account lockout columns
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INT DEFAULT 0`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_at TIMESTAMPTZ`);
+
     await client.query('COMMIT');
     console.log('✅ Database tables ready');
   } catch (err) {

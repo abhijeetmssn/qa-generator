@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { apiCreateUser, apiGetAllCompanies } from '../services/api';
-import type { UserRole, Company } from '../services/api';
+import { apiCreateUser, apiGetAllCompanies, apiGetLockedUsers, apiUnlockUser } from '../services/api';
+import type { UserRole, Company, LockedUser } from '../services/api';
 
 interface ManageUsersProps {
   adminCompanyName?: string;
@@ -15,8 +15,23 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companiesLoading, setCompaniesLoading] = useState(false);
+  const [lockedUsers, setLockedUsers] = useState<LockedUser[]>([]);
+  const [lockedLoading, setLockedLoading] = useState(false);
+  const [unlockingUid, setUnlockingUid] = useState<string | null>(null);
 
-  // Fetch companies on mount
+  const fetchLockedUsers = async () => {
+    setLockedLoading(true);
+    try {
+      const data = await apiGetLockedUsers();
+      setLockedUsers(data);
+    } catch (err: any) {
+      console.error('Failed to fetch locked users:', err.message);
+    } finally {
+      setLockedLoading(false);
+    }
+  };
+
+  // Fetch companies and locked users on mount
   useEffect(() => {
     const fetchCompanies = async () => {
       setCompaniesLoading(true);
@@ -37,7 +52,20 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
       }
     };
     fetchCompanies();
+    fetchLockedUsers();
   }, [adminCompanyName]);
+
+  const handleUnlock = async (uid: string) => {
+    setUnlockingUid(uid);
+    try {
+      await apiUnlockUser(uid);
+      setLockedUsers(prev => prev.filter(u => u.uid !== uid));
+    } catch (err: any) {
+      console.error('Failed to unlock user:', err.message);
+    } finally {
+      setUnlockingUid(null);
+    }
+  };
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,6 +243,91 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
           </button>
         </div>
       </form>
+
+      {/* Locked Users Section */}
+      <div style={{ marginTop: '40px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div>
+            <h2 style={{ marginBottom: '4px', color: '#1e293b' }}>Locked Accounts</h2>
+            <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
+              Users locked after 5 consecutive failed login attempts.
+            </p>
+          </div>
+          <button
+            onClick={fetchLockedUsers}
+            disabled={lockedLoading}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '8px',
+              border: '1px solid #d1d5db',
+              background: 'white',
+              cursor: 'pointer',
+              fontSize: '13px',
+              color: '#374151',
+            }}
+          >
+            {lockedLoading ? '⏳ Refreshing...' : '↻ Refresh'}
+          </button>
+        </div>
+
+        {lockedLoading ? (
+          <p style={{ color: '#6366f1', fontSize: '14px' }}>Loading locked accounts...</p>
+        ) : lockedUsers.length === 0 ? (
+          <div style={{
+            padding: '20px',
+            borderRadius: '10px',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            color: '#64748b',
+            fontSize: '14px',
+            textAlign: 'center',
+          }}>
+            No locked accounts.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {lockedUsers.map(user => (
+              <div
+                key={user.uid}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '14px 16px',
+                  borderRadius: '10px',
+                  border: '1px solid #fecaca',
+                  background: '#fef2f2',
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '14px' }}>
+                    🔒 {user.email}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                    Locked at: {new Date(user.lockedAt).toLocaleString()}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleUnlock(user.uid)}
+                  disabled={unlockingUid === user.uid}
+                  style={{
+                    padding: '6px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: unlockingUid === user.uid ? '#d1d5db' : '#4f46e5',
+                    color: 'white',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    cursor: unlockingUid === user.uid ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {unlockingUid === user.uid ? 'Unlocking...' : 'Unlock'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

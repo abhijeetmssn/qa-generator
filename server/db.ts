@@ -53,6 +53,8 @@ export interface User {
   createdAt: string;
   companyId?: number;
   role?: UserRole;
+  failedLoginAttempts?: number;
+  lockedAt?: string | null;
 }
 
 // ── Helper: map a DB row to Product ──
@@ -479,7 +481,52 @@ export async function findUserByEmail(email: string): Promise<User | undefined> 
     createdAt: rows[0].created_date,
     companyId: rows[0].company_id,
     role: rows[0].role || 'user',
+    failedLoginAttempts: rows[0].failed_login_attempts ?? 0,
+    lockedAt: rows[0].locked_at ?? null,
   };
+}
+
+export async function incrementFailedAttempts(email: string): Promise<number> {
+  const { rows } = await pool.query(
+    `UPDATE users SET failed_login_attempts = failed_login_attempts + 1 WHERE email = $1
+     RETURNING failed_login_attempts`,
+    [email]
+  );
+  return rows[0]?.failed_login_attempts ?? 0;
+}
+
+export async function lockUser(email: string): Promise<void> {
+  await pool.query(
+    `UPDATE users SET locked_at = NOW() WHERE email = $1`,
+    [email]
+  );
+}
+
+export async function unlockUser(uid: string): Promise<void> {
+  await pool.query(
+    `UPDATE users SET locked_at = NULL, failed_login_attempts = 0 WHERE uid = $1`,
+    [uid]
+  );
+}
+
+export async function resetFailedAttempts(email: string): Promise<void> {
+  await pool.query(
+    `UPDATE users SET failed_login_attempts = 0, locked_at = NULL WHERE email = $1`,
+    [email]
+  );
+}
+
+export async function getLockedUsers(companyId?: number): Promise<{ uid: string; email: string; lockedAt: string; companyId?: number }[]> {
+  const query = companyId
+    ? `SELECT uid, email, locked_at, company_id FROM users WHERE locked_at IS NOT NULL AND company_id = $1 ORDER BY locked_at DESC`
+    : `SELECT uid, email, locked_at, company_id FROM users WHERE locked_at IS NOT NULL ORDER BY locked_at DESC`;
+  const { rows } = await pool.query(query, companyId ? [companyId] : []);
+  return rows.map(r => ({
+    uid: r.uid,
+    email: r.email,
+    lockedAt: r.locked_at,
+    companyId: r.company_id,
+  }));
 }
 
 export async function addUser(user: User): Promise<User> {

@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import path from 'path';
-import { findUserByEmail, addUser, getCompanyById, updateCompanyLogo } from '../db';
+import { findUserByEmail, addUser, getCompanyById, updateCompanyLogo, incrementFailedAttempts, lockUser, resetFailedAttempts } from '../db';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'qa-generator-secret-key-2026';
@@ -35,10 +35,23 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    // Check if account is locked
+    if (user.lockedAt) {
+      return res.status(423).json({ error: 'Account locked due to too many failed login attempts. Please contact your administrator.' });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      const attempts = await incrementFailedAttempts(email);
+      if (attempts >= 5) {
+        await lockUser(email);
+        return res.status(423).json({ error: 'Account locked due to too many failed login attempts. Please contact your administrator.' });
+      }
+      return res.status(401).json({ error: `Invalid email or password. ${5 - attempts} attempt(s) remaining.` });
     }
+
+    // Successful login — reset failed attempts
+    await resetFailedAttempts(email);
 
     // Fetch company details
     let companyName: string | undefined = undefined;
