@@ -24,14 +24,20 @@ const allowedOrigins = [
   'http://localhost:5176', 'http://localhost:5177',
   'http://qrgenerators.in', 'https://qrgenerators.in',
   'http://www.qrgenerators.in', 'https://www.qrgenerators.in',
+  'http://apasqr.com', 'https://apasqr.com',
+  'http://www.apasqr.com', 'https://www.apasqr.com',
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ];
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, etc.)
+    // Allow requests with no origin (mobile apps, curl, Postman, etc.)
     if (!origin) return callback(null, true);
-    // Allow any *.vercel.app domain or known origins
-    if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
+    // Allow known origins, vercel preview URLs, and any apasqr.com subdomain
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.endsWith('.apasqr.com')
+    ) {
       return callback(null, true);
     }
     callback(new Error('Not allowed by CORS'));
