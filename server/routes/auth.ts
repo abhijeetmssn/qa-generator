@@ -48,6 +48,14 @@ router.post('/login', async (req, res) => {
       if (company) {
         companyName = company.name;
         companyAddress = company.address;
+
+        // Block non-admin users if subscription has expired
+        if (user.role !== 'admin' && company.subscriptionExpiresAt) {
+          const expired = new Date(company.subscriptionExpiresAt).getTime() < Date.now();
+          if (expired) {
+            return res.status(403).json({ error: 'Monthly subscription has expired. Please contact your administrator to renew.' });
+          }
+        }
       }
     }
 

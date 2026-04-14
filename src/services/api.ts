@@ -275,7 +275,7 @@ export async function apiGetCompanyById(id: number): Promise<Company> {
 }
 
 // Public company info (no auth required)
-export async function apiGetCompanyPublic(id: number): Promise<{ id: number; name: string; phone?: string; email?: string; website?: string; address?: string; scanAnalyticsEnabled?: boolean }> {
+export async function apiGetCompanyPublic(id: number): Promise<{ id: number; name: string; phone?: string; email?: string; website?: string; address?: string; scanAnalyticsEnabled?: boolean; subscriptionExpiresAt?: string }> {
   const res = await fetch(`${API_BASE}/companies/${id}/public`);
   if (!res.ok) {
     throw new Error('Company not found');

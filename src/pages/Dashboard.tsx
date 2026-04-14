@@ -398,15 +398,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   {user.companyAddress}
                 </div>
               )}
-              {subscriptionExpiresAt && (() => {
-                const days = getDaysRemaining(subscriptionExpiresAt);
-                const color = days <= 5 ? '#ef4444' : days <= 10 ? '#f59e0b' : '#22c55e';
-                return (
-                  <div style={{ fontSize: '11px', marginBottom: '8px', padding: '4px 8px', borderRadius: '6px', background: days <= 5 ? '#fef2f2' : days <= 10 ? '#fffbeb' : '#f0fdf4', color, fontWeight: 600, textAlign: 'center' }}>
-                    {days > 0 ? `⏳ ${days} day${days !== 1 ? 's' : ''} left` : '⚠️ Subscription expired'}
-                  </div>
-                );
-              })()}
               <div style={{ borderTop: '1px solid #ddd', paddingTop: '8px', marginTop: '8px', fontSize: '11px', color: '#999' }}>
                 Powered By <a href="#">APAS</a>
               </div>
@@ -420,6 +411,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         <header className="header">
           <div className="menu-icon" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</div>
           <div className="header-right">
+            {subscriptionExpiresAt && (() => {
+              const days = getDaysRemaining(subscriptionExpiresAt);
+              const bg = days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : days <= 10 ? '#fffbeb' : '#f0fdf4';
+              const color = days <= 0 ? '#dc2626' : days <= 5 ? '#ea580c' : days <= 10 ? '#d97706' : '#16a34a';
+              return (
+                <div style={{ fontSize: '12px', fontWeight: 700, padding: '5px 12px', borderRadius: '20px', background: bg, color, border: `1px solid ${color}22` }}>
+                  {days > 0 ? `⏳ ${days}d left` : '⚠️ Expired'}
+                </div>
+              );
+            })()}
             {user && (
               <div className="user-profile">
                 <button

@@ -10,7 +10,8 @@ type PublicProductProps = {
 const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
   const [product, setProduct] = useState<Product | null>(null);
-  const [company, setCompany] = useState<{ id: number; name: string; phone?: string; email?: string; website?: string; address?: string } | null>(null);
+  const [company, setCompany] = useState<{ id: number; name: string; phone?: string; email?: string; website?: string; address?: string; scanAnalyticsEnabled?: boolean; subscriptionExpiresAt?: string } | null>(null);
+  const [subscriptionExpired, setSubscriptionExpired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [logoError, setLogoError] = useState(false);
@@ -26,12 +27,16 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
           if (prod.companyId) {
             apiGetCompanyPublic(prod.companyId).then(co => {
               setCompany(co);
+              // Check if subscription is expired
+              if (co.subscriptionExpiresAt && new Date(co.subscriptionExpiresAt).getTime() < Date.now()) {
+                setSubscriptionExpired(true);
+                return;
+              }
               if (co.scanAnalyticsEnabled !== false) {
-                // Try GPS first, fall back to IP geo on server if denied/unavailable
                 if (navigator.geolocation) {
                   navigator.geolocation.getCurrentPosition(
                     (pos) => apiLogScan(uniqueId, { latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-                    () => apiLogScan(uniqueId), // permission denied — server will use IP geo
+                    () => apiLogScan(uniqueId),
                     { timeout: 5000, maximumAge: 60000 }
                   );
                 } else {
@@ -71,6 +76,22 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
     };
     loadProduct();
   }, [uniqueId]);
+
+  if (subscriptionExpired) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '24px' }}>
+        <div style={{ textAlign: 'center', maxWidth: '400px' }}>
+          <div style={{ fontSize: '4rem', marginBottom: '16px' }}>⚠️</div>
+          <h2 style={{ color: '#dc2626', fontWeight: 700, marginBottom: '12px', fontSize: '1.4rem' }}>
+            Monthly Subscription Expired
+          </h2>
+          <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: 1.6 }}>
+            This product's QR verification is currently unavailable. The company's maintenance subscription has expired. Please contact the company to resolve this.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

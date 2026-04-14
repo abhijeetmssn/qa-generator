@@ -46,7 +46,7 @@ router.get('/:id/public', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Company not found' });
     }
     // Return public-safe fields including contact details for product pages
-    res.json({ id: company.id, name: company.name, phone: company.phone, email: company.email, website: company.website, address: company.address, scanAnalyticsEnabled: company.scanAnalyticsEnabled });
+    res.json({ id: company.id, name: company.name, phone: company.phone, email: company.email, website: company.website, address: company.address, scanAnalyticsEnabled: company.scanAnalyticsEnabled, subscriptionExpiresAt: company.subscriptionExpiresAt });
   } catch (error) {
     console.error('Error fetching public company info:', error);
     res.status(500).json({ error: 'Failed to fetch company info' });
