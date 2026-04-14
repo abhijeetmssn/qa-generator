@@ -455,12 +455,49 @@ router.post('/:uniqueId/scan', async (req, res) => {
 
     // Normalise IPv4-mapped IPv6 (::ffff:1.2.3.4 → 1.2.3.4)
     const ipAddress = rawIp?.replace(/^::ffff:/, '') || null;
-
     const userAgent = req.headers['user-agent'] || null;
 
-    // Geo-lookup — geoip-lite returns null for private/loopback IPs
-    const geo = ipAddress ? geoip.lookup(ipAddress) : null;
-    console.log(`[scan] ip=${ipAddress} geo=${JSON.stringify(geo)}`);
+    // GPS coords sent from browser take priority over IP geolocation
+    const bodyLat = typeof req.body?.latitude === 'number' ? req.body.latitude : null;
+    const bodyLon = typeof req.body?.longitude === 'number' ? req.body.longitude : null;
+
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    let country: string | null = null;
+    let region: string | null = null;
+    let city: string | null = null;
+
+    if (bodyLat !== null && bodyLon !== null) {
+      // Use GPS coordinates from browser and reverse-geocode via OpenStreetMap Nominatim
+      latitude = bodyLat;
+      longitude = bodyLon;
+      try {
+        const geoRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${bodyLat}&lon=${bodyLon}&format=json`,
+          { headers: { 'User-Agent': 'qa-generator-scan-tracker/1.0' }, signal: AbortSignal.timeout(4000) }
+        );
+        if (geoRes.ok) {
+          const geoData: any = await geoRes.json();
+          country = geoData?.address?.country ?? null;
+          region = geoData?.address?.state ?? geoData?.address?.county ?? null;
+          city = geoData?.address?.city ?? geoData?.address?.town ?? geoData?.address?.village ?? null;
+        }
+      } catch {
+        // Nominatim unavailable — leave city/country blank, coordinates still saved
+      }
+    } else {
+      // Fall back to IP geolocation
+      const geo = ipAddress ? geoip.lookup(ipAddress) : null;
+      if (geo) {
+        latitude = geo.ll?.[0] ?? null;
+        longitude = geo.ll?.[1] ?? null;
+        country = geo.country ?? null;
+        region = geo.region ?? null;
+        city = geo.city ?? null;
+      }
+    }
+
+    console.log(`[scan] ip=${ipAddress} gps=${bodyLat},${bodyLon} resolved=${city},${country}`);
 
     await logScanEvent({
       productId: uniqueId,
@@ -468,11 +505,11 @@ router.post('/:uniqueId/scan', async (req, res) => {
       productName: product.name,
       ipAddress: ipAddress ?? undefined,
       userAgent: userAgent ?? undefined,
-      country: geo?.country ?? undefined,
-      region: geo?.region ?? undefined,
-      city: geo?.city ?? undefined,
-      latitude: geo?.ll?.[0] ?? undefined,
-      longitude: geo?.ll?.[1] ?? undefined,
+      country: country ?? undefined,
+      region: region ?? undefined,
+      city: city ?? undefined,
+      latitude: latitude ?? undefined,
+      longitude: longitude ?? undefined,
     });
 
     return res.json({ ok: true });

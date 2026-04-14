@@ -392,9 +392,13 @@ export interface ScanAnalyticsResponse {
   totalScans: number;
 }
 
-export async function apiLogScan(uniqueId: string): Promise<void> {
+export async function apiLogScan(uniqueId: string, coords?: { latitude: number; longitude: number }): Promise<void> {
   try {
-    await fetch(`${API_BASE}/products/${uniqueId}/scan`, { method: 'POST' });
+    await fetch(`${API_BASE}/products/${uniqueId}/scan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(coords ?? {}),
+    });
   } catch {
     // fire-and-forget — never block the public page
   }

@@ -27,7 +27,16 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
             apiGetCompanyPublic(prod.companyId).then(co => {
               setCompany(co);
               if (co.scanAnalyticsEnabled !== false) {
-                apiLogScan(uniqueId);
+                // Try GPS first, fall back to IP geo on server if denied/unavailable
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    (pos) => apiLogScan(uniqueId, { latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+                    () => apiLogScan(uniqueId), // permission denied — server will use IP geo
+                    { timeout: 5000, maximumAge: 60000 }
+                  );
+                } else {
+                  apiLogScan(uniqueId);
+                }
               }
             }).catch(console.error);
           } else {
