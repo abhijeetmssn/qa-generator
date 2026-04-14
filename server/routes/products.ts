@@ -17,6 +17,7 @@ import {
   generateUniqueId,
   logScanEvent,
   getScanAnalytics,
+  getCompanyById,
 } from '../db';
 import { authenticateToken, requireRole } from '../middleware';
 import type { Request, Response, NextFunction } from 'express';
@@ -436,6 +437,14 @@ router.post('/:uniqueId/scan', async (req, res) => {
     const { uniqueId } = req.params;
     const product = await getProductByUniqueId(uniqueId);
     if (!product) return res.status(404).json({ error: 'Product not found' });
+
+    // Only log if the company has scan analytics enabled
+    if (product.companyId) {
+      const company = await getCompanyById(product.companyId);
+      if (!company || company.scanAnalyticsEnabled === false) {
+        return res.json({ ok: true, skipped: true });
+      }
+    }
 
     const ipAddress =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
