@@ -10,6 +10,8 @@ interface EditProductProps {
   onCancel: () => void;
 }
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
 const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) => {
   const [form, setForm] = useState({
     name: product.name || '',
@@ -25,7 +27,10 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
   });
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(product.productImage || null);
+  const existingImageUrl = product.productImage
+    ? `${API_BASE.replace('/api', '')}${product.productImage}`
+    : null;
+  const [imagePreview, setImagePreview] = useState<string | null>(existingImageUrl);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
