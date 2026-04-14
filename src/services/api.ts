@@ -392,6 +392,18 @@ export interface ScanSummary {
   recentScans: ScanRecentEntry[];
 }
 
+export async function apiLogScan(uniqueId: string, coords?: { latitude: number; longitude: number }): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/products/${uniqueId}/scan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(coords ?? {}),
+    });
+  } catch {
+    // fire-and-forget — never block the public page
+  }
+}
+
 export interface ScanAnalyticsResponse {
   summary: ScanSummary[];
   totalScans: number;
