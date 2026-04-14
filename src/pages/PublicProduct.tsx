@@ -206,7 +206,7 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
           <div className="view-info-group">
             <label>CUSTOMER CARE CONTACT DETAILS</label>
             <div className="contact-details">
-              {product.manufacturerAddress && <p>🏠 - Regd. Office: {product.manufacturerAddress}</p>}
+              {company?.address && <p>🏠 - Regd. Office: {company.address}</p>}
               {company?.phone && <p>📱 - <a href={`tel:${company.phone}`}>{company.phone}</a></p>}
               {company?.email && <p>✉️ - <a href={`mailto:${company.email}`}>{company.email}</a></p>}
               {company?.website && <p className="website-link">🌐 <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer">{company.website}</a></p>}

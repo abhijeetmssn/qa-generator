@@ -279,7 +279,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
             <div className="view-info-group">
               <label>CUSTOMER CARE CONTACT DETAILS</label>
               <div className="contact-details">
-                {product.manufacturerAddress && <p><strong>🏢</strong> {product.manufacturerAddress}</p>}
+                {company?.address && <p><strong>🏢</strong> {company.address}</p>}
                 <p><strong>📞</strong> {company?.phone || '—'}</p>
                 <p><strong>📧</strong> {company?.email || '—'}</p>
                 <p><strong>🌐</strong> {company?.website ? <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer">{company.website}</a> : '—'}</p>
