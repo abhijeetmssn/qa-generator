@@ -395,20 +395,27 @@ export interface ScanSummary {
 export interface ScanAnalyticsResponse {
   summary: ScanSummary[];
   totalScans: number;
+  totalProducts: number;
 }
 
-export async function apiLogScan(uniqueId: string, coords?: { latitude: number; longitude: number }): Promise<void> {
-  try {
-    await fetch(`${API_BASE}/products/${uniqueId}/scan`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(coords ?? {}),
-    });
-  } catch {
-    // fire-and-forget — never block the public page
-  }
+export interface ScanDetailResponse {
+  scans: ScanRecentEntry[];
+  total: number;
 }
 
-export async function apiGetScanAnalytics(): Promise<ScanAnalyticsResponse> {
-  return request<ScanAnalyticsResponse>('/products/scan-analytics');
+export async function apiGetScanAnalytics(params?: { page?: number; limit?: number; search?: string }): Promise<ScanAnalyticsResponse> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.search) qs.set('search', params.search);
+  const query = qs.toString() ? `?${qs.toString()}` : '';
+  return request<ScanAnalyticsResponse>(`/products/scan-analytics${query}`);
+}
+
+export async function apiGetProductScanDetails(productId: string, params?: { page?: number; limit?: number }): Promise<ScanDetailResponse> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  const query = qs.toString() ? `?${qs.toString()}` : '';
+  return request<ScanDetailResponse>(`/products/scan-analytics/${productId}/scans${query}`);
 }

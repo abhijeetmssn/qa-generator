@@ -620,14 +620,26 @@ export async function logScanEvent(event: ScanEvent): Promise<void> {
   );
 }
 
-export async function getScanAnalytics(companyId?: number): Promise<{ summary: ScanSummary[]; totalScans: number }> {
+export async function getScanAnalytics(
+  options: { companyId?: number; page?: number; limit?: number; search?: string } = {}
+): Promise<{ summary: ScanSummary[]; totalScans: number; totalProducts: number }> {
+  const { companyId, page = 1, limit = 10, search = '' } = options;
+  const offset = (page - 1) * limit;
   const params: any[] = [];
-  // Only return data for companies with scan_analytics_enabled = true
-  const where = companyId
-    ? 'WHERE se.company_id = $1 AND c.scan_analytics_enabled = true'
+  let paramIdx = 1;
+
+  const baseWhere = companyId
+    ? `WHERE se.company_id = $${paramIdx++} AND c.scan_analytics_enabled = true`
     : 'WHERE c.scan_analytics_enabled = true';
   if (companyId) params.push(companyId);
 
+  const searchClause = search
+    ? ` AND (se.product_name ILIKE $${paramIdx++} OR se.product_id ILIKE $${paramIdx++})`
+    : '';
+  if (search) { params.push(`%${search}%`); params.push(`%${search}%`); }
+
+  // Paginated product summary (no recentScans here)
+  const summaryParams = [...params, limit, offset];
   const { rows: summaryRows } = await pool.query(
     `SELECT
        se.product_id,
@@ -636,47 +648,86 @@ export async function getScanAnalytics(companyId?: number): Promise<{ summary: S
        MAX(se.scanned_at) as last_scanned
      FROM scan_events se
      JOIN companies c ON c.id = se.company_id
-     ${where}
+     ${baseWhere}${searchClause}
      GROUP BY se.product_id
-     ORDER BY total_scans DESC`,
-    params
+     ORDER BY total_scans DESC
+     LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+    summaryParams
   );
 
-  const summary: ScanSummary[] = await Promise.all(
-    summaryRows.map(async (row: any) => {
-      const { rows: recent } = await pool.query(
-        `SELECT se.scanned_at, se.user_agent, se.ip_address,
-                se.country, se.region, se.city, se.latitude, se.longitude
-         FROM scan_events se
-         JOIN companies c ON c.id = se.company_id
-         WHERE se.product_id = $1 AND c.scan_analytics_enabled = true
-         ${companyId ? 'AND se.company_id = $2' : ''}
-         ORDER BY se.scanned_at DESC LIMIT 10`,
-        companyId ? [row.product_id, companyId] : [row.product_id]
-      );
-      return {
-        productId: row.product_id,
-        productName: row.product_name || row.product_id,
-        totalScans: parseInt(row.total_scans),
-        lastScanned: row.last_scanned ? new Date(row.last_scanned).toISOString() : null,
-        recentScans: recent.map((r: any) => ({
-          scannedAt: new Date(r.scanned_at).toISOString(),
-          userAgent: r.user_agent || null,
-          ipAddress: r.ip_address || null,
-          country: r.country || null,
-          region: r.region || null,
-          city: r.city || null,
-          latitude: r.latitude ?? null,
-          longitude: r.longitude ?? null,
-        })),
-      };
-    })
+  const summary: ScanSummary[] = summaryRows.map((row: any) => ({
+    productId: row.product_id,
+    productName: row.product_name || row.product_id,
+    totalScans: parseInt(row.total_scans),
+    lastScanned: row.last_scanned ? new Date(row.last_scanned).toISOString() : null,
+    recentScans: [], // fetched separately via getProductScanDetails
+  }));
+
+  // Total matching products
+  const countParams = [...params];
+  const { rows: productCountRows } = await pool.query(
+    `SELECT COUNT(DISTINCT se.product_id) as total
+     FROM scan_events se
+     JOIN companies c ON c.id = se.company_id
+     ${baseWhere}${searchClause}`,
+    countParams
   );
 
+  // Total scans (all, unfiltered by search)
   const { rows: totalRows } = await pool.query(
-    `SELECT COUNT(*) as total FROM scan_events se JOIN companies c ON c.id = se.company_id ${where}`,
+    `SELECT COUNT(*) as total FROM scan_events se JOIN companies c ON c.id = se.company_id ${baseWhere}`,
+    companyId ? [companyId] : []
+  );
+
+  return {
+    summary,
+    totalScans: parseInt(totalRows[0].total),
+    totalProducts: parseInt(productCountRows[0].total),
+  };
+}
+
+export async function getProductScanDetails(
+  productId: string,
+  options: { companyId?: number; page?: number; limit?: number } = {}
+): Promise<{ scans: ScanSummary['recentScans']; total: number }> {
+  const { companyId, page = 1, limit = 5 } = options;
+  const offset = (page - 1) * limit;
+  const params: any[] = [productId];
+  let paramIdx = 2;
+
+  const companyClause = companyId ? ` AND se.company_id = $${paramIdx++}` : '';
+  if (companyId) params.push(companyId);
+
+  const { rows } = await pool.query(
+    `SELECT se.scanned_at, se.user_agent, se.ip_address,
+            se.country, se.region, se.city, se.latitude, se.longitude
+     FROM scan_events se
+     JOIN companies c ON c.id = se.company_id
+     WHERE se.product_id = $1 AND c.scan_analytics_enabled = true${companyClause}
+     ORDER BY se.scanned_at DESC
+     LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+    [...params, limit, offset]
+  );
+
+  const { rows: countRows } = await pool.query(
+    `SELECT COUNT(*) as total
+     FROM scan_events se
+     JOIN companies c ON c.id = se.company_id
+     WHERE se.product_id = $1 AND c.scan_analytics_enabled = true${companyClause}`,
     params
   );
 
-  return { summary, totalScans: parseInt(totalRows[0].total) };
+  return {
+    scans: rows.map((r: any) => ({
+      scannedAt: new Date(r.scanned_at).toISOString(),
+      userAgent: r.user_agent || null,
+      ipAddress: r.ip_address || null,
+      country: r.country || null,
+      region: r.region || null,
+      city: r.city || null,
+      latitude: r.latitude ?? null,
+      longitude: r.longitude ?? null,
+    })),
+    total: parseInt(countRows[0].total),
+  };
 }

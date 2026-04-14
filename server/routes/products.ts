@@ -19,6 +19,7 @@ import {
   generateUniqueId,
   logScanEvent,
   getScanAnalytics,
+  getProductScanDetails,
   getCompanyById,
 } from '../db';
 import { authenticateToken, requireRole } from '../middleware';
@@ -170,17 +171,37 @@ router.get('/:uniqueId/image', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/products/scan-analytics — auth required — scan analytics for company
+// GET /api/products/scan-analytics — auth required — paginated scan analytics for company
 router.get('/scan-analytics', authenticateToken, async (req, res) => {
   try {
     const decoded = (req as any).user;
     const user = decoded?.email ? await findUserByEmail(decoded.email) : null;
     const companyId = user?.companyId;
-    const data = await getScanAnalytics(companyId);
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 10));
+    const search = (req.query.search as string) || '';
+    const data = await getScanAnalytics({ companyId, page, limit, search });
     return res.json(data);
   } catch (err) {
     console.error('Scan analytics error:', err);
     return res.status(500).json({ error: 'Failed to fetch scan analytics' });
+  }
+});
+
+// GET /api/products/scan-analytics/:productId/scans — paginated scan detail for one product
+router.get('/scan-analytics/:productId/scans', authenticateToken, async (req, res) => {
+  try {
+    const decoded = (req as any).user;
+    const user = decoded?.email ? await findUserByEmail(decoded.email) : null;
+    const companyId = user?.companyId;
+    const productId = req.params.productId as string;
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 5));
+    const data = await getProductScanDetails(productId, { companyId, page, limit });
+    return res.json(data);
+  } catch (err) {
+    console.error('Product scan details error:', err);
+    return res.status(500).json({ error: 'Failed to fetch scan details' });
   }
 });
 
