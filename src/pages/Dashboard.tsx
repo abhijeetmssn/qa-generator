@@ -76,8 +76,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   useEffect(() => {
     // Check if URL contains a product ID to view (from QR code scan)
     const hash = window.location.hash;
-    if (hash.startsWith('#product/')) {
-      const productId = hash.replace('#product/', '');
+    if (hash.startsWith('#p/') || hash.startsWith('#product/')) {
+      const productId = hash.startsWith('#p/') ? hash.replace('#p/', '') : hash.replace('#product/', '');
       const product = allProducts.find(p => p.uniqueId === productId);
       if (product) {
         setSelectedProduct(product);

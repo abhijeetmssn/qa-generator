@@ -57,7 +57,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
   }, [product, API_BASE]);
 
   // Build the public product view URL
-  const productUrl = `${window.location.origin}/#product/${product.uniqueId}`;
+  const productUrl = `${window.location.origin}/#p/${product.uniqueId}`;
 
   const handleDownloadQR = () => {
     const svg = qrRef.current?.querySelector('svg');

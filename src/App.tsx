@@ -30,8 +30,8 @@ function App() {
   useEffect(() => {
     // Check if viewing a public product by hash
     const hash = window.location.hash;
-    if (hash.startsWith('#product/')) {
-      const productId = hash.replace('#product/', '');
+    if (hash.startsWith('#p/') || hash.startsWith('#product/')) {
+      const productId = hash.startsWith('#p/') ? hash.replace('#p/', '') : hash.replace('#product/', '');
       setPublicProductId(productId);
       setLoading(false);
       return;
@@ -74,8 +74,8 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
-      if (hash.startsWith('#product/')) {
-        const productId = hash.replace('#product/', '');
+      if (hash.startsWith('#p/') || hash.startsWith('#product/')) {
+        const productId = hash.startsWith('#p/') ? hash.replace('#p/', '') : hash.replace('#product/', '');
         setPublicProductId(productId);
       } else {
         setPublicProductId(null);
