@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken, requireRole } from '../middleware';
 import pool from '../pool';
-import { getLockedUsers, unlockUser } from '../db';
+import { getLockedUsers, unlockUser, lockUser, getAllUsers } from '../db';
 
 const router = Router();
 
@@ -154,6 +154,34 @@ router.get('/export-sql', authenticateToken, requireRole('admin'), async (_req: 
   } catch (err) {
     console.error('SQL export error:', err);
     res.status(500).json({ error: 'Failed to export database' });
+  }
+});
+
+// GET /api/admin/users — list all users (admin only)
+router.get('/users', authenticateToken, requireRole('admin'), async (req: Request, res: Response) => {
+  try {
+    const decoded = (req as any).user;
+    const companyId = decoded?.companyId ? Number(decoded.companyId) : undefined;
+    const users = await getAllUsers(companyId);
+    res.json({ users });
+  } catch (err) {
+    console.error('Get all users error:', err);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// POST /api/admin/users/:uid/lock — manually lock a user (admin only)
+router.post('/users/:uid/lock', authenticateToken, requireRole('admin'), async (req: Request, res: Response) => {
+  try {
+    const { uid } = req.params;
+    // get email from uid
+    const { rows } = await pool.query('SELECT email FROM users WHERE uid = $1', [uid]);
+    if (!rows[0]) return res.status(404).json({ error: 'User not found' });
+    await lockUser(rows[0].email);
+    res.json({ message: 'User locked successfully' });
+  } catch (err) {
+    console.error('Lock user error:', err);
+    res.status(500).json({ error: 'Failed to lock user' });
   }
 });
 

@@ -529,6 +529,26 @@ export async function getLockedUsers(companyId?: number): Promise<{ uid: string;
   }));
 }
 
+export async function getAllUsers(companyId?: number): Promise<{ uid: string; email: string; role: string; companyId?: number; companyName?: string; lockedAt: string | null; createdDate: string }[]> {
+  const query = companyId
+    ? `SELECT u.uid, u.email, u.role, u.company_id, c.name as company_name, u.locked_at, u.created_date
+       FROM users u LEFT JOIN companies c ON c.id = u.company_id
+       WHERE u.company_id = $1 ORDER BY u.created_date DESC`
+    : `SELECT u.uid, u.email, u.role, u.company_id, c.name as company_name, u.locked_at, u.created_date
+       FROM users u LEFT JOIN companies c ON c.id = u.company_id
+       ORDER BY u.created_date DESC`;
+  const { rows } = await pool.query(query, companyId ? [companyId] : []);
+  return rows.map(r => ({
+    uid: r.uid,
+    email: r.email,
+    role: r.role,
+    companyId: r.company_id,
+    companyName: r.company_name,
+    lockedAt: r.locked_at ? new Date(r.locked_at).toISOString() : null,
+    createdDate: r.created_date ? new Date(r.created_date).toISOString() : '',
+  }));
+}
+
 export async function addUser(user: User): Promise<User> {
   await pool.query(
     'INSERT INTO users (uid, email, password, company_id, role) VALUES ($1, $2, $3, $4, $5)',

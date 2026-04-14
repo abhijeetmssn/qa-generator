@@ -313,6 +313,21 @@ export interface LockedUser {
   companyId?: number;
 }
 
+export interface ManagedUser {
+  uid: string;
+  email: string;
+  role: string;
+  companyId?: number;
+  companyName?: string;
+  lockedAt: string | null;
+  createdDate: string;
+}
+
+export async function apiGetAllUsers(): Promise<ManagedUser[]> {
+  const data = await request<{ users: ManagedUser[] }>('/admin/users');
+  return data.users;
+}
+
 export async function apiGetLockedUsers(): Promise<LockedUser[]> {
   const data = await request<{ users: LockedUser[] }>('/admin/locked-users');
   return data.users;
@@ -320,6 +335,10 @@ export async function apiGetLockedUsers(): Promise<LockedUser[]> {
 
 export async function apiUnlockUser(uid: string): Promise<void> {
   await request(`/admin/users/${uid}/unlock`, { method: 'POST' });
+}
+
+export async function apiLockUser(uid: string): Promise<void> {
+  await request(`/admin/users/${uid}/lock`, { method: 'POST' });
 }
 
 export async function apiExportDatabase(): Promise<void> {
