@@ -15,6 +15,8 @@ import {
   updateProductImage,
   getProductImage,
   generateUniqueId,
+  logScanEvent,
+  getScanAnalytics,
 } from '../db';
 import { authenticateToken, requireRole } from '../middleware';
 import type { Request, Response, NextFunction } from 'express';
@@ -156,6 +158,20 @@ router.get('/:uniqueId/image', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('Get product image error:', err);
     return res.status(500).json({ error: 'Failed to fetch image' });
+  }
+});
+
+// GET /api/products/scan-analytics — auth required — scan analytics for company
+router.get('/scan-analytics', authenticateToken, async (req, res) => {
+  try {
+    const decoded = (req as any).user;
+    const user = decoded?.email ? await findUserByEmail(decoded.email) : null;
+    const companyId = user?.companyId;
+    const data = await getScanAnalytics(companyId);
+    return res.json(data);
+  } catch (err) {
+    console.error('Scan analytics error:', err);
+    return res.status(500).json({ error: 'Failed to fetch scan analytics' });
   }
 });
 
@@ -411,6 +427,34 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
   } catch (err) {
     console.error('Bulk upload error:', err);
     return res.status(500).json({ error: 'Failed to process Excel file' });
+  }
+});
+
+// POST /api/products/:uniqueId/scan — public, no auth — log a QR scan event
+router.post('/:uniqueId/scan', async (req, res) => {
+  try {
+    const { uniqueId } = req.params;
+    const product = await getProductByUniqueId(uniqueId);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+
+    const ipAddress =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket.remoteAddress ||
+      null;
+    const userAgent = req.headers['user-agent'] || null;
+
+    await logScanEvent({
+      productId: uniqueId,
+      companyId: product.companyId,
+      productName: product.name,
+      ipAddress: ipAddress ?? undefined,
+      userAgent: userAgent ?? undefined,
+    });
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Scan log error:', err);
+    return res.status(500).json({ error: 'Failed to log scan' });
   }
 });
 

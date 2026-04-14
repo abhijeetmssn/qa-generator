@@ -44,6 +44,7 @@ export interface Company {
   phone?: string;
   email?: string;
   website?: string;
+  scanAnalyticsEnabled?: boolean;
 }
 
 export interface AuthResponse {
@@ -273,7 +274,7 @@ export async function apiGetCompanyById(id: number): Promise<Company> {
 }
 
 // Public company info (no auth required)
-export async function apiGetCompanyPublic(id: number): Promise<{ id: number; name: string; phone?: string; email?: string; website?: string; address?: string }> {
+export async function apiGetCompanyPublic(id: number): Promise<{ id: number; name: string; phone?: string; email?: string; website?: string; address?: string; scanAnalyticsEnabled?: boolean }> {
   const res = await fetch(`${API_BASE}/companies/${id}/public`);
   if (!res.ok) {
     throw new Error('Company not found');
@@ -364,4 +365,36 @@ export async function apiUpdateHazard(id: number, name: string, imageFile?: File
 
 export async function apiDeleteHazard(id: number): Promise<void> {
   await request(`/hazards/${id}`, { method: 'DELETE' });
+}
+
+// ── Scan Analytics ──
+export interface ScanRecentEntry {
+  scannedAt: string;
+  userAgent: string | null;
+  ipAddress: string | null;
+}
+
+export interface ScanSummary {
+  productId: string;
+  productName: string;
+  totalScans: number;
+  lastScanned: string | null;
+  recentScans: ScanRecentEntry[];
+}
+
+export interface ScanAnalyticsResponse {
+  summary: ScanSummary[];
+  totalScans: number;
+}
+
+export async function apiLogScan(uniqueId: string): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/products/${uniqueId}/scan`, { method: 'POST' });
+  } catch {
+    // fire-and-forget — never block the public page
+  }
+}
+
+export async function apiGetScanAnalytics(): Promise<ScanAnalyticsResponse> {
+  return request<ScanAnalyticsResponse>('/products/scan-analytics');
 }

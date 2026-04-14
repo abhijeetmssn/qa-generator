@@ -171,6 +171,30 @@ async function initDB() {
       );
     `);
 
+    // Add scan_analytics_enabled to companies if not present
+    await client.query(`
+      ALTER TABLE companies ADD COLUMN IF NOT EXISTS scan_analytics_enabled BOOLEAN DEFAULT true;
+    `);
+
+    // Create scan_events table (new — never touch existing tables)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS scan_events (
+        id            SERIAL PRIMARY KEY,
+        product_id    VARCHAR(100) NOT NULL,
+        company_id    INTEGER,
+        product_name  VARCHAR(255),
+        scanned_at    TIMESTAMPTZ DEFAULT NOW(),
+        user_agent    TEXT,
+        ip_address    TEXT
+      );
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_scan_events_product_id ON scan_events (product_id);
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_scan_events_company_id ON scan_events (company_id);
+    `);
+
     // Migrate products table: add columns if table already existed without them
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS is_master BOOLEAN DEFAULT false');
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS quantity VARCHAR(100)');

@@ -45,7 +45,7 @@ router.get('/:id/public', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Company not found' });
     }
     // Return public-safe fields including contact details for product pages
-    res.json({ id: company.id, name: company.name, phone: company.phone, email: company.email, website: company.website, address: company.address });
+    res.json({ id: company.id, name: company.name, phone: company.phone, email: company.email, website: company.website, address: company.address, scanAnalyticsEnabled: company.scanAnalyticsEnabled });
   } catch (error) {
     console.error('Error fetching public company info:', error);
     res.status(500).json({ error: 'Failed to fetch company info' });
@@ -82,7 +82,7 @@ router.get('/:id/logo', async (req: Request, res: Response) => {
 // Create new company (admin only)
 router.post('/', authenticateToken, requireRole('admin'), async (req: Request, res: Response) => {
   try {
-    const { name, logo, address, phone, email, website } = req.body;
+    const { name, logo, address, phone, email, website, scanAnalyticsEnabled } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Company name is required' });
@@ -101,6 +101,7 @@ router.post('/', authenticateToken, requireRole('admin'), async (req: Request, r
       phone: phone || undefined,
       email: email || undefined,
       website: website || undefined,
+      scanAnalyticsEnabled: scanAnalyticsEnabled !== false,
     });
 
     res.status(201).json(company);

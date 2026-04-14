@@ -13,7 +13,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(companyId || null);
-  const [formData, setFormData] = useState<Company>({ name: '', address: '', phone: '', email: '', website: '' });
+  const [formData, setFormData] = useState<Company>({ name: '', address: '', phone: '', email: '', website: '', scanAnalyticsEnabled: true });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(null);
@@ -44,7 +44,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
 
     apiGetCompanyById(selectedCompanyId)
       .then(async company => {
-        setFormData({ name: company.name || '', address: company.address || '', phone: company.phone || '', email: company.email || '', website: company.website || '' });
+        setFormData({ name: company.name || '', address: company.address || '', phone: company.phone || '', email: company.email || '', website: company.website || '', scanAnalyticsEnabled: company.scanAnalyticsEnabled !== false });
         const logoUrl = `${API_BASE}/companies/${selectedCompanyId}/logo`;
         const res = await fetch(logoUrl);
         if (res.ok) setCurrentLogoUrl(logoUrl + '?t=' + Date.now());
@@ -81,7 +81,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
     if (!formData.name?.trim()) { setError('Company name is required.'); return; }
     setSaving(true);
     try {
-      await apiUpdateCompany(selectedCompanyId, { name: formData.name, address: formData.address, phone: formData.phone, email: formData.email, website: formData.website });
+      await apiUpdateCompany(selectedCompanyId, { name: formData.name, address: formData.address, phone: formData.phone, email: formData.email, website: formData.website, scanAnalyticsEnabled: formData.scanAnalyticsEnabled });
       if (logoFile) {
         await apiUploadLogo(logoFile, selectedCompanyId);
         setCurrentLogoUrl(`${API_BASE}/companies/${selectedCompanyId}/logo?t=` + Date.now());
@@ -181,6 +181,35 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
                   <div className="form-group">
                     <label>WEBSITE</label>
                     <input name="website" type="text" value={formData.website || ''} onChange={handleChange} placeholder="www.example.com" />
+                  </div>
+                </div>
+
+                {/* Scan Analytics Toggle */}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>SCAN ANALYTICS</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', paddingTop: '4px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, scanAnalyticsEnabled: !prev.scanAnalyticsEnabled }))}
+                        style={{
+                          width: '52px', height: '28px', borderRadius: '14px', border: 'none', cursor: 'pointer',
+                          background: formData.scanAnalyticsEnabled ? '#22c55e' : '#d1d5db',
+                          position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+                        }}
+                      >
+                        <span style={{
+                          position: 'absolute', top: '3px',
+                          left: formData.scanAnalyticsEnabled ? '27px' : '3px',
+                          width: '22px', height: '22px', borderRadius: '50%',
+                          background: '#fff', transition: 'left 0.2s',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                        }} />
+                      </button>
+                      <span style={{ fontSize: '14px', color: formData.scanAnalyticsEnabled ? '#15803d' : '#6b7280' }}>
+                        {formData.scanAnalyticsEnabled ? 'Enabled — QR scan events will be tracked' : 'Disabled — scans will not be recorded'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

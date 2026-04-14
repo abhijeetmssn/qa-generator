@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiGetProductByUniqueId, apiGetCompanyPublic } from '../services/api';
+import { apiGetProductByUniqueId, apiGetCompanyPublic, apiLogScan } from '../services/api';
 import type { Product } from '../services/api';
 import '../ViewProduct.css';
 
@@ -24,7 +24,14 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
           setProduct(prod);
           setError(null);
           if (prod.companyId) {
-            apiGetCompanyPublic(prod.companyId).then(setCompany).catch(console.error);
+            apiGetCompanyPublic(prod.companyId).then(co => {
+              setCompany(co);
+              if (co.scanAnalyticsEnabled !== false) {
+                apiLogScan(uniqueId);
+              }
+            }).catch(console.error);
+          } else {
+            apiLogScan(uniqueId);
           }
           // Preload images before showing page
           const imagesToLoad: string[] = [];

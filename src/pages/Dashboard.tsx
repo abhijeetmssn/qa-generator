@@ -10,13 +10,14 @@ import CreateCompany from './CreateCompany';
 import EditCompany from './EditCompany';
 import ManageHazards from './ManageHazards';
 import Trash from './Trash';
+import ScanAnalytics from './ScanAnalytics';
 import Logo from '../components/Logo';
 import Spinner from '../components/Spinner';
 import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct, apiUploadProductImage, apiExportDatabase } from '../services/api';
 import type { Product } from '../services/api';
 import type { UserRole } from '../services/api';
 
-type Page = 'dashboard' | 'add' | 'edit' | 'list' | 'trash' | 'view' | 'users' | 'bulk-upload' | 'create-company' | 'edit-company' | 'hazards';
+type Page = 'dashboard' | 'add' | 'edit' | 'list' | 'trash' | 'view' | 'users' | 'bulk-upload' | 'create-company' | 'edit-company' | 'hazards' | 'scan-analytics';
 
 interface User {
   email: string;
@@ -165,6 +166,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         ) : <div className="page-placeholder">Only admins can edit company details.</div>;
       case 'hazards':
         return <ManageHazards />;
+      case 'scan-analytics':
+        return canEdit
+          ? <ScanAnalytics />
+          : <div className="page-placeholder">You don't have permission to view scan analytics.</div>;
       case 'trash':
         return <Trash canEdit={canEdit} isAdmin={user.role === 'admin'} onRestored={async () => {
           const products = await apiGetProducts();
@@ -257,6 +262,20 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             <span className="nav-icon">📋</span>
             Products List
           </a>
+          {canEdit && (
+            <a
+              href="#"
+              className={page === 'scan-analytics' ? 'active' : ''}
+              onClick={(e) => {
+                e.preventDefault();
+                setPage('scan-analytics');
+                setSidebarOpen(false);
+              }}
+            >
+              <span className="nav-icon">📲</span>
+              Scan Analytics
+            </a>
+          )}
           {canEdit && (
             <a
               href="#"

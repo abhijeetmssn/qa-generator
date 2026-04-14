@@ -15,6 +15,7 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
     phone: '',
     email: '',
     website: '',
+    scanAnalyticsEnabled: true,
   });
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -76,6 +77,7 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
         phone: '',
         email: '',
         website: '',
+        scanAnalyticsEnabled: true,
       });
       setLogoFile(null);
       setLogoPreview(null);
@@ -229,6 +231,36 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
             placeholder="www.example.com"
             disabled={loading}
           />
+        </div>
+
+        {/* Scan Analytics Toggle */}
+        <div style={{ marginBottom: '28px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+            Scan Analytics
+          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button
+              type="button"
+              onClick={() => setFormData(prev => ({ ...prev, scanAnalyticsEnabled: !prev.scanAnalyticsEnabled }))}
+              disabled={loading}
+              style={{
+                width: '52px', height: '28px', borderRadius: '14px', border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
+                background: formData.scanAnalyticsEnabled ? '#22c55e' : '#d1d5db',
+                position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+              }}
+            >
+              <span style={{
+                position: 'absolute', top: '3px',
+                left: formData.scanAnalyticsEnabled ? '27px' : '3px',
+                width: '22px', height: '22px', borderRadius: '50%',
+                background: '#fff', transition: 'left 0.2s',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              }} />
+            </button>
+            <span style={{ fontSize: '14px', color: formData.scanAnalyticsEnabled ? '#15803d' : '#6b7280' }}>
+              {formData.scanAnalyticsEnabled ? 'Enabled — QR scan events will be tracked' : 'Disabled — scans will not be recorded'}
+            </span>
+          </div>
         </div>
 
         {/* Buttons */}

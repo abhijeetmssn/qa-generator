@@ -10,6 +10,7 @@ export interface Company {
   phone?: string;
   email?: string;
   website?: string;
+  scanAnalyticsEnabled?: boolean;
   createdAt?: string;
 }
 
@@ -288,10 +289,10 @@ export async function permanentDeleteProduct(uniqueId: string): Promise<boolean>
 // ── Companies ──
 export async function addCompany(company: Company): Promise<Company> {
   const { rows } = await pool.query(
-    `INSERT INTO companies (name, logo, address, phone, email, website)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING id, name, logo, address, phone, email, website, created_date`,
-    [company.name, company.logo || null, company.address || null, company.phone || null, company.email || null, company.website || null]
+    `INSERT INTO companies (name, logo, address, phone, email, website, scan_analytics_enabled)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING id, name, logo, address, phone, email, website, scan_analytics_enabled, created_date`,
+    [company.name, company.logo || null, company.address || null, company.phone || null, company.email || null, company.website || null, company.scanAnalyticsEnabled !== false]
   );
   return {
     id: rows[0].id,
@@ -301,6 +302,7 @@ export async function addCompany(company: Company): Promise<Company> {
     phone: rows[0].phone,
     email: rows[0].email,
     website: rows[0].website,
+    scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
     createdAt: rows[0].created_date,
   };
 }
@@ -316,6 +318,7 @@ export async function getCompanyByName(name: string): Promise<Company | undefine
     phone: rows[0].phone,
     email: rows[0].email,
     website: rows[0].website,
+    scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
     createdAt: rows[0].created_date,
   };
 }
@@ -332,6 +335,7 @@ export async function getCompanyById(id: number): Promise<Company | undefined> {
     phone: rows[0].phone,
     email: rows[0].email,
     website: rows[0].website,
+    scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
     createdAt: rows[0].created_date,
   };
 }
@@ -346,6 +350,7 @@ export async function getAllCompanies(): Promise<Company[]> {
     phone: row.phone,
     email: row.email,
     website: row.website,
+    scanAnalyticsEnabled: row.scan_analytics_enabled,
     createdAt: row.created_date,
   }));
 }
@@ -362,6 +367,7 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
     phone: 'phone',
     email: 'email',
     website: 'website',
+    scanAnalyticsEnabled: 'scan_analytics_enabled',
   };
 
   for (const [key, col] of Object.entries(columnMap)) {
@@ -390,6 +396,7 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
     phone: rows[0].phone,
     email: rows[0].email,
     website: rows[0].website,
+    scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
     createdAt: rows[0].created_date,
   };
 }
@@ -537,4 +544,86 @@ export async function getHazardImage(id: number): Promise<Buffer | null> {
   const { rows } = await pool.query('SELECT image FROM hazards WHERE id = $1', [id]);
   if (rows.length === 0 || !rows[0].image) return null;
   return rows[0].image;
+}
+
+// ── Scan Events ──
+export interface ScanEvent {
+  id?: number;
+  productId: string;
+  companyId?: number;
+  productName?: string;
+  scannedAt?: string;
+  userAgent?: string;
+  ipAddress?: string;
+}
+
+export interface ScanSummary {
+  productId: string;
+  productName: string;
+  totalScans: number;
+  lastScanned: string | null;
+  recentScans: { scannedAt: string; userAgent: string | null; ipAddress: string | null }[];
+}
+
+export async function logScanEvent(event: ScanEvent): Promise<void> {
+  await pool.query(
+    `INSERT INTO scan_events (product_id, company_id, product_name, user_agent, ip_address)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [event.productId, event.companyId || null, event.productName || null, event.userAgent || null, event.ipAddress || null]
+  );
+}
+
+export async function getScanAnalytics(companyId?: number): Promise<{ summary: ScanSummary[]; totalScans: number }> {
+  const params: any[] = [];
+  // Only return data for companies with scan_analytics_enabled = true
+  const where = companyId
+    ? 'WHERE se.company_id = $1 AND c.scan_analytics_enabled = true'
+    : 'WHERE c.scan_analytics_enabled = true';
+  if (companyId) params.push(companyId);
+
+  const { rows: summaryRows } = await pool.query(
+    `SELECT
+       se.product_id,
+       MAX(se.product_name) as product_name,
+       COUNT(*) as total_scans,
+       MAX(se.scanned_at) as last_scanned
+     FROM scan_events se
+     JOIN companies c ON c.id = se.company_id
+     ${where}
+     GROUP BY se.product_id
+     ORDER BY total_scans DESC`,
+    params
+  );
+
+  const summary: ScanSummary[] = await Promise.all(
+    summaryRows.map(async (row: any) => {
+      const { rows: recent } = await pool.query(
+        `SELECT se.scanned_at, se.user_agent, se.ip_address
+         FROM scan_events se
+         JOIN companies c ON c.id = se.company_id
+         WHERE se.product_id = $1 AND c.scan_analytics_enabled = true
+         ${companyId ? 'AND se.company_id = $2' : ''}
+         ORDER BY se.scanned_at DESC LIMIT 10`,
+        companyId ? [row.product_id, companyId] : [row.product_id]
+      );
+      return {
+        productId: row.product_id,
+        productName: row.product_name || row.product_id,
+        totalScans: parseInt(row.total_scans),
+        lastScanned: row.last_scanned ? new Date(row.last_scanned).toISOString() : null,
+        recentScans: recent.map((r: any) => ({
+          scannedAt: new Date(r.scanned_at).toISOString(),
+          userAgent: r.user_agent || null,
+          ipAddress: r.ip_address || null,
+        })),
+      };
+    })
+  );
+
+  const { rows: totalRows } = await pool.query(
+    `SELECT COUNT(*) as total FROM scan_events se JOIN companies c ON c.id = se.company_id ${where}`,
+    params
+  );
+
+  return { summary, totalScans: parseInt(totalRows[0].total) };
 }
