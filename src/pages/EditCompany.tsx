@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { apiGetCompanyById, apiUpdateCompany, apiUploadLogo, apiGetAllCompanies } from '../services/api';
+import { apiGetCompanyById, apiUpdateCompany, apiUploadLogo, apiGetAllCompanies, apiRenewSubscription } from '../services/api';
 import type { Company } from '../services/api';
 
 interface EditCompanyProps {
@@ -22,6 +22,8 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
+  const [renewing, setRenewing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load all companies for dropdown (admin only)
@@ -45,6 +47,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
     apiGetCompanyById(selectedCompanyId)
       .then(async company => {
         setFormData({ name: company.name || '', address: company.address || '', phone: company.phone || '', email: company.email || '', website: company.website || '', scanAnalyticsEnabled: company.scanAnalyticsEnabled !== false });
+        setSubscriptionExpiresAt(company.subscriptionExpiresAt || null);
         const logoUrl = `${API_BASE}/companies/${selectedCompanyId}/logo`;
         const res = await fetch(logoUrl);
         if (res.ok) setCurrentLogoUrl(logoUrl + '?t=' + Date.now());
@@ -181,6 +184,54 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
                   <div className="form-group">
                     <label>WEBSITE</label>
                     <input name="website" type="text" value={formData.website || ''} onChange={handleChange} placeholder="www.example.com" />
+                  </div>
+                </div>
+
+                {/* Maintenance / Subscription */}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>MAINTENANCE SUBSCRIPTION</label>
+                    {(() => {
+                      const days = subscriptionExpiresAt
+                        ? Math.ceil((new Date(subscriptionExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                        : null;
+                      const color = days === null ? '#94a3b8' : days <= 0 ? '#ef4444' : days <= 5 ? '#f97316' : days <= 10 ? '#f59e0b' : '#22c55e';
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', paddingTop: '4px' }}>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 600, color, minWidth: '180px' }}>
+                            {days === null
+                              ? 'No expiry set'
+                              : days <= 0
+                              ? '⚠️ Expired'
+                              : `⏳ ${days} day${days !== 1 ? 's' : ''} remaining`}
+                          </div>
+                          {subscriptionExpiresAt && (
+                            <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                              Expires: {new Date(subscriptionExpiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            disabled={renewing}
+                            onClick={async () => {
+                              if (!selectedCompanyId) return;
+                              setRenewing(true);
+                              try {
+                                const updated = await apiRenewSubscription(selectedCompanyId);
+                                setSubscriptionExpiresAt(updated.subscriptionExpiresAt || null);
+                              } catch {
+                                setError('Failed to renew subscription.');
+                              } finally {
+                                setRenewing(false);
+                              }
+                            }}
+                            style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', background: '#3b82f6', color: '#fff', fontWeight: 600, fontSize: '0.88rem', cursor: renewing ? 'not-allowed' : 'pointer', opacity: renewing ? 0.7 : 1 }}
+                          >
+                            {renewing ? '⏳ Renewing...' : '🔄 Renew 30 Days'}
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 

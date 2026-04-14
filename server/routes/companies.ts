@@ -1,12 +1,13 @@
 import { Router, Request, Response } from 'express';
-import { 
-  addCompany, 
-  getAllCompanies, 
-  getCompanyById, 
-  updateCompany, 
+import {
+  addCompany,
+  getAllCompanies,
+  getCompanyById,
+  updateCompany,
   deleteCompany,
   getCompanyByName,
   getCompanyLogo,
+  renewCompanySubscription,
 } from '../db';
 import { authenticateToken, requireRole } from '../middleware';
 
@@ -124,6 +125,20 @@ router.put('/:id', authenticateToken, requireRole('admin'), async (req: Request,
   } catch (error) {
     console.error('Error updating company:', error);
     res.status(500).json({ error: 'Failed to update company' });
+  }
+});
+
+// POST /api/companies/:id/renew — reset subscription to 30 days from now (admin only)
+router.post('/:id/renew', authenticateToken, requireRole('admin'), async (req: Request, res: Response) => {
+  try {
+    const company = await renewCompanySubscription(Number(req.params.id));
+    if (!company) {
+      return res.status(404).json({ error: 'Company not found' });
+    }
+    res.json(company);
+  } catch (error) {
+    console.error('Error renewing subscription:', error);
+    res.status(500).json({ error: 'Failed to renew subscription' });
   }
 });
 

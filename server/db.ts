@@ -11,6 +11,7 @@ export interface Company {
   email?: string;
   website?: string;
   scanAnalyticsEnabled?: boolean;
+  subscriptionExpiresAt?: string;
   createdAt?: string;
 }
 
@@ -289,9 +290,9 @@ export async function permanentDeleteProduct(uniqueId: string): Promise<boolean>
 // ── Companies ──
 export async function addCompany(company: Company): Promise<Company> {
   const { rows } = await pool.query(
-    `INSERT INTO companies (name, logo, address, phone, email, website, scan_analytics_enabled)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
-     RETURNING id, name, logo, address, phone, email, website, scan_analytics_enabled, created_date`,
+    `INSERT INTO companies (name, logo, address, phone, email, website, scan_analytics_enabled, subscription_expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW() + INTERVAL '30 days')
+     RETURNING id, name, logo, address, phone, email, website, scan_analytics_enabled, subscription_expires_at, created_date`,
     [company.name, company.logo || null, company.address || null, company.phone || null, company.email || null, company.website || null, company.scanAnalyticsEnabled !== false]
   );
   return {
@@ -303,6 +304,7 @@ export async function addCompany(company: Company): Promise<Company> {
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    subscriptionExpiresAt: rows[0].subscription_expires_at,
     createdAt: rows[0].created_date,
   };
 }
@@ -319,6 +321,7 @@ export async function getCompanyByName(name: string): Promise<Company | undefine
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    subscriptionExpiresAt: rows[0].subscription_expires_at,
     createdAt: rows[0].created_date,
   };
 }
@@ -326,7 +329,6 @@ export async function getCompanyByName(name: string): Promise<Company | undefine
 export async function getCompanyById(id: number): Promise<Company | undefined> {
   const { rows } = await pool.query('SELECT * FROM companies WHERE id = $1', [id]);
   if (rows.length === 0) return undefined;
-  // Don't return logo buffer in JSON - use URL instead
   return {
     id: rows[0].id,
     name: rows[0].name,
@@ -336,6 +338,7 @@ export async function getCompanyById(id: number): Promise<Company | undefined> {
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    subscriptionExpiresAt: rows[0].subscription_expires_at,
     createdAt: rows[0].created_date,
   };
 }
@@ -351,6 +354,7 @@ export async function getAllCompanies(): Promise<Company[]> {
     email: row.email,
     website: row.website,
     scanAnalyticsEnabled: row.scan_analytics_enabled,
+    subscriptionExpiresAt: row.subscription_expires_at,
     createdAt: row.created_date,
   }));
 }
@@ -397,6 +401,30 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    subscriptionExpiresAt: rows[0].subscription_expires_at,
+    createdAt: rows[0].created_date,
+  };
+}
+
+export async function renewCompanySubscription(id: number): Promise<Company | null> {
+  const { rows } = await pool.query(
+    `UPDATE companies
+     SET subscription_expires_at = NOW() + INTERVAL '30 days'
+     WHERE id = $1
+     RETURNING *`,
+    [id]
+  );
+  if (rows.length === 0) return null;
+  return {
+    id: rows[0].id,
+    name: rows[0].name,
+    logo: rows[0].logo ? `/api/companies/${rows[0].id}/logo` : undefined,
+    address: rows[0].address,
+    phone: rows[0].phone,
+    email: rows[0].email,
+    website: rows[0].website,
+    scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    subscriptionExpiresAt: rows[0].subscription_expires_at,
     createdAt: rows[0].created_date,
   };
 }

@@ -176,6 +176,16 @@ async function initDB() {
       ALTER TABLE companies ADD COLUMN IF NOT EXISTS scan_analytics_enabled BOOLEAN DEFAULT true;
     `);
 
+    // Add subscription_expires_at — 30 days from creation
+    await client.query(`
+      ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ;
+    `);
+    // Backfill existing companies that have no expiry yet
+    await client.query(`
+      UPDATE companies SET subscription_expires_at = NOW() + INTERVAL '30 days'
+      WHERE subscription_expires_at IS NULL;
+    `);
+
     // Create scan_events table (new — never touch existing tables)
     await client.query(`
       CREATE TABLE IF NOT EXISTS scan_events (

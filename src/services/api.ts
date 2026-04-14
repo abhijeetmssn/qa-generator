@@ -45,6 +45,7 @@ export interface Company {
   email?: string;
   website?: string;
   scanAnalyticsEnabled?: boolean;
+  subscriptionExpiresAt?: string;
 }
 
 export interface AuthResponse {
@@ -298,6 +299,10 @@ export async function apiUpdateCompany(id: number, updates: Partial<Company>): P
 
 export async function apiDeleteCompany(id: number): Promise<void> {
   await request(`/companies/${id}`, { method: 'DELETE' });
+}
+
+export async function apiRenewSubscription(id: number): Promise<Company> {
+  return request<Company>(`/companies/${id}/renew`, { method: 'POST' });
 }
 
 // ── Admin ──

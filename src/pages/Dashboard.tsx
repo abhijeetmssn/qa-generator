@@ -13,7 +13,7 @@ import Trash from './Trash';
 import ScanAnalytics from './ScanAnalytics';
 import Logo from '../components/Logo';
 import Spinner from '../components/Spinner';
-import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct, apiUploadProductImage, apiExportDatabase } from '../services/api';
+import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct, apiUploadProductImage, apiExportDatabase, apiGetCompanyById } from '../services/api';
 import type { Product } from '../services/api';
 import type { UserRole } from '../services/api';
 
@@ -43,6 +43,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [exportingDb, setExportingDb] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user.companyId) {
+      apiGetCompanyById(user.companyId)
+        .then(c => setSubscriptionExpiresAt(c.subscriptionExpiresAt || null))
+        .catch(console.error);
+    }
+  }, [user.companyId]);
+
+  const getDaysRemaining = (expiresAt: string | null): number => {
+    if (!expiresAt) return 0;
+    const diff = new Date(expiresAt).getTime() - Date.now();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -178,6 +193,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       default:
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+            {/* Subscription warning card */}
+            {subscriptionExpiresAt && (() => {
+              const days = getDaysRemaining(subscriptionExpiresAt);
+              if (days > 10) return null;
+              return (
+                <div className="card" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: '6px', background: days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : '#fffbeb', borderLeft: `4px solid ${days <= 0 ? '#ef4444' : days <= 5 ? '#f97316' : '#f59e0b'}` }}>
+                  <div style={{ fontWeight: 700, fontSize: '1rem', color: days <= 0 ? '#dc2626' : '#92400e' }}>
+                    {days <= 0 ? '⚠️ Subscription Expired' : `⏳ ${days} Day${days !== 1 ? 's' : ''} Left`}
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#78350f' }}>
+                    {days <= 0
+                      ? 'Your maintenance subscription has expired. Please contact admin to renew.'
+                      : 'Your maintenance subscription is expiring soon. Please contact admin to renew.'}
+                  </p>
+                </div>
+              );
+            })()}
             <div className="card">
               <div className="card-icon">📋</div>
               <div>
@@ -366,6 +398,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   {user.companyAddress}
                 </div>
               )}
+              {subscriptionExpiresAt && (() => {
+                const days = getDaysRemaining(subscriptionExpiresAt);
+                const color = days <= 5 ? '#ef4444' : days <= 10 ? '#f59e0b' : '#22c55e';
+                return (
+                  <div style={{ fontSize: '11px', marginBottom: '8px', padding: '4px 8px', borderRadius: '6px', background: days <= 5 ? '#fef2f2' : days <= 10 ? '#fffbeb' : '#f0fdf4', color, fontWeight: 600, textAlign: 'center' }}>
+                    {days > 0 ? `⏳ ${days} day${days !== 1 ? 's' : ''} left` : '⚠️ Subscription expired'}
+                  </div>
+                );
+              })()}
               <div style={{ borderTop: '1px solid #ddd', paddingTop: '8px', marginTop: '8px', fontSize: '11px', color: '#999' }}>
                 Powered By <a href="#">APAS</a>
               </div>
