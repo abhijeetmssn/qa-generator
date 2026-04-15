@@ -9,9 +9,10 @@ import SearchableSelect from '../components/SearchableSelect';
 type AddProductProps = {
   onProductAdded?: (product: any) => Promise<any>;
   onProductsList?: () => void;
+  isAdmin?: boolean;
 };
 
-const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList }) => {
+const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList, isAdmin = false }) => {
   const [masterProducts, setMasterProducts] = useState<Product[]>([]);
   const [hazards, setHazards] = useState<Hazard[]>([]);
   const [selectedMasterId, setSelectedMasterId] = useState('');
@@ -259,11 +260,17 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList 
                         options={hazards.map(h => ({ value: String(h.id), label: h.name }))}
                         value={form.hazardId}
                         onChange={val => setForm(prev => ({ ...prev, hazardId: val }))}
-                        placeholder="-- Select --"
+                        placeholder={isAdmin ? '-- Select --' : '— Set by admin only —'}
                         title="Select Hazard Symbol"
                         emptyMessage="No hazard symbols found"
+                        disabled={!isAdmin}
                       />
                     </div>
+                    {!isAdmin && (
+                      <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+                        Hazard symbol can only be set by an admin.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

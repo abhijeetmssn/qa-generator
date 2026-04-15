@@ -153,10 +153,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const renderPage = () => {
     switch (page) {
       case 'add':
-        return <AddProduct onProductAdded={handleProductAdded} onProductsList={() => setPage('list')} />;
+        return <AddProduct onProductAdded={handleProductAdded} onProductsList={() => setPage('list')} isAdmin={user.role === 'admin'} />;
       case 'edit':
         return canEdit && selectedProduct ? (
-          <EditProduct product={selectedProduct} onSave={handleSaveProduct} onCancel={() => setPage('list')} />
+          <EditProduct product={selectedProduct} onSave={handleSaveProduct} onCancel={() => setPage('list')} isAdmin={user.role === 'admin'} />
         ) : <div className="page-placeholder">You don't have permission to edit products.</div>;
       case 'list':
         return <ProductsList products={allProducts} goAdd={() => setPage('add')} onView={handleViewProduct} onEdit={handleEditProduct} onDelete={handleDeleteProduct} canEdit={canEdit} isAdmin={user.role === 'admin'} deletingId={deletingId} />;

@@ -9,11 +9,12 @@ interface EditProductProps {
   product: Product;
   onSave: (uniqueId: string, updates: Partial<Product>) => void;
   onCancel: () => void;
+  isAdmin?: boolean;
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) => {
+const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel, isAdmin = false }) => {
   const [form, setForm] = useState({
     name: product.name || '',
     batch: product.batch || '',
@@ -140,13 +141,13 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
               <select
                 value={hazardId}
                 onChange={e => setHazardId(e.target.value)}
-                disabled={!product.is_master}
+                disabled={!isAdmin}
                 style={{
                   width: '100%', padding: '8px 12px',
                   border: '1px solid #d1d5db', borderRadius: '8px',
-                  fontSize: '14px', background: product.is_master ? 'white' : '#f8fafc',
-                  color: product.is_master ? '#1e293b' : '#64748b',
-                  cursor: product.is_master ? 'default' : 'not-allowed',
+                  fontSize: '14px', background: isAdmin ? 'white' : '#f8fafc',
+                  color: isAdmin ? '#1e293b' : '#64748b',
+                  cursor: isAdmin ? 'default' : 'not-allowed',
                 }}
               >
                 <option value="">— No hazard symbol —</option>
@@ -154,9 +155,9 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
                   <option key={h.id} value={h.id}>{h.name}</option>
                 ))}
               </select>
-              {!product.is_master && (
+              {!isAdmin && (
                 <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
-                  Hazard can only be changed on the parent product — it applies to all batches.
+                  Hazard symbol can only be changed by an admin.
                 </p>
               )}
             </div>
