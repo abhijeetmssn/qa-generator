@@ -370,8 +370,15 @@ router.get('/bulk-upload/template', authenticateToken, requireRole('admin'), asy
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Products');
 
+    // Hazard column index (1-based): 12th column
+    const HAZARD_COL = 12;
+
     ws.columns = [
       { header: 'Product Name',         key: 'name',                width: 25 },
+      { header: 'Batch Number',          key: 'batch',               width: 18 },
+      { header: 'Manufacturing Date',    key: 'mfg',                 width: 20 },
+      { header: 'Expiry Date',           key: 'expiry',              width: 18 },
+      { header: 'Packing Size',          key: 'packingSize',         width: 16 },
       { header: 'Marketed By',           key: 'marketedBy',          width: 22 },
       { header: 'Manufacturer',          key: 'manufacturer',        width: 22 },
       { header: 'Manufacturer Address',  key: 'manufacturerAddress', width: 30 },
@@ -394,6 +401,10 @@ router.get('/bulk-upload/template', authenticateToken, requireRole('admin'), asy
     const exampleHazard = hazardNames[0] || '';
     ws.addRow({
       name: 'Example Product',
+      batch: 'B-001',
+      mfg: '2024-01',
+      expiry: '2026-01',
+      packingSize: '500 ml',
       marketedBy: 'Example Co.',
       manufacturer: 'Example Mfg Ltd.',
       manufacturerAddress: '123 Industrial Area, City',
@@ -402,22 +413,51 @@ router.get('/bulk-upload/template', authenticateToken, requireRole('admin'), asy
       manufacturerLicence: 'LIC-9876',
       hazard: exampleHazard,
     });
+    // ── Build Hazard Reference sheet FIRST so the Products dropdown can reference it ──
+    const refWs = wb.addWorksheet('Hazard Reference');
+    refWs.columns = [
+      { header: 'Hazard Name', key: 'name',  width: 30 },
+      { header: 'Color',       key: 'color', width: 16 },
+      { header: 'Note',        key: 'note',  width: 52 },
+    ];
+    refWs.getRow(1).eachCell(cell => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF37474F' } };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+    refWs.getRow(1).height = 22;
+
+    hazards.forEach(h => {
+      const { bg, fontColor, label } = hazardColor(h.name);
+      const refRow = refWs.addRow({ name: h.name, color: label, note: `← Select "${h.name}" from dropdown in Products sheet` });
+      refRow.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+        cell.font = { bold: true, color: { argb: fontColor } };
+        cell.alignment = { vertical: 'middle' };
+      });
+      refRow.height = 20;
+    });
+
     // Color the example hazard cell
     if (exampleHazard) {
       const { bg, fontColor } = hazardColor(exampleHazard);
-      const exCell = ws.getCell(2, 8);
+      const exCell = ws.getCell(2, HAZARD_COL);
       exCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
       exCell.font = { bold: true, color: { argb: fontColor } };
     }
 
-    // Dropdown + conditional color for rows 2–1000
+    // Dropdown referencing the Hazard Reference sheet column A (avoids comma-string formula issues)
     if (hazardNames.length > 0) {
+      const refLastRow = hazards.length + 1; // +1 for header row
+      const dropdownFormula = `'Hazard Reference'!$A$2:$A$${refLastRow}`;
+      const hazardColLetter = String.fromCharCode(64 + HAZARD_COL); // 12 → 'L'
+
+      // Apply dropdown to each data row referencing the Hazard Reference sheet range
       for (let row = 2; row <= 1000; row++) {
-        const cell = ws.getCell(row, 8);
-        cell.dataValidation = {
+        ws.getCell(row, HAZARD_COL).dataValidation = {
           type: 'list',
           allowBlank: true,
-          formulae: [`"${hazardNames.join(',')}"`],
+          formulae: [dropdownFormula],
           showErrorMessage: true,
           errorTitle: 'Invalid Hazard',
           error: 'Please select a hazard from the dropdown list.',
@@ -426,7 +466,7 @@ router.get('/bulk-upload/template', authenticateToken, requireRole('admin'), asy
 
       // Conditional formatting: each hazard gets its actual color
       ws.addConditionalFormatting({
-        ref: 'H2:H1000',
+        ref: `${hazardColLetter}2:${hazardColLetter}1000`,
         rules: hazards.map((h, i) => {
           const { bg } = hazardColor(h.name);
           return {
@@ -442,31 +482,6 @@ router.get('/bulk-upload/template', authenticateToken, requireRole('admin'), asy
         }),
       });
     }
-
-    // ── Hazard Reference sheet ──
-    const refWs = wb.addWorksheet('Hazard Reference');
-    refWs.columns = [
-      { header: 'Hazard Name', key: 'name',  width: 30 },
-      { header: 'Color',       key: 'color', width: 16 },
-      { header: 'Use in Hazard column → select exact name from dropdown', key: 'note', width: 52 },
-    ];
-    refWs.getRow(1).eachCell(cell => {
-      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF37474F' } };
-      cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    });
-    refWs.getRow(1).height = 22;
-
-    hazards.forEach(h => {
-      const { bg, fontColor, label } = hazardColor(h.name);
-      const row = refWs.addRow({ name: h.name, color: label, note: `← Select "${h.name}" from dropdown` });
-      row.eachCell(cell => {
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
-        cell.font = { bold: true, color: { argb: fontColor } };
-        cell.alignment = { vertical: 'middle' };
-      });
-      row.height = 20;
-    });
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename="products_upload_template.xlsx"');
@@ -570,9 +585,15 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
 
       try {
         // Resolve hazard name → ID
-        const hazardId = mapped.hazardName
-          ? allHazards.find(h => h.name.toLowerCase() === mapped.hazardName.toLowerCase())?.id
-          : undefined;
+        let hazardId: number | undefined;
+        if (mapped.hazardName) {
+          const matched = allHazards.find(h => h.name.toLowerCase() === mapped.hazardName.trim().toLowerCase());
+          if (matched) {
+            hazardId = matched.id;
+          } else {
+            results.errors.push(`Row ${i + 2}: Hazard "${mapped.hazardName}" not found — product saved without hazard. Valid options: ${allHazards.map(h => h.name).join(', ')}`);
+          }
+        }
 
         await addProduct({
           id: Date.now() + i,
