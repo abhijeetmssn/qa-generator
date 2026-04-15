@@ -9,24 +9,32 @@ interface EditProductProps {
   product: Product;
   onSave: (uniqueId: string, updates: Partial<Product>) => void;
   onCancel: () => void;
-  isAdmin?: boolean;
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel, isAdmin = false }) => {
-  const [form, setForm] = useState({
+const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) => {
+  const isMaster = product.is_master === true;
+
+  // Master-level fields (template fields — admin only)
+  const [masterForm, setMasterForm] = useState({
     name: product.name || '',
-    batch: product.batch || '',
-    mfg: product.mfg || '',
-    expiry: product.expiry || '',
-    packingSize: product.packingSize || '',
+    marketedBy: product.marketedBy || '',
+    manufacturer: product.manufacturer || '',
     manufacturerAddress: product.manufacturerAddress || '',
     technicalName: product.technicalName || '',
     registrationNumber: product.registrationNumber || '',
     manufacturerLicence: product.manufacturerLicence || '',
-    marketedBy: product.marketedBy || '',
   });
+
+  // Child-level fields (batch-specific — editor)
+  const [childForm, setChildForm] = useState({
+    batch: product.batch || '',
+    mfg: product.mfg || '',
+    expiry: product.expiry || '',
+    packingSize: product.packingSize || '',
+  });
+
   const [hazardId, setHazardId] = useState<string>(product.hazardId ? String(product.hazardId) : '');
   const [hazards, setHazards] = useState<Hazard[]>([]);
   const [saving, setSaving] = useState(false);
@@ -41,23 +49,35 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel, is
     apiGetHazards().then(setHazards).catch(console.error);
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMasterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setMasterForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleChildChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setChildForm(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      if (imageFile) {
+      if (!isMaster && imageFile) {
         try {
           await apiUploadProductImage(product.uniqueId, imageFile);
         } catch (imgErr) {
           console.error('Failed to upload image:', imgErr);
         }
       }
-      await onSave(product.uniqueId, { ...form, hazardId: hazardId ? Number(hazardId) : undefined });
+      if (isMaster) {
+        onSave(product.uniqueId, {
+          ...masterForm,
+          hazardId: hazardId ? Number(hazardId) : undefined,
+        });
+      } else {
+        onSave(product.uniqueId, { ...childForm });
+      }
     } finally {
       setSaving(false);
     }
@@ -66,125 +86,163 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel, is
   return (
     <div className="add-product-wrapper">
       <div className="add-product-header">
-        <h1>Edit Product</h1>
+        <h1>{isMaster ? 'Edit Master Product' : 'Edit Product'}</h1>
         <div className="header-actions">
           <button type="button" className="secondary-btn" onClick={onCancel}>
             ← Back to List
           </button>
         </div>
       </div>
+
+      {isMaster && (
+        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px 16px', marginBottom: '12px', fontSize: '13px', color: '#1d4ed8' }}>
+          Changes to these fields will be inherited by all batch products of <strong>{product.name}</strong>. Hazard change will apply immediately to all batches.
+        </div>
+      )}
+
       <div className="content-card">
         <form className="add-product-form" onSubmit={handleSubmit}>
           <div className="form-grid">
-            <div className="form-group">
-              <label>Product Name</label>
-              <input name="name" value={form.name} onChange={handleChange} placeholder="Product name" required />
-            </div>
-            <div className="form-group">
-              <label>Batch Number</label>
-              <input name="batch" value={form.batch} onChange={handleChange} placeholder="Batch number" />
-            </div>
-            <div className="form-group">
-              <label>Manufacturing Date</label>
-              <DatePicker
-                selected={form.mfg ? new Date(form.mfg + '-01') : null}
-                onChange={(date: Date | null) => {
-                  setForm(prev => ({ ...prev, mfg: date ? date.toISOString().slice(0, 7) : '' }));
-                }}
-                dateFormat="yyyy-MM"
-                showMonthYearPicker
-                showFullMonthYearPicker
-                placeholderText="Select month and year"
-                className="form-control"
-              />
-            </div>
-            <div className="form-group">
-              <label>Expiry Date</label>
-              <DatePicker
-                selected={form.expiry ? new Date(form.expiry + '-01') : null}
-                onChange={(date: Date | null) => {
-                  setForm(prev => ({ ...prev, expiry: date ? date.toISOString().slice(0, 7) : '' }));
-                }}
-                dateFormat="yyyy-MM"
-                showMonthYearPicker
-                showFullMonthYearPicker
-                placeholderText="Select month and year"
-                className="form-control"
-              />
-            </div>
-            <div className="form-group">
-              <label>Manufacturer Address</label>
-              <input name="manufacturerAddress" value={form.manufacturerAddress} onChange={handleChange} placeholder="Full address" />
-            </div>
-            <div className="form-group">
-              <label>Technical Name</label>
-              <input name="technicalName" value={form.technicalName} onChange={handleChange} placeholder="Technical name" />
-            </div>
-            <div className="form-group">
-              <label>Registration Number</label>
-              <input name="registrationNumber" value={form.registrationNumber} onChange={handleChange} placeholder="Registration #" />
-            </div>
-            <div className="form-group">
-              <label>Manufacturer Licence</label>
-              <input name="manufacturerLicence" value={form.manufacturerLicence} onChange={handleChange} placeholder="Licence #" />
-            </div>
-            <div className="form-group">
-              <label>Marketed By</label>
-              <input name="marketedBy" value={form.marketedBy} onChange={handleChange} placeholder="Company that markets this product" />
-            </div>
-            <div className="form-group">
-              <label>Packaging Size</label>
-              <input name="packingSize" value={form.packingSize} onChange={handleChange} placeholder="e.g. 500 ml, 1 kg" />
-            </div>
-            <div className="form-group">
-              <label>Cautionary / Hazard Symbol</label>
-              <select
-                value={hazardId}
-                onChange={e => setHazardId(e.target.value)}
-                disabled={!isAdmin}
-                style={{
-                  width: '100%', padding: '8px 12px',
-                  border: '1px solid #d1d5db', borderRadius: '8px',
-                  fontSize: '14px', background: isAdmin ? 'white' : '#f8fafc',
-                  color: isAdmin ? '#1e293b' : '#64748b',
-                  cursor: isAdmin ? 'default' : 'not-allowed',
-                }}
-              >
-                <option value="">— No hazard symbol —</option>
-                {hazards.map(h => (
-                  <option key={h.id} value={h.id}>{h.name}</option>
-                ))}
-              </select>
-              {!isAdmin && (
-                <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
-                  Hazard symbol can only be changed by an admin.
-                </p>
-              )}
-            </div>
 
-            <div className="form-group">
-              <label>Product Image</label>
-              {imagePreview && (
-                <div style={{ marginBottom: '8px' }}>
-                  <img src={imagePreview} alt="Product" style={{ maxWidth: '150px', maxHeight: '100px', borderRadius: '6px', border: '1px solid #e2e8f0' }} />
+            {/* ── MASTER PRODUCT FIELDS ── */}
+            {isMaster && (
+              <>
+                <div className="form-group">
+                  <label>Product Name</label>
+                  <input name="name" value={masterForm.name} onChange={handleMasterChange} placeholder="Product name" required />
                 </div>
-              )}
-              <input
-                ref={imageInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  setImageFile(file);
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => setImagePreview(reader.result as string);
-                    reader.readAsDataURL(file);
-                  }
-                }}
-                style={{ padding: '8px' }}
-              />
-            </div>
+                <div className="form-group">
+                  <label>Marketed By</label>
+                  <input name="marketedBy" value={masterForm.marketedBy} onChange={handleMasterChange} placeholder="Company that markets this product" />
+                </div>
+                <div className="form-group">
+                  <label>Manufacturer</label>
+                  <input name="manufacturer" value={masterForm.manufacturer} onChange={handleMasterChange} placeholder="Manufacturer name" />
+                </div>
+                <div className="form-group">
+                  <label>Manufacturer Address</label>
+                  <input name="manufacturerAddress" value={masterForm.manufacturerAddress} onChange={handleMasterChange} placeholder="Full address" />
+                </div>
+                <div className="form-group">
+                  <label>Technical Name</label>
+                  <input name="technicalName" value={masterForm.technicalName} onChange={handleMasterChange} placeholder="Technical name" />
+                </div>
+                <div className="form-group">
+                  <label>Registration Number</label>
+                  <input name="registrationNumber" value={masterForm.registrationNumber} onChange={handleMasterChange} placeholder="Registration #" />
+                </div>
+                <div className="form-group">
+                  <label>Manufacturer Licence</label>
+                  <input name="manufacturerLicence" value={masterForm.manufacturerLicence} onChange={handleMasterChange} placeholder="Licence #" />
+                </div>
+                <div className="form-group">
+                  <label>Cautionary / Hazard Symbol</label>
+                  <select
+                    value={hazardId}
+                    onChange={e => setHazardId(e.target.value)}
+                    style={{
+                      width: '100%', padding: '8px 12px',
+                      border: '1px solid #d1d5db', borderRadius: '8px',
+                      fontSize: '14px', background: 'white', color: '#1e293b',
+                    }}
+                  >
+                    <option value="">— No hazard symbol —</option>
+                    {hazards.map(h => (
+                      <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
+                  </select>
+                  <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>
+                    Selecting a hazard will update all batch products automatically.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* ── CHILD PRODUCT FIELDS ── */}
+            {!isMaster && (
+              <>
+                <div className="form-group">
+                  <label>Batch Number</label>
+                  <input name="batch" value={childForm.batch} onChange={handleChildChange} placeholder="Batch number" />
+                </div>
+                <div className="form-group">
+                  <label>Manufacturing Date</label>
+                  <DatePicker
+                    selected={childForm.mfg ? new Date(childForm.mfg + '-01') : null}
+                    onChange={(date: Date | null) => {
+                      setChildForm(prev => ({ ...prev, mfg: date ? date.toISOString().slice(0, 7) : '' }));
+                    }}
+                    dateFormat="yyyy-MM"
+                    showMonthYearPicker
+                    showFullMonthYearPicker
+                    placeholderText="Select month and year"
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Expiry Date</label>
+                  <DatePicker
+                    selected={childForm.expiry ? new Date(childForm.expiry + '-01') : null}
+                    onChange={(date: Date | null) => {
+                      setChildForm(prev => ({ ...prev, expiry: date ? date.toISOString().slice(0, 7) : '' }));
+                    }}
+                    dateFormat="yyyy-MM"
+                    showMonthYearPicker
+                    showFullMonthYearPicker
+                    placeholderText="Select month and year"
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Packaging Size</label>
+                  <input name="packingSize" value={childForm.packingSize} onChange={handleChildChange} placeholder="e.g. 500 ml, 1 kg" />
+                </div>
+                <div className="form-group">
+                  <label>Cautionary / Hazard Symbol</label>
+                  <select
+                    value={hazardId}
+                    disabled
+                    style={{
+                      width: '100%', padding: '8px 12px',
+                      border: '1px solid #d1d5db', borderRadius: '8px',
+                      fontSize: '14px', background: '#f8fafc', color: '#64748b',
+                      cursor: 'not-allowed',
+                    }}
+                  >
+                    <option value="">— No hazard symbol —</option>
+                    {hazards.map(h => (
+                      <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
+                  </select>
+                  <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px', marginBottom: 0 }}>
+                    Hazard symbol can only be changed by an admin on the master product.
+                  </p>
+                </div>
+                <div className="form-group">
+                  <label>Product Image</label>
+                  {imagePreview && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <img src={imagePreview} alt="Product" style={{ maxWidth: '150px', maxHeight: '100px', borderRadius: '6px', border: '1px solid #e2e8f0' }} />
+                    </div>
+                  )}
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setImageFile(file);
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => setImagePreview(reader.result as string);
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    style={{ padding: '8px' }}
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
@@ -202,6 +260,7 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel, is
       <div className="content-card" style={{ marginTop: '16px', padding: '16px', background: '#f8fafc' }}>
         <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '13px', color: '#64748b' }}>
           <span><strong>Unique ID:</strong> {product.uniqueId}</span>
+          {isMaster && <span><strong>Type:</strong> Master Product</span>}
         </div>
       </div>
     </div>

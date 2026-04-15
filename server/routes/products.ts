@@ -370,15 +370,11 @@ router.get('/bulk-upload/template', authenticateToken, requireRole('admin'), asy
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Products');
 
-    // Hazard column index (1-based): 12th column
-    const HAZARD_COL = 12;
+    // Hazard column index (1-based): 8th column
+    const HAZARD_COL = 8;
 
     ws.columns = [
       { header: 'Product Name',         key: 'name',                width: 25 },
-      { header: 'Batch Number',          key: 'batch',               width: 18 },
-      { header: 'Manufacturing Date',    key: 'mfg',                 width: 20 },
-      { header: 'Expiry Date',           key: 'expiry',              width: 18 },
-      { header: 'Packing Size',          key: 'packingSize',         width: 16 },
       { header: 'Marketed By',           key: 'marketedBy',          width: 22 },
       { header: 'Manufacturer',          key: 'manufacturer',        width: 22 },
       { header: 'Manufacturer Address',  key: 'manufacturerAddress', width: 30 },
@@ -401,10 +397,6 @@ router.get('/bulk-upload/template', authenticateToken, requireRole('admin'), asy
     const exampleHazard = hazardNames[0] || '';
     ws.addRow({
       name: 'Example Product',
-      batch: 'B-001',
-      mfg: '2024-01',
-      expiry: '2026-01',
-      packingSize: '500 ml',
       marketedBy: 'Example Co.',
       manufacturer: 'Example Mfg Ltd.',
       manufacturerAddress: '123 Industrial Area, City',

@@ -265,12 +265,12 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
                         emptyMessage="No hazard symbols found"
                         disabled={!isAdmin}
                       />
+                      {!isAdmin && (
+                        <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px', marginBottom: 0 }}>
+                          Hazard symbol can only be set by an admin.
+                        </p>
+                      )}
                     </div>
-                    {!isAdmin && (
-                      <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
-                        Hazard symbol can only be set by an admin.
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
