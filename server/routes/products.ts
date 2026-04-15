@@ -21,6 +21,8 @@ import {
   getScanAnalytics,
   getProductScanDetails,
   getCompanyById,
+  cascadeHazardToChildren,
+  getHazards,
 } from '../db';
 import { authenticateToken, requireRole } from '../middleware';
 import type { Request, Response, NextFunction } from 'express';
@@ -265,9 +267,14 @@ router.post('/', authenticateToken, async (req, res) => {
 // PUT /api/products/:uniqueId — update a product (admin or editor only)
 router.put('/:uniqueId', authenticateToken, requireRole('admin', 'editor'), async (req, res) => {
   try {
-    const updated = await updateProduct(req.params.uniqueId as string, req.body);
+    const uniqueId = req.params.uniqueId as string;
+    const updated = await updateProduct(uniqueId, req.body);
     if (!updated) {
       return res.status(404).json({ error: 'Product not found' });
+    }
+    // Cascade hazard change to all child products when master product is updated
+    if (req.body.hazardId && updated.is_master) {
+      await cascadeHazardToChildren(uniqueId, Number(req.body.hazardId));
     }
     return res.json({ product: updated });
   } catch (err) {
@@ -336,6 +343,74 @@ router.get('/search', authenticateToken, async (req, res) => {
   }
 });
 
+// GET /api/products/bulk-upload/template — download Excel template with hazard dropdown
+router.get('/bulk-upload/template', authenticateToken, requireRole('admin'), async (_req, res) => {
+  try {
+    const ExcelJS = (await import('exceljs')).default;
+    const hazards = await getHazards();
+    const hazardNames = hazards.map(h => h.name);
+
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Products');
+
+    // Headers
+    const columns = [
+      { header: 'Product Name', key: 'name', width: 25 },
+      { header: 'Marketed By', key: 'marketedBy', width: 22 },
+      { header: 'Manufacturer', key: 'manufacturer', width: 22 },
+      { header: 'Manufacturer Address', key: 'manufacturerAddress', width: 30 },
+      { header: 'Technical Name', key: 'technicalName', width: 22 },
+      { header: 'Registration Number', key: 'registrationNumber', width: 22 },
+      { header: 'Manufacturer Licence', key: 'manufacturerLicence', width: 22 },
+      { header: 'Hazard', key: 'hazard', width: 22 },
+    ];
+    ws.columns = columns;
+
+    // Style header row
+    ws.getRow(1).eachCell(cell => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
+
+    // Example row
+    ws.addRow({
+      name: 'Example Product',
+      marketedBy: 'Example Co.',
+      manufacturer: 'Example Mfg Ltd.',
+      manufacturerAddress: '123 Industrial Area, City',
+      technicalName: 'Acetaminophen 500mg',
+      registrationNumber: 'REG-12345',
+      manufacturerLicence: 'LIC-9876',
+      hazard: hazardNames[0] || '',
+    });
+
+    // Add dropdown validation on Hazard column (H) for rows 2–1000
+    if (hazardNames.length > 0) {
+      const hazardColIdx = 8; // column H
+      for (let row = 2; row <= 1000; row++) {
+        const cell = ws.getCell(row, hazardColIdx);
+        cell.dataValidation = {
+          type: 'list',
+          allowBlank: true,
+          formulae: [`"${hazardNames.join(',')}"`],
+          showErrorMessage: true,
+          errorTitle: 'Invalid Hazard',
+          error: 'Please select a hazard from the dropdown list.',
+        };
+      }
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="products_upload_template.xlsx"');
+    await wb.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error('Template generation error:', err);
+    res.status(500).json({ error: 'Failed to generate template' });
+  }
+});
+
 // POST /api/products/bulk-upload — bulk import from Excel (admin only)
 router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.single('file'), async (req: Request, res: Response) => {
   try {
@@ -396,7 +471,13 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
       license: 'manufacturerLicence',
       marketedby: 'marketedBy',
       marketed: 'marketedBy',
+      hazard: 'hazardName',
+      hazardname: 'hazardName',
+      hazardsymbol: 'hazardName',
     };
+
+    // Pre-load hazards for name → ID resolution
+    const allHazards = await getHazards();
 
     const results = { inserted: 0, skipped: 0, errors: [] as string[] };
 
@@ -421,6 +502,11 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
       }
 
       try {
+        // Resolve hazard name → ID
+        const hazardId = mapped.hazardName
+          ? allHazards.find(h => h.name.toLowerCase() === mapped.hazardName.toLowerCase())?.id
+          : undefined;
+
         await addProduct({
           id: Date.now() + i,
           uniqueId: await generateUniqueId(),
@@ -435,6 +521,7 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
           packingSize: mapped.packingSize || undefined,
           manufacturerLicence: mapped.manufacturerLicence || undefined,
           marketedBy: mapped.marketedBy || undefined,
+          hazardId: hazardId || undefined,
           owner_uid: user.uid,
           is_master: true,
           companyId: companyId,

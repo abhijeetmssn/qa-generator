@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { Product } from '../services/api';
-import { apiUploadProductImage } from '../services/api';
+import { apiUploadProductImage, apiGetHazards } from '../services/api';
+import type { Hazard } from '../services/api';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -25,6 +26,8 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
     manufacturerLicence: product.manufacturerLicence || '',
     marketedBy: product.marketedBy || '',
   });
+  const [hazardId, setHazardId] = useState<string>(product.hazardId ? String(product.hazardId) : '');
+  const [hazards, setHazards] = useState<Hazard[]>([]);
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const existingImageUrl = product.productImage
@@ -32,6 +35,10 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
     : null;
   const [imagePreview, setImagePreview] = useState<string | null>(existingImageUrl);
   const imageInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    apiGetHazards().then(setHazards).catch(console.error);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -49,7 +56,7 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
           console.error('Failed to upload image:', imgErr);
         }
       }
-      await onSave(product.uniqueId, form);
+      await onSave(product.uniqueId, { ...form, hazardId: hazardId ? Number(hazardId) : undefined });
     } finally {
       setSaving(false);
     }
@@ -128,6 +135,32 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
               <label>Packaging Size</label>
               <input name="packingSize" value={form.packingSize} onChange={handleChange} placeholder="e.g. 500 ml, 1 kg" />
             </div>
+            <div className="form-group">
+              <label>Cautionary / Hazard Symbol</label>
+              <select
+                value={hazardId}
+                onChange={e => setHazardId(e.target.value)}
+                disabled={!product.is_master}
+                style={{
+                  width: '100%', padding: '8px 12px',
+                  border: '1px solid #d1d5db', borderRadius: '8px',
+                  fontSize: '14px', background: product.is_master ? 'white' : '#f8fafc',
+                  color: product.is_master ? '#1e293b' : '#64748b',
+                  cursor: product.is_master ? 'default' : 'not-allowed',
+                }}
+              >
+                <option value="">— No hazard symbol —</option>
+                {hazards.map(h => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </select>
+              {!product.is_master && (
+                <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+                  Hazard can only be changed on the parent product — it applies to all batches.
+                </p>
+              )}
+            </div>
+
             <div className="form-group">
               <label>Product Image</label>
               {imagePreview && (

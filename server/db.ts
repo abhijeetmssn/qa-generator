@@ -252,6 +252,7 @@ export async function updateProduct(uniqueId: string, updates: Partial<Product>)
     marketedBy: 'marketed_by',
     imageUrl: 'image_url',
     hazardSymbol: 'hazard_symbol',
+    hazardId: 'hazard_id',
   };
 
   for (const [key, col] of Object.entries(columnMap)) {
@@ -272,6 +273,21 @@ export async function updateProduct(uniqueId: string, updates: Partial<Product>)
     values
   );
   return rows.length > 0 ? rowToProduct(rows[0]) : null;
+}
+
+export async function cascadeHazardToChildren(masterUniqueId: string, hazardId: number): Promise<void> {
+  const { rows } = await pool.query(
+    'SELECT name, company_id FROM products WHERE unique_id = $1 AND is_master = true',
+    [masterUniqueId]
+  );
+  if (rows.length === 0) return;
+  const { name, company_id } = rows[0];
+  await pool.query(
+    `UPDATE products SET hazard_id = $1
+     WHERE name = $2 AND company_id = $3
+       AND (is_master = false OR is_master IS NULL) AND active = 'Y'`,
+    [hazardId, name, company_id]
+  );
 }
 
 export async function deleteProduct(uniqueId: string): Promise<boolean> {

@@ -1,21 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import * as XLSX from 'xlsx';
 import { apiBulkUploadProducts, apiGetAllCompanies } from '../services/api';
 import type { BulkUploadResult, Company } from '../services/api';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 interface BulkUploadProps {
   onUploadComplete: () => void;
 }
 
-const TEMPLATE_COLUMNS = [
-  'Product Name',
-  'Marketed By',
-  'Manufacturer',
-  'Manufacturer Address',
-  'Technical Name',
-  'Registration Number',
-  'Manufacturer Licence',
-];
 
 const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
   const [file, setFile] = useState<File | null>(null);
@@ -31,26 +23,21 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
     apiGetAllCompanies().then(setCompanies).catch(console.error);
   }, []);
 
-  const handleDownloadTemplate = () => {
-    const sampleRow: Record<string, string> = {};
-    TEMPLATE_COLUMNS.forEach((col) => (sampleRow[col] = ''));
-    // Add one example row
-    const example: Record<string, string> = {
-      'Product Name': 'Example Product',
-      'Marketed By': 'Example Marketing Co.',
-      'Manufacturer': 'Example Pharma Ltd.',
-      'Manufacturer Address': '123 Industrial Area, City',
-      'Technical Name': 'Acetaminophen 500mg',
-      'Registration Number': 'REG-12345',
-      'Manufacturer Licence': 'LIC-9876',
-    };
-
-    const ws = XLSX.utils.json_to_sheet([example], { header: TEMPLATE_COLUMNS });
-    // Auto-size columns
-    ws['!cols'] = TEMPLATE_COLUMNS.map((col) => ({ wch: Math.max(col.length + 2, 20) }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Products');
-    XLSX.writeFile(wb, 'products_upload_template.xlsx');
+  const handleDownloadTemplate = async () => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_BASE}/products/bulk-upload/template`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    });
+    if (!res.ok) { alert('Failed to download template'); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'products_upload_template.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const handleFileSelect = (selectedFile: File) => {

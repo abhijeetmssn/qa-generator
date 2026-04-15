@@ -157,6 +157,7 @@ export interface Product {
   productImage?: string;
   companyId?: number;
   companyName?: string;
+  is_master?: boolean;
   createdDate?: string;
   updatedDate?: string;
 }
