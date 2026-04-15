@@ -74,11 +74,13 @@ function rowToProduct(row: any): Product {
     manufacturerLicence: row.manufacturer_licence,
     marketedBy: row.marketed_by,
     imageUrl: row.image_url,
-    hazardSymbol: row.hazard_symbol,
+    // hazard_name comes from LEFT JOIN hazards — falls back to legacy hazard_symbol text
+    hazardSymbol: row.hazard_name ?? row.hazard_symbol,
     hazardId: row.hazard_id ?? undefined,
     productImage: row.product_image ? `/api/products/${row.unique_id}/image` : undefined,
     owner_uid: row.owner_uid,
     active: row.active || 'Y',
+    is_master: row.is_master ?? false,
     companyId: row.company_id ?? undefined,
     companyName: row.company_name ?? undefined,
     createdDate: row.created_date ?? undefined,
@@ -93,8 +95,9 @@ export async function getProducts(companyId?: number, isAdmin?: boolean): Promis
     : '(p.is_master = false OR p.is_master IS NULL)';
   if (companyId) {
     const { rows } = await pool.query(
-      `SELECT p.*, c.name as company_name FROM products p
+      `SELECT p.*, c.name as company_name, h.name as hazard_name FROM products p
        LEFT JOIN companies c ON p.company_id = c.id
+       LEFT JOIN hazards h ON h.id = p.hazard_id
        WHERE p.active = 'Y' AND ${masterFilter} AND p.company_id = $1
        ORDER BY p.created_date DESC`,
       [companyId]
@@ -102,8 +105,9 @@ export async function getProducts(companyId?: number, isAdmin?: boolean): Promis
     return rows.map(rowToProduct);
   }
   const { rows } = await pool.query(
-    `SELECT p.*, c.name as company_name FROM products p
+    `SELECT p.*, c.name as company_name, h.name as hazard_name FROM products p
      LEFT JOIN companies c ON p.company_id = c.id
+     LEFT JOIN hazards h ON h.id = p.hazard_id
      WHERE p.active = 'Y' AND ${masterFilter}
      ORDER BY p.created_date DESC`
   );
@@ -113,30 +117,40 @@ export async function getProducts(companyId?: number, isAdmin?: boolean): Promis
 export async function getMasterProducts(companyId?: number): Promise<Product[]> {
   if (companyId) {
     const { rows } = await pool.query(
-      `SELECT p.*, c.name as company_name FROM products p
+      `SELECT p.*, c.name as company_name, h.name as hazard_name FROM products p
        LEFT JOIN companies c ON p.company_id = c.id
+       LEFT JOIN hazards h ON h.id = p.hazard_id
        WHERE p.active = 'Y' AND p.is_master = true AND p.company_id = $1
        ORDER BY p.name`,
       [companyId]
     );
     return rows.map(rowToProduct);
   }
-  const { rows } = await pool.query("SELECT * FROM products WHERE active = 'Y' AND is_master = true ORDER BY name");
+  const { rows } = await pool.query(
+    `SELECT p.*, h.name as hazard_name FROM products p
+     LEFT JOIN hazards h ON h.id = p.hazard_id
+     WHERE p.active = 'Y' AND p.is_master = true ORDER BY p.name`
+  );
   return rows.map(rowToProduct);
 }
 
 export async function getTrashProducts(companyId?: number): Promise<Product[]> {
   if (companyId) {
     const { rows } = await pool.query(
-      `SELECT p.*, c.name as company_name FROM products p
+      `SELECT p.*, c.name as company_name, h.name as hazard_name FROM products p
        LEFT JOIN companies c ON p.company_id = c.id
+       LEFT JOIN hazards h ON h.id = p.hazard_id
        WHERE p.active = 'N' AND p.company_id = $1
        ORDER BY p.created_date DESC`,
       [companyId]
     );
     return rows.map(rowToProduct);
   }
-  const { rows } = await pool.query("SELECT * FROM products WHERE active = 'N' ORDER BY created_date DESC");
+  const { rows } = await pool.query(
+    `SELECT p.*, h.name as hazard_name FROM products p
+     LEFT JOIN hazards h ON h.id = p.hazard_id
+     WHERE p.active = 'N' ORDER BY p.created_date DESC`
+  );
   return rows.map(rowToProduct);
 }
 
@@ -144,6 +158,7 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
   const { rows } = await pool.query(
     `SELECT p.*,
        c.name as company_name,
+       h.name as hazard_name,
        COALESCE(NULLIF(TRIM(p.manufacturer_licence), ''), m.manufacturer_licence) as manufacturer_licence,
        COALESCE(NULLIF(TRIM(p.technical_name), ''), m.technical_name) as technical_name,
        COALESCE(NULLIF(TRIM(p.registration_number), ''), m.registration_number) as registration_number,
@@ -152,6 +167,7 @@ export async function getProductByUniqueId(uniqueId: string): Promise<Product | 
        COALESCE(NULLIF(TRIM(p.marketed_by), ''), m.marketed_by) as marketed_by
      FROM products p
      LEFT JOIN companies c ON p.company_id = c.id
+     LEFT JOIN hazards h ON h.id = p.hazard_id
      LEFT JOIN products m ON m.is_master = true AND m.name = p.name AND m.company_id = p.company_id
      WHERE p.unique_id = $1`,
     [uniqueId]
