@@ -343,37 +343,56 @@ router.get('/search', authenticateToken, async (req, res) => {
   }
 });
 
-// GET /api/products/bulk-upload/template — download Excel template with hazard dropdown
+// GET /api/products/bulk-upload/template — download Excel template with hazard dropdown + colors
 router.get('/bulk-upload/template', authenticateToken, requireRole('admin'), async (_req, res) => {
   try {
     const ExcelJS = (await import('exceljs')).default;
     const hazards = await getHazards();
     const hazardNames = hazards.map(h => h.name);
 
+    // Palette of distinct ARGB colors for hazard rows
+    const PALETTE = [
+      'FFFFE0B2', // amber
+      'FFFFCDD2', // red/pink
+      'FFE8F5E9', // green
+      'FFE3F2FD', // blue
+      'FFEDE7F6', // purple
+      'FFFFF9C4', // yellow
+      'FFFFE0E0', // salmon
+      'FFE0F7FA', // cyan
+      'FFF3E5F5', // lavender
+      'FFDCEDC8', // lime
+    ];
+    const hazardColorMap: Record<string, string> = {};
+    hazards.forEach((h, i) => {
+      hazardColorMap[h.name] = PALETTE[i % PALETTE.length];
+    });
+
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Products');
 
-    // Headers
-    const columns = [
-      { header: 'Product Name', key: 'name', width: 25 },
-      { header: 'Marketed By', key: 'marketedBy', width: 22 },
-      { header: 'Manufacturer', key: 'manufacturer', width: 22 },
-      { header: 'Manufacturer Address', key: 'manufacturerAddress', width: 30 },
-      { header: 'Technical Name', key: 'technicalName', width: 22 },
-      { header: 'Registration Number', key: 'registrationNumber', width: 22 },
-      { header: 'Manufacturer Licence', key: 'manufacturerLicence', width: 22 },
-      { header: 'Hazard', key: 'hazard', width: 22 },
+    ws.columns = [
+      { header: 'Product Name',         key: 'name',                width: 25 },
+      { header: 'Marketed By',           key: 'marketedBy',          width: 22 },
+      { header: 'Manufacturer',          key: 'manufacturer',        width: 22 },
+      { header: 'Manufacturer Address',  key: 'manufacturerAddress', width: 30 },
+      { header: 'Technical Name',        key: 'technicalName',       width: 22 },
+      { header: 'Registration Number',   key: 'registrationNumber',  width: 22 },
+      { header: 'Manufacturer Licence',  key: 'manufacturerLicence', width: 22 },
+      { header: 'Hazard',                key: 'hazard',              width: 26 },
     ];
-    ws.columns = columns;
 
     // Style header row
     ws.getRow(1).eachCell(cell => {
       cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
       cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.border = { bottom: { style: 'medium', color: { argb: 'FF1565C0' } } };
     });
+    ws.getRow(1).height = 20;
 
     // Example row
+    const exampleHazard = hazardNames[0] || '';
     ws.addRow({
       name: 'Example Product',
       marketedBy: 'Example Co.',
@@ -382,14 +401,19 @@ router.get('/bulk-upload/template', authenticateToken, requireRole('admin'), asy
       technicalName: 'Acetaminophen 500mg',
       registrationNumber: 'REG-12345',
       manufacturerLicence: 'LIC-9876',
-      hazard: hazardNames[0] || '',
+      hazard: exampleHazard,
     });
+    // Color the example hazard cell
+    if (exampleHazard && hazardColorMap[exampleHazard]) {
+      const exCell = ws.getCell(2, 8);
+      exCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hazardColorMap[exampleHazard] } };
+      exCell.font = { bold: true };
+    }
 
-    // Add dropdown validation on Hazard column (H) for rows 2–1000
+    // Dropdown + conditional color for rows 2–1000
     if (hazardNames.length > 0) {
-      const hazardColIdx = 8; // column H
       for (let row = 2; row <= 1000; row++) {
-        const cell = ws.getCell(row, hazardColIdx);
+        const cell = ws.getCell(row, 8);
         cell.dataValidation = {
           type: 'list',
           allowBlank: true,
@@ -399,7 +423,44 @@ router.get('/bulk-upload/template', authenticateToken, requireRole('admin'), asy
           error: 'Please select a hazard from the dropdown list.',
         };
       }
+
+      // Conditional formatting: color each hazard value distinctly
+      ws.addConditionalFormatting({
+        ref: 'H2:H1000',
+        rules: hazards.map((h, i) => ({
+          type: 'containsText' as const,
+          operator: 'containsText' as const,
+          text: h.name,
+          priority: i + 1,
+          style: {
+            fill: { type: 'pattern' as const, pattern: 'solid' as const, bgColor: { argb: PALETTE[i % PALETTE.length] } },
+            font: { bold: true },
+          },
+        })),
+      });
     }
+
+    // ── Hazard Reference sheet ──
+    const refWs = wb.addWorksheet('Hazard Reference');
+    refWs.columns = [
+      { header: 'Hazard Name', key: 'name', width: 35 },
+      { header: 'Color Preview', key: 'color', width: 18 },
+    ];
+    refWs.getRow(1).eachCell(cell => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF37474F' } };
+      cell.alignment = { horizontal: 'center' };
+    });
+    hazards.forEach((h, i) => {
+      const argb = PALETTE[i % PALETTE.length];
+      const row = refWs.addRow({ name: h.name, color: '■ Color Preview' });
+      row.eachCell(cell => {
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb } };
+        cell.font = { bold: true };
+        cell.alignment = { vertical: 'middle' };
+      });
+      row.height = 18;
+    });
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename="products_upload_template.xlsx"');
