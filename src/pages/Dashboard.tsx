@@ -197,23 +197,28 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       default:
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-            {/* Subscription warning card */}
+            {/* Subscription card */}
             {subscriptionExpiresAt && (() => {
               const days = getDaysRemaining(subscriptionExpiresAt);
-              if (days > 10) return null;
               const daysSinceExpiry = days <= 0 ? Math.abs(days) : 0;
               const dataDeletesIn = Math.max(0, 15 - daysSinceExpiry);
+              const bg = days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : days <= 10 ? '#fffbeb' : '#f0fdf4';
+              const borderColor = days <= 0 ? '#ef4444' : days <= 5 ? '#f97316' : days <= 10 ? '#f59e0b' : '#22c55e';
+              const titleColor = days <= 0 ? '#dc2626' : days <= 10 ? '#92400e' : '#15803d';
+              const textColor = days <= 0 ? '#dc2626' : days <= 10 ? '#78350f' : '#166534';
               return (
-                <div className="card" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: '6px', background: days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : '#fffbeb', borderLeft: `4px solid ${days <= 0 ? '#ef4444' : days <= 5 ? '#f97316' : '#f59e0b'}` }}>
-                  <div style={{ fontWeight: 700, fontSize: '1rem', color: days <= 0 ? '#dc2626' : '#92400e' }}>
-                    {days <= 0 ? '⚠️ Subscription Expired' : `⏳ ${days} Day${days !== 1 ? 's' : ''} Left`}
+                <div className="card" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: '6px', background: bg, borderLeft: `4px solid ${borderColor}` }}>
+                  <div style={{ fontWeight: 700, fontSize: '1rem', color: titleColor }}>
+                    {days <= 0 ? '⚠️ Subscription Expired' : `✅ ${days} Day${days !== 1 ? 's' : ''} Remaining`}
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.88rem', color: days <= 0 ? '#dc2626' : '#78350f' }}>
+                  <p style={{ margin: 0, fontSize: '0.88rem', color: textColor }}>
                     {days <= 0
                       ? dataDeletesIn > 0
                         ? `Your data will be permanently deleted in ${dataDeletesIn} day${dataDeletesIn !== 1 ? 's' : ''}. Please pay your subscription to avoid data loss.`
                         : 'Your data deletion period has passed. Please contact admin immediately to recover your account.'
-                      : 'Your maintenance subscription is expiring soon. Please contact admin to renew.'}
+                      : days <= 10
+                        ? 'Your maintenance subscription is expiring soon. Please contact admin to renew.'
+                        : 'Your maintenance subscription is active.'}
                   </p>
                 </div>
               );
@@ -421,9 +426,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           <div className="header-right">
             {subscriptionExpiresAt && (() => {
               const days = getDaysRemaining(subscriptionExpiresAt);
-              if (days > 10) return null;
-              const bg = days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : '#fffbeb';
-              const color = days <= 0 ? '#dc2626' : days <= 5 ? '#ea580c' : '#d97706';
+              const bg = days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : days <= 10 ? '#fffbeb' : '#f0fdf4';
+              const color = days <= 0 ? '#dc2626' : days <= 5 ? '#ea580c' : days <= 10 ? '#d97706' : '#16a34a';
               const daysSinceExpiry = days <= 0 ? Math.abs(days) : 0;
               const dataDeletesIn = Math.max(0, 15 - daysSinceExpiry);
               return (
