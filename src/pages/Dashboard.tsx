@@ -44,11 +44,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
+  const [scanAnalyticsEnabled, setScanAnalyticsEnabled] = useState<boolean>(false);
 
   useEffect(() => {
     if (user.companyId) {
       apiGetCompanyById(user.companyId)
-        .then(c => setSubscriptionExpiresAt(c.subscriptionExpiresAt || null))
+        .then(c => {
+          setSubscriptionExpiresAt(c.subscriptionExpiresAt || null);
+          setScanAnalyticsEnabled(c.scanAnalyticsEnabled !== false);
+        })
         .catch(console.error);
     }
   }, [user.companyId]);
@@ -182,9 +186,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       case 'hazards':
         return <ManageHazards />;
       case 'scan-analytics':
-        return canEdit
+        return scanAnalyticsEnabled
           ? <ScanAnalytics />
-          : <div className="page-placeholder">You don't have permission to view scan analytics.</div>;
+          : <div className="page-placeholder">Scan Analytics is not enabled for your company.</div>;
       case 'trash':
         return <Trash canEdit={canEdit} isAdmin={user.role === 'admin'} onRestored={async () => {
           const products = await apiGetProducts();
@@ -294,7 +298,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             <span className="nav-icon">📋</span>
             Products List
           </a>
-          {canEdit && (
+          {scanAnalyticsEnabled && (
             <a
               href="#"
               className={page === 'scan-analytics' ? 'active' : ''}
