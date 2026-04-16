@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiLogin } from '../services/api';
+import { apiLogin, SubscriptionExpiredError } from '../services/api';
 import type { UserRole } from '../services/api';
 import '../styles/Login.css';
 
@@ -27,17 +27,28 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, companyInfo }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [logoError, setLogoError] = useState(false);
+  const [subscriptionExpiry, setSubscriptionExpiry] = useState<string | null>(null);
+
+  const getDaysRemaining = (expiresAt: string) => {
+    const diff = new Date(expiresAt).getTime() - Date.now();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSubscriptionExpiry(null);
     setLoading(true);
 
     try {
       const data = await apiLogin(email, password);
       onLoginSuccess(data.user);
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please try again.');
+      if (err instanceof SubscriptionExpiredError) {
+        setSubscriptionExpiry(err.subscriptionExpiresAt);
+      } else {
+        setError(err.message || 'Login failed. Please try again.');
+      }
     }
 
     setLoading(false);
@@ -146,6 +157,25 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, companyInfo }) => {
                   disabled={loading}
                 />
               </div>
+
+              {/* Subscription expired warning */}
+              {subscriptionExpiry && (() => {
+                const days = getDaysRemaining(subscriptionExpiry);
+                const daysSince = Math.abs(Math.min(0, days));
+                const dataDeletesIn = Math.max(0, 15 - daysSince);
+                return (
+                  <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '12px 16px', marginBottom: '12px' }}>
+                    <div style={{ fontWeight: 700, color: '#dc2626', fontSize: '14px', marginBottom: '6px' }}>
+                      ⚠️ Subscription Expired
+                    </div>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#b91c1c', lineHeight: '1.5' }}>
+                      {dataDeletesIn > 0
+                        ? `Your data will be permanently deleted in ${dataDeletesIn} day${dataDeletesIn !== 1 ? 's' : ''}. Please pay your subscription amount to restore access.`
+                        : 'Your data deletion period has passed. Please contact your administrator immediately.'}
+                    </p>
+                  </div>
+                );
+              })()}
 
               {/* Error Message */}
               {error && <div className="error-message">{error}</div>}

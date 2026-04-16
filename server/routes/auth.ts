@@ -66,7 +66,10 @@ router.post('/login', async (req, res) => {
         if (user.role !== 'admin' && company.subscriptionExpiresAt) {
           const expired = new Date(company.subscriptionExpiresAt).getTime() < Date.now();
           if (expired) {
-            return res.status(403).json({ error: 'Monthly subscription has expired. Please contact your administrator to renew.' });
+            return res.status(403).json({
+              error: 'Monthly subscription has expired. Please pay your subscription to avoid data loss.',
+              subscriptionExpiresAt: company.subscriptionExpiresAt,
+            });
           }
         }
       }

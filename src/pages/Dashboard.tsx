@@ -201,14 +201,18 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             {subscriptionExpiresAt && (() => {
               const days = getDaysRemaining(subscriptionExpiresAt);
               if (days > 10) return null;
+              const daysSinceExpiry = days <= 0 ? Math.abs(days) : 0;
+              const dataDeletesIn = Math.max(0, 15 - daysSinceExpiry);
               return (
                 <div className="card" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: '6px', background: days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : '#fffbeb', borderLeft: `4px solid ${days <= 0 ? '#ef4444' : days <= 5 ? '#f97316' : '#f59e0b'}` }}>
                   <div style={{ fontWeight: 700, fontSize: '1rem', color: days <= 0 ? '#dc2626' : '#92400e' }}>
                     {days <= 0 ? '⚠️ Subscription Expired' : `⏳ ${days} Day${days !== 1 ? 's' : ''} Left`}
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#78350f' }}>
+                  <p style={{ margin: 0, fontSize: '0.88rem', color: days <= 0 ? '#dc2626' : '#78350f' }}>
                     {days <= 0
-                      ? 'Your maintenance subscription has expired. Please contact admin to renew.'
+                      ? dataDeletesIn > 0
+                        ? `Your data will be permanently deleted in ${dataDeletesIn} day${dataDeletesIn !== 1 ? 's' : ''}. Please pay your subscription to avoid data loss.`
+                        : 'Your data deletion period has passed. Please contact admin immediately to recover your account.'
                       : 'Your maintenance subscription is expiring soon. Please contact admin to renew.'}
                   </p>
                 </div>
@@ -417,11 +421,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           <div className="header-right">
             {subscriptionExpiresAt && (() => {
               const days = getDaysRemaining(subscriptionExpiresAt);
-              const bg = days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : days <= 10 ? '#fffbeb' : '#f0fdf4';
-              const color = days <= 0 ? '#dc2626' : days <= 5 ? '#ea580c' : days <= 10 ? '#d97706' : '#16a34a';
+              if (days > 10) return null;
+              const bg = days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : '#fffbeb';
+              const color = days <= 0 ? '#dc2626' : days <= 5 ? '#ea580c' : '#d97706';
+              const daysSinceExpiry = days <= 0 ? Math.abs(days) : 0;
+              const dataDeletesIn = Math.max(0, 15 - daysSinceExpiry);
               return (
                 <div style={{ fontSize: '12px', fontWeight: 700, padding: '5px 12px', borderRadius: '20px', background: bg, color, border: `1px solid ${color}22` }}>
-                  {days > 0 ? `⏳ ${days}d left` : '⚠️ Expired'}
+                  {days > 0 ? `⏳ ${days}d left` : dataDeletesIn > 0 ? `⚠️ Data deletes in ${dataDeletesIn}d` : '🚨 Data at risk'}
                 </div>
               );
             })()}

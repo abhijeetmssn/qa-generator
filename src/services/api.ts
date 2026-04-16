@@ -36,6 +36,15 @@ async function request<T>(
 // ── Auth ──
 export type UserRole = 'admin' | 'editor' | 'viewer';
 
+export class SubscriptionExpiredError extends Error {
+  subscriptionExpiresAt: string;
+  constructor(message: string, subscriptionExpiresAt: string) {
+    super(message);
+    this.name = 'SubscriptionExpiredError';
+    this.subscriptionExpiresAt = subscriptionExpiresAt;
+  }
+}
+
 export interface Company {
   id?: number;
   name: string;
@@ -61,13 +70,21 @@ export interface AuthResponse {
 }
 
 export async function apiLogin(email: string, password: string): Promise<AuthResponse> {
-  const data = await request<AuthResponse>('/auth/login', {
+  const res = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
+  const data = await res.json();
+  if (!res.ok) {
+    if (res.status === 403 && data.subscriptionExpiresAt) {
+      throw new SubscriptionExpiredError(data.error, data.subscriptionExpiresAt);
+    }
+    throw new Error(data.error || `Request failed (${res.status})`);
+  }
   localStorage.setItem('token', data.token);
   localStorage.setItem('currentUser', JSON.stringify(data.user));
-  return data;
+  return data as AuthResponse;
 }
 
 export async function apiSignup(
