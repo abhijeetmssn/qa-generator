@@ -289,8 +289,8 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
             <h3 style={{ marginTop: 0, color: '#222' }}>Product Added Successfully!</h3>
             <p style={{ color: '#666', marginBottom: '16px' }}>Share this QR Code with customers to view product details:</p>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
-              <QRCodeSVG 
-                value={`product/${addedProduct.uniqueId}`}
+              <QRCodeSVG
+                value={`https://apasqr.com/#p/${addedProduct.uniqueId}`}
                 size={256}
                 level="H"
                 includeMargin={true}
