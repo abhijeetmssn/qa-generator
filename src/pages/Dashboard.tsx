@@ -137,7 +137,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         console.error('Failed to upload product image:', imgErr);
       }
     }
-    setAllProducts(prev => [...prev, saved]);
+    setAllProducts(prev => [saved, ...prev]);
     return saved;
   };
 
