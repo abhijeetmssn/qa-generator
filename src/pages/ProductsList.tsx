@@ -51,11 +51,21 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
     return companies.filter(c => c.name.toLowerCase().includes(q));
   }, [companies, companySearch]);
 
+  // Sort newest first (by created date, falling back to id)
+  const sortedProducts = useMemo(() => {
+    return [...products].sort((a, b) => {
+      const da = a.createdDate ? new Date(a.createdDate).getTime() : 0;
+      const db = b.createdDate ? new Date(b.createdDate).getTime() : 0;
+      if (db !== da) return db - da;
+      return (Number(b.id) || 0) - (Number(a.id) || 0);
+    });
+  }, [products]);
+
   // Filter products by selected company (admin only)
   const companyFilteredProducts = useMemo(() => {
-    if (!isAdmin || !selectedCompanyId) return products;
-    return products.filter(p => p.companyId === selectedCompanyId);
-  }, [products, selectedCompanyId, isAdmin]);
+    if (!isAdmin || !selectedCompanyId) return sortedProducts;
+    return sortedProducts.filter(p => p.companyId === selectedCompanyId);
+  }, [sortedProducts, selectedCompanyId, isAdmin]);
 
   // Filter products by search term
   const filtered = useMemo(() => {
