@@ -4,13 +4,7 @@ import '../ViewProduct.css';
 import type { Product, Company } from '../services/api';
 import { apiGetCompanyById } from '../services/api';
 import Spinner from '../components/Spinner';
-
-function formatMonthYear(val?: string) {
-  if (!val) return '—';
-  const [year, month] = val.split('-');
-  if (!year || !month) return val;
-  return `${month}/${year.slice(-2)}`;
-}
+import { formatProductDate } from '../utils/dates';
 
 type ViewProductProps = {
   product: Product;
@@ -209,7 +203,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
 
             <div className="view-info-group">
               <label>EXPIRY DATE</label>
-              <p>{formatMonthYear(product.expiry)}</p>
+              <p>{formatProductDate(product.expiry)}</p>
             </div>
 
             <div className="view-info-group">
@@ -268,7 +262,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
 
             <div className="view-info-group">
               <label>MANUFACTURING DATE</label>
-              <p>{formatMonthYear(product.mfg)}</p>
+              <p>{formatProductDate(product.mfg)}</p>
             </div>
 
             <div className="view-info-group">

@@ -776,6 +776,44 @@
   filter: invert(0.15);
 }
 
+/* ── Date precision segmented control ── */
+.date-precision-track {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 2px;
+  padding: 3px;
+  background: #f1f5f9;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.date-precision-seg {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  padding: 7px 18px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+.date-precision-seg:hover:not(.is-active) {
+  color: #334155;
+}
+.date-precision-seg.is-active {
+  background: #fff;
+  color: #1e3a5f;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+}
+.date-precision-seg:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
 .submit-btn {
   min-width: 200px;
   border: none;

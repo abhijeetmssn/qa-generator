@@ -3,14 +3,7 @@ import * as XLSX from 'xlsx';
 import type { Product, Company } from '../services/api';
 import { apiGetAllCompanies } from '../services/api';
 import Spinner from '../components/Spinner';
-
-function formatMonthYear(val?: string) {
-  if (!val) return '—';
-  // Accepts 'YYYY-MM' or 'YYYY-MM-DD'
-  const [year, month] = val.split('-');
-  if (!year || !month) return val;
-  return `${month}/${year.slice(-2)}`;
-}
+import { formatProductDate } from '../utils/dates';
 
 function formatISTDate(val?: string) {
   if (!val) return '—';
@@ -226,8 +219,8 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                     <td>{product.uniqueId}</td>
                     <td>{product.name}</td>
                     <td>{product.batch}</td>
-                      <td>{formatMonthYear(product.mfg)}</td>
-                      <td>{formatMonthYear(product.expiry)}</td>
+                      <td>{formatProductDate(product.mfg)}</td>
+                      <td>{formatProductDate(product.expiry)}</td>
                     <td>{product.packingSize || '—'}</td>
                     <td>{formatISTDate(product.createdDate)}</td>
                     <td>
