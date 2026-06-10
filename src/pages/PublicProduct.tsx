@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiGetProductByUniqueId, apiGetCompanyPublic, apiLogScan } from '../services/api';
 import type { Product } from '../services/api';
+import { formatProductDate } from '../utils/dates';
 import '../ViewProduct.css';
 
 type PublicProductProps = {
@@ -135,13 +136,6 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
 
   const logoUrl = product.companyId ? `${API_BASE}/companies/${product.companyId}/logo` : undefined;
 
-  function formatMonthYear(val?: string) {
-    if (!val) return '—';
-    const [year, month] = val.split('-');
-    if (!year || !month) return val;
-    return `${month}/${year.slice(-2)}`;
-  }
-
   return (
     <div className="view-product-page public-product-page">
       <div className="view-product-header public-header">
@@ -188,13 +182,13 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
 
           <div className="view-info-group">
             <label>MANUFACTURING DATE</label>
-            <p>{formatMonthYear(product.mfg)}</p>
+            <p>{formatProductDate(product.mfg)}</p>
           </div>
 
 
           <div className="view-info-group">
             <label>EXPIRY DATE</label>
-            <p>{formatMonthYear(product.expiry)}</p>
+            <p>{formatProductDate(product.expiry)}</p>
           </div>
 
           
