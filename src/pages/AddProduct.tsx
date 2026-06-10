@@ -5,6 +5,7 @@ import type { Product, Hazard } from '../services/api';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import SearchableSelect from '../components/SearchableSelect';
+import { formatByPrecision, parseDateStr, type DatePrecision } from '../utils/dates';
 
 type AddProductProps = {
   onProductAdded?: (product: any) => Promise<any>;
@@ -36,6 +37,21 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [addedProduct, setAddedProduct] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [datePrecision, setDatePrecision] = useState<DatePrecision>('month');
+
+  // Switching precision re-formats any already-picked dates to the new precision
+  const handlePrecisionChange = (precision: DatePrecision) => {
+    setDatePrecision(precision);
+    setForm(prev => {
+      const mfgDate = parseDateStr(prev.manufacturer);
+      const expDate = parseDateStr(prev.expiry);
+      return {
+        ...prev,
+        manufacturer: mfgDate ? formatByPrecision(mfgDate, precision) : prev.manufacturer,
+        expiry: expDate ? formatByPrecision(expDate, precision) : prev.expiry,
+      };
+    });
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -216,36 +232,57 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
                     <label>PACKAGING SIZE</label>
                     <input name="packingSize" value={form.packingSize} onChange={handleChange} placeholder="e.g. 500 ml, 1 kg" />
                   </div>
+                  <div className="form-group full-width">
+                    <label>DATE FORMAT</label>
+                    <div className="date-precision-track" role="group" aria-label="Date format">
+                      <button
+                        type="button"
+                        className={`date-precision-seg${datePrecision === 'month' ? ' is-active' : ''}`}
+                        aria-pressed={datePrecision === 'month'}
+                        onClick={() => handlePrecisionChange('month')}
+                      >
+                        Month &amp; Year
+                      </button>
+                      <button
+                        type="button"
+                        className={`date-precision-seg${datePrecision === 'day' ? ' is-active' : ''}`}
+                        aria-pressed={datePrecision === 'day'}
+                        onClick={() => handlePrecisionChange('day')}
+                      >
+                        Day · Month · Year
+                      </button>
+                    </div>
+                  </div>
                   <div className="form-group">
                     <label>DATE OF MANUFACTURE</label>
                     <DatePicker
-                      selected={form.manufacturer ? new Date(form.manufacturer + '-01') : null}
+                      selected={parseDateStr(form.manufacturer)}
                       onChange={(date: Date | null) => {
-                        const mfgStr = date ? date.toISOString().slice(0, 7) : '';
-                        let expiryStr = '';
-                        if (date) {
-                          const expDate = new Date(date);
-                          expDate.setFullYear(expDate.getFullYear() + 2);
-                          expiryStr = expDate.toISOString().slice(0, 7);
-                        }
-                        setForm(prev => ({ ...prev, manufacturer: mfgStr, expiry: expiryStr }));
+                        if (!date) { setForm(prev => ({ ...prev, manufacturer: '', expiry: '' })); return; }
+                        const expDate = new Date(date);
+                        expDate.setFullYear(expDate.getFullYear() + 2);
+                        setForm(prev => ({
+                          ...prev,
+                          manufacturer: formatByPrecision(date, datePrecision),
+                          expiry: formatByPrecision(expDate, datePrecision),
+                        }));
                       }}
-                      dateFormat="yyyy-MM"
-                      showMonthYearPicker
-                      showFullMonthYearPicker
-                      placeholderText="Select month and year"
+                      dateFormat={datePrecision === 'day' ? 'dd/MM/yyyy' : 'MM/yyyy'}
+                      showMonthYearPicker={datePrecision === 'month'}
+                      showFullMonthYearPicker={datePrecision === 'month'}
+                      placeholderText={datePrecision === 'day' ? 'Select date' : 'Select month and year'}
                       className="form-control"
                     />
                   </div>
                   <div className="form-group">
                     <label>EXPIRY DATE</label>
                     <DatePicker
-                      selected={form.expiry ? new Date(form.expiry + '-01') : null}
-                      onChange={(date: Date | null) => setForm(prev => ({ ...prev, expiry: date ? date.toISOString().slice(0, 7) : '' }))}
-                      dateFormat="yyyy-MM"
-                      showMonthYearPicker
-                      showFullMonthYearPicker
-                      placeholderText="Select month and year"
+                      selected={parseDateStr(form.expiry)}
+                      onChange={(date: Date | null) => setForm(prev => ({ ...prev, expiry: date ? formatByPrecision(date, datePrecision) : '' }))}
+                      dateFormat={datePrecision === 'day' ? 'dd/MM/yyyy' : 'MM/yyyy'}
+                      showMonthYearPicker={datePrecision === 'month'}
+                      showFullMonthYearPicker={datePrecision === 'month'}
+                      placeholderText={datePrecision === 'day' ? 'Select date' : 'Select month and year'}
                       className="form-control"
                     />
                   </div>
