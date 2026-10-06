@@ -447,3 +447,8 @@
     gap: 16px;
   }
 }
+
+.login-container .login-brandmark {
+  margin-bottom: 18px;
+  line-height: 0;
+}

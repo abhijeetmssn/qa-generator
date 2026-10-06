@@ -52,15 +52,67 @@
 .logo-section {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 24px 16px 20px;
+  justify-content: flex-start;
+  padding: 20px 20px 18px;
   margin-bottom: 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
-.logo-section > div {
+
+/* APAS lockup: shield mark + wordmark */
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.brand-lockup svg {
+  flex-shrink: 0;
+}
+.brand-name {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.16em;
+  color: #fff;
+  line-height: 1;
+}
+.brand-tagline {
+  font-size: 0.7rem;
+  color: rgba(226, 232, 240, 0.6);
+  margin-top: 5px;
+  white-space: nowrap;
+}
+
+/* Company's own uploaded logo */
+.brand-company {
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+}
+.brand-company-logo {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.brand-company-logo img {
+  max-height: 96px;
+  max-width: 172px;
+  object-fit: contain;
+  display: block;
+}
+.brand-company-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
 }
 
 /* ── Sidebar Navigation ── */
@@ -2416,4 +2468,42 @@ label.secondary-btn {
 /* Stacked form rows (Edit Company) need breathing room */
 .add-product-form > .form-row + .form-row {
   margin-top: 10px;
+}
+
+/* =====================================================
+   Full-height list page (Products List): the page itself never
+   scrolls — title, toolbar, column headings and pager stay in view
+   and only the table rows scroll inside the card.
+   ===================================================== */
+.products-list-page.is-fill {
+  align-self: stretch;
+  min-height: 0;
+}
+.products-list-page.is-fill .products-table-card {
+  flex: 1;
+  min-height: 260px;
+}
+.products-list-page.is-fill .table-scroll-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.products-list-page.is-fill .products-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.products-list-page.is-fill .products-table thead th:last-child {
+  z-index: 3; /* corner cell: sticky to the top and the right */
+}
+
+/* Below wide desktops, row actions are icon-only (name on hover) so every column fits */
+@media (max-width: 1439px) {
+  .products-table .btn-label {
+    display: none;
+  }
+  .products-table .icon-btn {
+    padding: 6px 8px;
+    margin-right: 4px;
+  }
 }

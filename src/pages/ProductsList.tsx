@@ -122,7 +122,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
   };
 
   return (
-    <div className="products-list-page">
+    <div className="products-list-page is-fill">
       <div className="products-list-header">
         <h1>Product List</h1>
         <div className="products-list-actions">
@@ -222,11 +222,19 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                     <td>{product.packingSize || '—'}</td>
                     <td>{formatISTDate(product.createdDate)}</td>
                     <td>
-                      <button className="icon-btn view" onClick={() => onView(product)}>View</button>
-                      {canEdit && <button className="icon-btn edit" onClick={() => onEdit?.(product)}>Edit</button>}
+                      <button className="icon-btn view" aria-label="View" title="View" onClick={() => onView(product)}>
+                        <Icon name="eye" size={14} /><span className="btn-label">View</span>
+                      </button>
+                      {canEdit && (
+                        <button className="icon-btn edit" aria-label="Edit" title="Edit" onClick={() => onEdit?.(product)}>
+                          <Icon name="edit" size={14} /><span className="btn-label">Edit</span>
+                        </button>
+                      )}
                       {canEdit && (
                         <button
                           className="icon-btn delete"
+                          aria-label="Delete"
+                          title="Delete"
                           disabled={deletingId === product.uniqueId}
                           onClick={() => {
                             if (window.confirm(`Move "${product.name}" to trash?`)) {
@@ -236,7 +244,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                         >
                           {deletingId === product.uniqueId
                             ? <Spinner size="small" />
-                            : 'Delete'}
+                            : <><Icon name="trash" size={14} /><span className="btn-label">Delete</span></>}
                         </button>
                       )}
                     </td>
