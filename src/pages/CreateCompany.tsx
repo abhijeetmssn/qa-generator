@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { apiCreateCompany, apiUploadLogo } from '../services/api';
+import ToggleSwitch from '../components/ToggleSwitch';
 import type { Company } from '../services/api';
 
 interface CreateCompanyProps {
@@ -18,6 +19,7 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
     facebookUrl: '',
     instagramUrl: '',
     scanAnalyticsEnabled: true,
+    perPackQrEnabled: false,
   });
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -80,6 +82,7 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
         email: '',
         website: '',
         scanAnalyticsEnabled: true,
+        perPackQrEnabled: false,
       });
       setLogoFile(null);
       setLogoPreview(null);
@@ -94,37 +97,25 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
   };
 
   return (
-    <div style={{ width: '100%', padding: '20px' }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-        <h1 style={{ marginBottom: '30px', fontSize: '32px', fontWeight: 'bold', color: '#1f2937' }}>
-          Create New Company
-        </h1>
+    <div className="form-page">
+      <div className="form-page-inner">
+        <div className="page-header">
+          <div>
+            <h1>Create New Company</h1>
+            <p className="page-subtitle">Add a company and its customer-care details shown on the product page.</p>
+          </div>
+        </div>
 
         {error && (
-          <div style={{
-            padding: '16px',
-            marginBottom: '24px',
-            backgroundColor: '#fee2e2',
-            color: '#991b1b',
-            borderRadius: '8px',
-            border: '1px solid #fecaca',
-            fontSize: '14px',
-          }}>
-            ⚠️ {error}
-          </div>
+          <div className="alert is-danger">{error}</div>
         )}
 
-        <div style={{
-          backgroundColor: 'white',
-          padding: '32px',
-          borderRadius: '12px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        }}>
-          <form onSubmit={handleSubmit}>
+        <div className="content-card">
+          <form onSubmit={handleSubmit} className="field-grid">
         {/* Company Name */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
-            Company Name <span style={{ color: '#ef4444' }}>*</span>
+        <div className="field is-full">
+          <label className="field-label">
+            Company Name <span className="required">*</span>
           </label>
           <input
             type="text"
@@ -138,8 +129,8 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
         </div>
 
         {/* Address */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+        <div className="field is-full">
+          <label className="field-label">
             Address
           </label>
           <textarea
@@ -156,8 +147,8 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
         </div>
 
         {/* Phone */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+        <div className="field">
+          <label className="field-label">
             Phone
           </label>
           <input
@@ -171,8 +162,8 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
         </div>
 
         {/* Email */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+        <div className="field">
+          <label className="field-label">
             Email
           </label>
           <input
@@ -186,43 +177,32 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
         </div>
 
         {/* Logo Upload */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+        <div className="field">
+          <label className="field-label">
             Company Logo
           </label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="logo-upload-row">
             <input
               ref={fileInputRef}
               type="file"
               accept="image/png,image/jpeg,image/svg+xml,image/webp"
               onChange={handleLogoSelect}
               disabled={loading}
-              style={{
-                flex: 1,
-                fontSize: '13px',
-                padding: '8px',
-              }}
             />
-            {logoUploading && <span style={{ fontSize: '13px', color: '#6366f1' }}>⏳ Uploading...</span>}
+            {logoUploading && <span className="field-hint">Uploading...</span>}
             {logoPreview && !logoUploading && (
               <img
                 src={logoPreview}
                 alt="Logo preview"
-                style={{
-                  width: '50px',
-                  height: '50px',
-                  objectFit: 'contain',
-                  borderRadius: '6px',
-                  border: '1px solid #e2e8f0',
-                }}
+                className="logo-preview"
               />
             )}
           </div>
         </div>
 
         {/* Website */}
-        <div style={{ marginBottom: '28px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+        <div className="field">
+          <label className="field-label">
             Website
           </label>
           <input
@@ -236,8 +216,8 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
         </div>
 
         {/* Facebook */}
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+        <div className="field">
+          <label className="field-label">
             Facebook Link
           </label>
           <input
@@ -251,8 +231,8 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
         </div>
 
         {/* Instagram */}
-        <div style={{ marginBottom: '28px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+        <div className="field">
+          <label className="field-label">
             Instagram Link
           </label>
           <input
@@ -266,77 +246,40 @@ const CreateCompany: React.FC<CreateCompanyProps> = ({ onCompanyCreated, onCance
         </div>
 
         {/* Scan Analytics Toggle */}
-        <div style={{ marginBottom: '28px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px', color: '#374151' }}>
+        <div className="field is-full">
+          <label className="field-label">
             Scan Analytics
           </label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <button
-              type="button"
-              onClick={() => setFormData(prev => ({ ...prev, scanAnalyticsEnabled: !prev.scanAnalyticsEnabled }))}
-              disabled={loading}
-              style={{
-                width: '52px', height: '28px', borderRadius: '14px', border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
-                background: formData.scanAnalyticsEnabled ? '#22c55e' : '#d1d5db',
-                position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-              }}
-            >
-              <span style={{
-                position: 'absolute', top: '3px',
-                left: formData.scanAnalyticsEnabled ? '27px' : '3px',
-                width: '22px', height: '22px', borderRadius: '50%',
-                background: '#fff', transition: 'left 0.2s',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-              }} />
-            </button>
-            <span style={{ fontSize: '14px', color: formData.scanAnalyticsEnabled ? '#15803d' : '#6b7280' }}>
-              {formData.scanAnalyticsEnabled ? 'Enabled — QR scan events will be tracked' : 'Disabled — scans will not be recorded'}
-            </span>
-          </div>
+          <ToggleSwitch
+            checked={!!formData.scanAnalyticsEnabled}
+            onChange={() => setFormData(prev => ({ ...prev, scanAnalyticsEnabled: !prev.scanAnalyticsEnabled }))}
+            disabled={loading}
+            onLabel="Enabled — QR scan events will be tracked"
+            offLabel="Disabled — scans will not be recorded"
+          />
+        </div>
+
+        {/* One QR per pack Toggle */}
+        <div className="field is-full">
+          <label className="field-label">
+            One QR per Pack
+          </label>
+          <ToggleSwitch
+            checked={!!formData.perPackQrEnabled}
+            onChange={() => setFormData(prev => ({ ...prev, perPackQrEnabled: !prev.perPackQrEnabled }))}
+            disabled={loading}
+            onLabel="Allowed — new batches can get a unique QR for every pack"
+            offLabel="Not allowed — one QR per batch only"
+          />
         </div>
 
         {/* Buttons */}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={loading}
-            style={{
-              padding: '12px 28px',
-              borderRadius: '6px',
-              border: '1px solid #d1d5db',
-              backgroundColor: '#ffffff',
-              color: '#374151',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: '600',
-              transition: 'all 0.2s',
-              opacity: loading ? 0.6 : 1,
-            }}
-            onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = '#f3f4f6')}
-            onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = '#ffffff')}
-          >
+        <div className="form-actions is-full">
+          <button type="button" className="secondary-btn" onClick={onCancel} disabled={loading}>
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={loading || logoUploading}
-            style={{
-              padding: '12px 28px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: '#3b82f6',
-              color: 'white',
-              cursor: (loading || logoUploading) ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              fontWeight: '600',
-              transition: 'all 0.2s',
-              opacity: (loading || logoUploading) ? 0.7 : 1,
-            }}
-            onMouseEnter={(e) => !(loading || logoUploading) && (e.currentTarget.style.backgroundColor = '#2563eb')}
-            onMouseLeave={(e) => !(loading || logoUploading) && (e.currentTarget.style.backgroundColor = '#3b82f6')}
-          >
-            {loading || logoUploading ? '⏳ Creating...' : '✓ Create Company'}
+          <button type="submit" className="primary-btn" disabled={loading || logoUploading}>
+            {loading || logoUploading ? 'Creating...' : 'Create Company'}
           </button>
         </div>
           </form>

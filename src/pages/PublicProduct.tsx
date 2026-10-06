@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { apiGetProductByUniqueId, apiGetCompanyPublic, apiLogScan } from '../services/api';
+import { apiViewProduct, apiViewPackProduct, apiGetCompanyPublic } from '../services/api';
 import type { Product } from '../services/api';
+import type { ScanCoords } from '../components/LocationGate';
 import { formatProductDate } from '../utils/dates';
 import { assetUrl } from '../utils/assetUrl';
+import { getDeviceId } from '../utils/device';
+import Icon from '../components/Icon';
 import '../ViewProduct.css';
 
 type PublicProductProps = {
-  uniqueId: string;
+  uniqueId?: string;  // batch QR: #p/<uniqueId>
+  packCode?: string;  // pack QR (one QR per pack): #c/<code>
+  coords: ScanCoords; // mandatory — this page is only shown behind LocationGate
 };
 
-const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
+const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId, packCode, coords }) => {
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
   const [product, setProduct] = useState<Product | null>(null);
   const [company, setCompany] = useState<{ id: number; name: string; phone?: string; email?: string; website?: string; address?: string; facebookUrl?: string; instagramUrl?: string; scanAnalyticsEnabled?: boolean; subscriptionExpiresAt?: string } | null>(null);
@@ -22,7 +27,10 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
     const loadProduct = async () => {
       try {
         setLoading(true);
-        const prod = await apiGetProductByUniqueId(uniqueId);
+        // The server logs the scan with these coordinates (when Scan Analytics is on)
+        const prod = packCode
+          ? await apiViewPackProduct(packCode, { ...coords, deviceId: getDeviceId() })
+          : await apiViewProduct(uniqueId!, coords);
         if (prod) {
           setProduct(prod);
           setError(null);
@@ -32,22 +40,8 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
               // Check if subscription is expired
               if (co.subscriptionExpiresAt && new Date(co.subscriptionExpiresAt).getTime() < Date.now()) {
                 setSubscriptionExpired(true);
-                return;
-              }
-              if (co.scanAnalyticsEnabled !== false) {
-                if (navigator.geolocation) {
-                  navigator.geolocation.getCurrentPosition(
-                    (pos) => apiLogScan(uniqueId, { latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-                    () => apiLogScan(uniqueId),
-                    { timeout: 5000, maximumAge: 60000 }
-                  );
-                } else {
-                  apiLogScan(uniqueId);
-                }
               }
             }).catch(console.error);
-          } else {
-            apiLogScan(uniqueId);
           }
           // Preload images before showing page
           const imagesToLoad: string[] = [];
@@ -78,17 +72,17 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
       }
     };
     loadProduct();
-  }, [uniqueId]);
+  }, [uniqueId, packCode, coords]);
 
   if (subscriptionExpired) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '24px' }}>
-        <div style={{ textAlign: 'center', maxWidth: '400px' }}>
-          <div style={{ fontSize: '4rem', marginBottom: '16px' }}>⚠️</div>
-          <h2 style={{ color: '#dc2626', fontWeight: 700, marginBottom: '12px', fontSize: '1.4rem' }}>
+      <div className="public-state">
+        <div className="public-state-card">
+          <div className="public-state-icon is-danger"><Icon name="alert" size={26} /></div>
+          <h2 className="public-state-title is-danger">
             Monthly Subscription Expired
           </h2>
-          <p style={{ color: '#64748b', fontSize: '0.95rem', lineHeight: 1.6 }}>
+          <p className="public-state-text">
             This product's QR verification is currently unavailable. The company's maintenance subscription has expired. Please contact the company to resolve this.
           </p>
         </div>
@@ -98,15 +92,10 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f5f7fb 0%, #e8eef8 100%)',
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '18px', color: '#666', fontWeight: '500' }}>Loading product...</p>
+      <div className="public-state">
+        <div className="public-state-card">
+          <div className="public-spinner" />
+          <p className="public-state-muted">Loading product...</p>
         </div>
       </div>
     );
@@ -114,23 +103,11 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
 
   if (error || !product) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f5f7fb 0%, #e8eef8 100%)',
-        padding: '20px',
-      }}>
-        <div style={{
-          textAlign: 'center',
-          background: 'white',
-          padding: '40px',
-          borderRadius: '12px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        }}>
-          <h2 style={{ color: '#dc2626', marginTop: 0 }}>Product Not Found</h2>
-          <p style={{ color: '#666' }}>{error || 'The product you are looking for does not exist.'}</p>
+      <div className="public-state">
+        <div className="public-state-card">
+          <div className="public-state-icon is-danger"><Icon name="search" size={26} /></div>
+          <h2 className="public-state-title is-danger">Product Not Found</h2>
+          <p className="public-state-text">{error || 'The product you are looking for does not exist.'}</p>
         </div>
       </div>
     );
@@ -239,17 +216,17 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
           <div className="view-info-group">
             <label>CUSTOMER CARE CONTACT DETAILS</label>
             <div className="contact-details">
-              {company?.address && <p>🏠 - Regd. Office: {company.address}</p>}
-              {company?.phone && <p>📱 - <a href={`tel:${company.phone}`}>{company.phone}</a></p>}
-              {company?.email && <p>✉️ - <a href={`mailto:${company.email}`}>{company.email}</a></p>}
-              {company?.website && <p className="website-link">🌐 <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer">{company.website}</a></p>}
+              {company?.address && <p><Icon name="map-pin" size={16} /> <span>Regd. Office: {company.address}</span></p>}
+              {company?.phone && <p><Icon name="phone" size={16} /> <a href={`tel:${company.phone}`}>{company.phone}</a></p>}
+              {company?.email && <p><Icon name="mail" size={16} /> <a href={`mailto:${company.email}`}>{company.email}</a></p>}
+              {company?.website && <p className="website-link"><Icon name="globe" size={16} /> <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer">{company.website}</a></p>}
               {(company?.facebookUrl || company?.instagramUrl) && (
-                <div className="social-links" style={{ display: 'flex', gap: '14px', marginTop: '12px' }}>
+                <div className="social-links">
                   {company?.facebookUrl && (
-                    <a href={company.facebookUrl.startsWith('http') ? company.facebookUrl : `https://${company.facebookUrl}`} target="_blank" rel="noopener noreferrer" className="fb-btn" style={{ padding: '12px 32px', borderRadius: '24px', color: '#fff', background: 'linear-gradient(135deg, #4a90d9, #1877f2)', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}>Facebook</a>
+                    <a href={company.facebookUrl.startsWith('http') ? company.facebookUrl : `https://${company.facebookUrl}`} target="_blank" rel="noopener noreferrer" className="fb-btn">Facebook</a>
                   )}
                   {company?.instagramUrl && (
-                    <a href={company.instagramUrl.startsWith('http') ? company.instagramUrl : `https://${company.instagramUrl}`} target="_blank" rel="noopener noreferrer" className="ig-btn" style={{ padding: '12px 32px', borderRadius: '24px', color: '#fff', background: 'linear-gradient(135deg, #f77737, #e1306c)', textDecoration: 'none', fontWeight: 600, fontSize: '1rem' }}>Instagram</a>
+                    <a href={company.instagramUrl.startsWith('http') ? company.instagramUrl : `https://${company.instagramUrl}`} target="_blank" rel="noopener noreferrer" className="ig-btn">Instagram</a>
                   )}
                 </div>
               )}
@@ -282,7 +259,7 @@ const PublicProduct: React.FC<PublicProductProps> = ({ uniqueId }) => {
       </div>
 
       <div className="view-footer">
-        <p>Developed by <a href="#" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>APAS</a></p>
+        <p>Developed by <a href="#">APAS</a></p>
       </div>
     </div>
   );

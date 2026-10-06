@@ -1,4 +1,5 @@
 // Database service — PostgreSQL powered
+import { randomBytes } from 'crypto';
 import pool from './pool';
 
 // ── Company type ──
@@ -13,6 +14,7 @@ export interface Company {
   facebookUrl?: string;
   instagramUrl?: string;
   scanAnalyticsEnabled?: boolean;
+  perPackQrEnabled?: boolean; // admin has allowed one QR per pack for this company
   subscriptionExpiresAt?: string;
   createdAt?: string;
 }
@@ -360,10 +362,10 @@ export async function permanentDeleteProduct(uniqueId: string): Promise<boolean>
 // ── Companies ──
 export async function addCompany(company: Company): Promise<Company> {
   const { rows } = await pool.query(
-    `INSERT INTO companies (name, logo, address, phone, email, website, scan_analytics_enabled, facebook_url, instagram_url, subscription_expires_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW() + INTERVAL '30 days')
-     RETURNING id, name, logo, address, phone, email, website, scan_analytics_enabled, facebook_url, instagram_url, subscription_expires_at, created_date`,
-    [company.name, company.logo || null, company.address || null, company.phone || null, company.email || null, company.website || null, company.scanAnalyticsEnabled !== false, company.facebookUrl || null, company.instagramUrl || null]
+    `INSERT INTO companies (name, logo, address, phone, email, website, scan_analytics_enabled, facebook_url, instagram_url, per_pack_qr_enabled, subscription_expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW() + INTERVAL '30 days')
+     RETURNING id, name, logo, address, phone, email, website, scan_analytics_enabled, facebook_url, instagram_url, per_pack_qr_enabled, subscription_expires_at, created_date`,
+    [company.name, company.logo || null, company.address || null, company.phone || null, company.email || null, company.website || null, company.scanAnalyticsEnabled !== false, company.facebookUrl || null, company.instagramUrl || null, company.perPackQrEnabled === true]
   );
   return {
     id: rows[0].id,
@@ -374,6 +376,7 @@ export async function addCompany(company: Company): Promise<Company> {
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    perPackQrEnabled: rows[0].per_pack_qr_enabled === true,
     facebookUrl: rows[0].facebook_url,
     instagramUrl: rows[0].instagram_url,
     subscriptionExpiresAt: rows[0].subscription_expires_at,
@@ -393,6 +396,7 @@ export async function getCompanyByName(name: string): Promise<Company | undefine
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    perPackQrEnabled: rows[0].per_pack_qr_enabled === true,
     facebookUrl: rows[0].facebook_url,
     instagramUrl: rows[0].instagram_url,
     subscriptionExpiresAt: rows[0].subscription_expires_at,
@@ -412,6 +416,7 @@ export async function getCompanyById(id: number): Promise<Company | undefined> {
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    perPackQrEnabled: rows[0].per_pack_qr_enabled === true,
     facebookUrl: rows[0].facebook_url,
     instagramUrl: rows[0].instagram_url,
     subscriptionExpiresAt: rows[0].subscription_expires_at,
@@ -430,6 +435,7 @@ export async function getAllCompanies(): Promise<Company[]> {
     email: row.email,
     website: row.website,
     scanAnalyticsEnabled: row.scan_analytics_enabled,
+    perPackQrEnabled: row.per_pack_qr_enabled === true,
     facebookUrl: row.facebook_url,
     instagramUrl: row.instagram_url,
     subscriptionExpiresAt: row.subscription_expires_at,
@@ -452,6 +458,7 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
     facebookUrl: 'facebook_url',
     instagramUrl: 'instagram_url',
     scanAnalyticsEnabled: 'scan_analytics_enabled',
+    perPackQrEnabled: 'per_pack_qr_enabled',
   };
 
   for (const [key, col] of Object.entries(columnMap)) {
@@ -481,6 +488,7 @@ export async function updateCompany(id: number, updates: Partial<Company>): Prom
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    perPackQrEnabled: rows[0].per_pack_qr_enabled === true,
     facebookUrl: rows[0].facebook_url,
     instagramUrl: rows[0].instagram_url,
     subscriptionExpiresAt: rows[0].subscription_expires_at,
@@ -515,6 +523,7 @@ export async function renewCompanySubscription(id: number): Promise<Company | nu
     email: rows[0].email,
     website: rows[0].website,
     scanAnalyticsEnabled: rows[0].scan_analytics_enabled,
+    perPackQrEnabled: rows[0].per_pack_qr_enabled === true,
     facebookUrl: rows[0].facebook_url,
     instagramUrl: rows[0].instagram_url,
     subscriptionExpiresAt: rows[0].subscription_expires_at,
@@ -800,6 +809,8 @@ export interface ScanEvent {
   city?: string;
   latitude?: number;
   longitude?: number;
+  packCodeId?: number; // set when a pack QR (one per pack) was scanned
+  deviceId?: string;   // anonymous phone ID, sent with pack QR scans
 }
 
 export interface ScanSummary {
@@ -821,13 +832,14 @@ export interface ScanSummary {
 
 export async function logScanEvent(event: ScanEvent): Promise<void> {
   await pool.query(
-    `INSERT INTO scan_events (product_id, company_id, product_name, user_agent, ip_address, country, region, city, latitude, longitude)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+    `INSERT INTO scan_events (product_id, company_id, product_name, user_agent, ip_address, country, region, city, latitude, longitude, pack_code_id, device_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
     [
       event.productId, event.companyId || null, event.productName || null,
       event.userAgent || null, event.ipAddress || null,
       event.country || null, event.region || null, event.city || null,
       event.latitude ?? null, event.longitude ?? null,
+      event.packCodeId ?? null, event.deviceId || null,
     ]
   );
 }
@@ -942,4 +954,114 @@ export async function getProductScanDetails(
     })),
     total: parseInt(countRows[0].total),
   };
+}
+
+// ── Pack Codes (one QR per pack of a batch) ──
+// Codes use an alphabet without look-alike characters (no 0/O, 1/I). 32 symbols ×
+// 10 characters ≈ 50 bits, so codes cannot be guessed or enumerated.
+const PACK_CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+const PACK_CODE_LENGTH = 10;
+export const PACK_CODE_PATTERN = /^[2-9A-HJ-NP-Z]{10}$/;
+export const MAX_PACKS_PER_BATCH = 100000;
+
+function randomPackCode(): string {
+  const bytes = randomBytes(PACK_CODE_LENGTH);
+  let code = '';
+  // 256 is a multiple of 32, so masking the low 5 bits has no modulo bias
+  for (const b of bytes) code += PACK_CODE_ALPHABET[b & 31];
+  return code;
+}
+
+export interface PackCode {
+  id: number;
+  code: string;
+  productId: string;
+  companyId?: number;
+  serialNo: number;
+}
+
+/**
+ * Create `quantity` pack codes for a batch, numbered from 1 (or after its highest existing
+ * pack number). All-or-nothing: either every code is created or none is.
+ */
+export async function generatePackCodes(
+  productId: string,
+  companyId: number | undefined,
+  quantity: number
+): Promise<{ fromSerial: number; toSerial: number; count: number }> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Serialise runs per batch so two requests can't take the same pack numbers
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`pack_codes:${productId}`]);
+    const { rows } = await client.query(
+      'SELECT COALESCE(MAX(serial_no), 0)::int AS max FROM pack_codes WHERE product_id = $1',
+      [productId]
+    );
+    const fromSerial = rows[0].max + 1;
+    const CHUNK = 5000;
+
+    for (let start = fromSerial; start < fromSerial + quantity; start += CHUNK) {
+      const end = Math.min(start + CHUNK, fromSerial + quantity);
+      let pending = Array.from({ length: end - start }, (_, i) => start + i);
+      // A random code can (very rarely) collide with an existing one — retry just those packs
+      while (pending.length > 0) {
+        const { rows: inserted } = await client.query(
+          `INSERT INTO pack_codes (code, product_id, company_id, serial_no)
+           SELECT t.code, $3, $4, t.serial_no FROM unnest($1::text[], $2::int[]) AS t(code, serial_no)
+           ON CONFLICT (code) DO NOTHING
+           RETURNING serial_no`,
+          [pending.map(randomPackCode), pending, productId, companyId ?? null]
+        );
+        const done = new Set(inserted.map((r: any) => r.serial_no));
+        pending = pending.filter((s) => !done.has(s));
+      }
+    }
+
+    await client.query('COMMIT');
+    return { fromSerial, toSerial: fromSerial + quantity - 1, count: quantity };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function getPackCodeByCode(code: string): Promise<PackCode | undefined> {
+  const { rows } = await pool.query(
+    'SELECT id, code, product_id, company_id, serial_no FROM pack_codes WHERE code = $1',
+    [code]
+  );
+  if (rows.length === 0) return undefined;
+  return {
+    id: rows[0].id,
+    code: rows[0].code,
+    productId: rows[0].product_id,
+    companyId: rows[0].company_id ?? undefined,
+    serialNo: rows[0].serial_no,
+  };
+}
+
+export async function getPackCodeSummary(productId: string): Promise<{ total: number; lastSerial: number }> {
+  const { rows } = await pool.query(
+    `SELECT COUNT(*)::int AS total, COALESCE(MAX(serial_no), 0)::int AS last_serial
+     FROM pack_codes WHERE product_id = $1`,
+    [productId]
+  );
+  return { total: rows[0].total, lastSerial: rows[0].last_serial };
+}
+
+export async function getPackCodesInRange(
+  productId: string,
+  fromSerial: number,
+  toSerial: number
+): Promise<{ serialNo: number; code: string }[]> {
+  const { rows } = await pool.query(
+    `SELECT serial_no, code FROM pack_codes
+     WHERE product_id = $1 AND serial_no BETWEEN $2 AND $3
+     ORDER BY serial_no`,
+    [productId, fromSerial, toSerial]
+  );
+  return rows.map((r: any) => ({ serialNo: r.serial_no, code: r.code }));
 }

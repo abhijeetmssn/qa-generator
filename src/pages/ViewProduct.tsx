@@ -2,8 +2,10 @@ import React, { useRef, useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import '../ViewProduct.css';
 import type { Product, Company } from '../services/api';
-import { apiGetCompanyById } from '../services/api';
+import { apiGetCompanyById, apiGetPackCodeSummary } from '../services/api';
 import Spinner from '../components/Spinner';
+import PackCodesDownload from '../components/PackCodesDownload';
+import Icon from '../components/Icon';
 import { formatProductDate } from '../utils/dates';
 import { assetUrl } from '../utils/assetUrl';
 
@@ -28,6 +30,12 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
       apiGetCompanyById(companyId).then(setCompany).catch(console.error);
     }
   }, [companyId]);
+
+  // Pack QR codes, if this batch was created with one QR per pack
+  const [packSummary, setPackSummary] = useState<{ total: number; lastSerial: number } | null>(null);
+  useEffect(() => {
+    apiGetPackCodeSummary(product.uniqueId).then(setPackSummary).catch(() => setPackSummary(null));
+  }, [product.uniqueId]);
 
   // Preload product and hazard images before showing page
   useEffect(() => {
@@ -161,7 +169,7 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
   return (
     <div className="view-product-page">
       <div className="view-header">
-        <button className="back-btn" onClick={goBack}>← Back</button>
+        <button className="back-btn" onClick={goBack}><Icon name="arrow-left" size={16} /> Back</button>
       </div>
       
       <div className="view-product-header">
@@ -287,10 +295,10 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
             <div className="view-info-group">
               <label>CUSTOMER CARE CONTACT DETAILS</label>
               <div className="contact-details">
-                {company?.address && <p><strong>🏢</strong> {company.address}</p>}
-                <p><strong>📞</strong> {company?.phone || '—'}</p>
-                <p><strong>📧</strong> {company?.email || '—'}</p>
-                <p><strong>🌐</strong> {company?.website ? <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer">{company.website}</a> : '—'}</p>
+                {company?.address && <p><Icon name="map-pin" size={16} /> {company.address}</p>}
+                <p><Icon name="phone" size={16} /> {company?.phone || '—'}</p>
+                <p><Icon name="mail" size={16} /> {company?.email || '—'}</p>
+                <p><Icon name="globe" size={16} /> {company?.website ? <a href={company.website.startsWith('http') ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer">{company.website}</a> : '—'}</p>
                 <div className="social-links">
                   <a href="#" className="fb-btn">Facebook</a>
                   <a href="#" className="ig-btn">Instagram</a>
@@ -318,17 +326,31 @@ const ViewProduct: React.FC<ViewProductProps> = ({ product, goBack, companyId, c
                   className="download-qr-btn"
                   onClick={handleDownloadQR}
                 >
-                  ⬇ Download QR Code
+                  <Icon name="download" size={16} /> Download QR Code
                 </button>
                 <button
                   type="button"
                   className="print-qr-btn"
                   onClick={handlePrintQR}
                 >
-                  🖨 Print QR Code
+                  <Icon name="printer" size={16} /> Print QR Code
                 </button>
               </div>
             </div>
+
+            {/* Pack QR codes — only for batches created with one QR per pack */}
+            {packSummary && packSummary.total > 0 && (
+              <div className="view-info-group qr-section">
+                <label>PACK QR CODES (ONE PER PACK)</label>
+                <p>
+                  {packSummary.total.toLocaleString('en-IN')} packs · Pack No. 1 – {packSummary.lastSerial.toLocaleString('en-IN')}
+                </p>
+                <PackCodesDownload
+                  product={{ uniqueId: product.uniqueId, name: product.name, batch: product.batch }}
+                  lastSerial={packSummary.lastSerial}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

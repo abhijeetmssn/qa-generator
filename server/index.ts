@@ -11,6 +11,7 @@ import productRoutes from './routes/products';
 import companiesRoutes from './routes/companies';
 import hazardsRoutes from './routes/hazards';
 import adminRoutes from './routes/admin';
+import packCodesRoutes from './routes/packCodes';
 import { scheduleDailyBackup } from './backup';
 
 const __filename_local = fileURLToPath(import.meta.url);
@@ -56,6 +57,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/companies', companiesRoutes);
 app.use('/api/hazards', hazardsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/pack-codes', packCodesRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
@@ -183,6 +185,11 @@ async function initDB() {
       ALTER TABLE companies ADD COLUMN IF NOT EXISTS scan_analytics_enabled BOOLEAN DEFAULT true;
     `);
 
+    // Per-pack QR codes (one QR per pack) — off until an admin grants it to the company
+    await client.query(`
+      ALTER TABLE companies ADD COLUMN IF NOT EXISTS per_pack_qr_enabled BOOLEAN DEFAULT false;
+    `);
+
     // Add subscription_expires_at — 30 days from creation
     await client.query(`
       ALTER TABLE companies ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ;
@@ -220,6 +227,23 @@ async function initDB() {
     await client.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS city VARCHAR(100)`);
     await client.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS latitude FLOAT`);
     await client.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS longitude FLOAT`);
+
+    // Pack codes: one random code per physical pack of a batch, each printed as its own
+    // QR (apasqr.com/#c/<code>). serial_no is the pack number within the batch.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS pack_codes (
+        id            SERIAL PRIMARY KEY,
+        code          VARCHAR(16) UNIQUE NOT NULL,
+        product_id    VARCHAR(100) NOT NULL,
+        company_id    INTEGER,
+        serial_no     INTEGER NOT NULL,
+        created_date  TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE (product_id, serial_no)
+      );
+    `);
+    // Scans of a pack QR also record which pack and which phone (anonymous ID) — NULL for batch QR scans
+    await client.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS pack_code_id INTEGER`);
+    await client.query(`ALTER TABLE scan_events ADD COLUMN IF NOT EXISTS device_id VARCHAR(64)`);
 
     // Migrate products table: add columns if table already existed without them
     await client.query('ALTER TABLE products ADD COLUMN IF NOT EXISTS is_master BOOLEAN DEFAULT false');

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Product } from '../services/api';
+import Icon from '../components/Icon';
 import { apiUploadProductImage, apiDeleteProductImage, apiUploadProductLeaflet, apiDeleteProductLeaflet, apiGetHazards } from '../services/api';
 import type { Hazard } from '../services/api';
 import DatePicker from 'react-datepicker';
@@ -142,13 +143,13 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
         <h1>{isMaster ? 'Edit Master Product' : 'Edit Product'}</h1>
         <div className="header-actions">
           <button type="button" className="secondary-btn" onClick={onCancel}>
-            ← Back to List
+            <Icon name="arrow-left" size={16} /> Back to List
           </button>
         </div>
       </div>
 
       {isMaster && (
-        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px 16px', marginBottom: '12px', fontSize: '13px', color: '#1d4ed8' }}>
+        <div className="alert is-info" style={{ marginBottom: 0 }}>
           Changes to these fields will be inherited by all batch products of <strong>{product.name}</strong>. Hazard change will apply immediately to all batches.
         </div>
       )}
@@ -193,11 +194,6 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
                   <select
                     value={hazardId}
                     onChange={e => setHazardId(e.target.value)}
-                    style={{
-                      width: '100%', padding: '8px 12px',
-                      border: '1px solid #d1d5db', borderRadius: '8px',
-                      fontSize: '14px', background: 'white', color: '#1e293b',
-                    }}
                   >
                     <option value="">— No hazard symbol —</option>
                     {hazards.map(h => (
@@ -276,12 +272,6 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
                   <select
                     value={hazardId}
                     disabled
-                    style={{
-                      width: '100%', padding: '8px 12px',
-                      border: '1px solid #d1d5db', borderRadius: '8px',
-                      fontSize: '14px', background: '#f8fafc', color: '#64748b',
-                      cursor: 'not-allowed',
-                    }}
                   >
                     <option value="">— No hazard symbol —</option>
                     {hazards.map(h => (
@@ -410,20 +400,20 @@ const EditProduct: React.FC<EditProductProps> = ({ product, onSave, onCancel }) 
                 </div>
           </div>
 
-          <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
-            <button type="submit" className="primary-btn" disabled={saving}>
-              {saving ? '⏳ Saving...' : '💾 Save Changes'}
-            </button>
+          <div className="form-actions" style={{ marginTop: '24px' }}>
             <button type="button" className="secondary-btn" onClick={onCancel}>
               Cancel
+            </button>
+            <button type="submit" className="primary-btn" disabled={saving}>
+              {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>
       </div>
 
       {/* Read-only info */}
-      <div className="content-card" style={{ marginTop: '16px', padding: '16px', background: '#f8fafc' }}>
-        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', fontSize: '13px', color: '#64748b' }}>
+      <div className="meta-strip">
+        <div className="meta-strip-row">
           <span><strong>Unique ID:</strong> {product.uniqueId}</span>
           {isMaster && <span><strong>Type:</strong> Master Product</span>}
         </div>

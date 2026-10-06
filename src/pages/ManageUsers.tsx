@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { apiCreateUser, apiGetAllCompanies, apiGetAllUsers, apiUnlockUser, apiLockUser } from '../services/api';
 import type { UserRole, Company, ManagedUser } from '../services/api';
+import Icon from '../components/Icon';
 
 interface ManageUsersProps {
   adminCompanyName?: string;
 }
 
-const ROLE_COLOR: Record<string, { bg: string; color: string }> = {
-  admin:  { bg: '#fef3c7', color: '#92400e' },
-  editor: { bg: '#dbeafe', color: '#1e40af' },
-  viewer: { bg: '#f1f5f9', color: '#475569' },
+const ROLE_BADGE: Record<string, string> = {
+  admin: 'is-warning',
+  editor: 'is-info',
+  viewer: 'is-neutral',
 };
 
 const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
@@ -109,40 +110,33 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
 
   return (
     <div className="manage-users-page">
-      <h2 style={{ marginBottom: '8px', color: '#1e293b' }}>Create New User</h2>
-      <p style={{ color: '#64748b', marginBottom: '24px', fontSize: '14px' }}>
-        Add a new user account with specific permissions.
-      </p>
+      <div className="section-heading">
+        <h2>Create New User</h2>
+        <p>Add a new user account with specific permissions.</p>
+      </div>
 
       {message && (
-        <div style={{
-          padding: '12px 16px', borderRadius: '8px', marginBottom: '20px',
-          background: message.type === 'success' ? '#ecfdf5' : '#fef2f2',
-          color: message.type === 'success' ? '#065f46' : '#991b1b',
-          border: `1px solid ${message.type === 'success' ? '#a7f3d0' : '#fecaca'}`,
-          fontSize: '14px',
-        }}>
-          {message.type === 'success' ? '✅ ' : '❌ '}{message.text}
+        <div className={`alert is-${message.type === 'success' ? 'success' : 'danger'}`}>
+          {message.text}
         </div>
       )}
 
       <form className="add-product-form" onSubmit={handleCreateUser}>
         <div className="form-grid">
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+          <div className="form-group full-width">
             <label>Select Company *</label>
             <select
               value={companyId}
               onChange={e => setCompanyId(e.target.value)}
-              style={{ width: '100%', padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '14px', background: 'white' }}
               disabled={companiesLoading}
               required
             >
               <option value="">-- Select a company --</option>
               {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-            {companiesLoading && <p style={{ fontSize: '13px', color: '#6366f1', marginTop: '4px' }}>Loading companies...</p>}
+            {companiesLoading && <p className="field-hint">Loading companies...</p>}
             {!companiesLoading && companies.length === 0 && (
-              <p style={{ fontSize: '13px', color: '#dc2626', marginTop: '4px' }}>No companies available. Create a company first.</p>
+              <p className="field-hint is-error">No companies available. Create a company first.</p>
             )}
           </div>
 
@@ -155,22 +149,17 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimum 6 characters" required minLength={6} />
           </div>
 
-          <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+          <div className="form-group full-width">
             <label>User Role *</label>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }}>
+            <div className="role-options">
               {(['viewer', 'editor', 'admin'] as UserRole[]).map(r => (
-                <label key={r} style={{
-                  flex: '1', minWidth: '160px', display: 'flex', alignItems: 'flex-start', gap: '10px',
-                  padding: '14px 16px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s ease',
-                  border: role === r ? '2px solid #4f46e5' : '2px solid #e2e8f0',
-                  background: role === r ? '#eef2ff' : '#fff',
-                }}>
-                  <input type="radio" name="role" value={r} checked={role === r} onChange={() => setRole(r)} style={{ marginTop: '3px' }} />
+                <label key={r} className={`role-option${role === r ? ' is-selected' : ''}`}>
+                  <input type="radio" name="role" value={r} checked={role === r} onChange={() => setRole(r)} />
                   <div>
-                    <div style={{ fontWeight: 600, textTransform: 'capitalize', color: '#1e293b', fontSize: '14px' }}>
-                      {r === 'viewer' ? '👁️ Viewer' : r === 'editor' ? '✏️ Editor' : '🔑 Admin'}
+                    <div className="role-option-title">
+                      {r === 'viewer' ? 'Viewer' : r === 'editor' ? 'Editor' : 'Admin'}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{roleDescriptions[r]}</div>
+                    <div className="role-option-desc">{roleDescriptions[r]}</div>
                   </div>
                 </label>
               ))}
@@ -178,97 +167,84 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
           </div>
         </div>
 
-        <div style={{ marginTop: '24px' }}>
+        <div className="form-actions">
           <button type="submit" className="primary-btn" disabled={loading}>
-            {loading ? '⏳ Creating...' : '➕ Create User'}
+            <Icon name="plus" size={16} />
+            {loading ? 'Creating...' : 'Create User'}
           </button>
         </div>
       </form>
 
       {/* All Users Table */}
-      <div style={{ marginTop: '40px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-          <div>
-            <h2 style={{ marginBottom: '4px', color: '#1e293b' }}>All Users</h2>
-            <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
+      <div className="section-block">
+        <div className="section-heading-row">
+          <div className="section-heading">
+            <h2>All Users</h2>
+            <p>
               {users.length} user{users.length !== 1 ? 's' : ''} · {users.filter(u => u.lockedAt).length} locked
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div className="filter-bar-row">
             <input
               type="text"
+              className="search-input"
               placeholder="Search by email, role, company..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ padding: '7px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '13px', width: '220px', outline: 'none' }}
             />
-            <button
-              onClick={fetchUsers}
-              disabled={usersLoading}
-              style={{ padding: '7px 14px', borderRadius: '8px', border: '1px solid #d1d5db', background: 'white', cursor: 'pointer', fontSize: '13px', color: '#374151' }}
-            >
-              {usersLoading ? '⏳' : '↻ Refresh'}
+            <button className="secondary-btn" onClick={fetchUsers} disabled={usersLoading}>
+              <Icon name="refresh" size={15} />
+              {usersLoading ? 'Refreshing…' : 'Refresh'}
             </button>
           </div>
         </div>
 
         {usersLoading ? (
-          <p style={{ color: '#6366f1', fontSize: '14px' }}>Loading users...</p>
+          <p className="muted-text">Loading users...</p>
         ) : filteredUsers.length === 0 ? (
-          <div style={{ padding: '20px', borderRadius: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', color: '#64748b', fontSize: '14px', textAlign: 'center' }}>
+          <div className="empty-state">
             {search ? 'No users match your search.' : 'No users found.'}
           </div>
         ) : (
-          <div style={{ borderRadius: '10px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+          <div className="table-frame">
+            <table className="products-table">
               <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                  <th style={thStyle}>#</th>
-                  <th style={thStyle}>Email</th>
-                  <th style={thStyle}>Role</th>
-                  <th style={thStyle}>Company</th>
-                  <th style={thStyle}>Status</th>
-                  <th style={{ ...thStyle, textAlign: 'center' }}>Action</th>
+                <tr>
+                  <th>#</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Company</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'center' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.map((u, idx) => {
                   const isLocked = !!u.lockedAt;
-                  const rc = ROLE_COLOR[u.role] || ROLE_COLOR.viewer;
                   return (
-                    <tr key={u.uid} style={{ borderBottom: '1px solid #f1f5f9', background: isLocked ? '#fff5f5' : '#fff' }}>
-                      <td style={tdStyle}>{idx + 1}</td>
-                      <td style={{ ...tdStyle, fontWeight: 500, color: '#1e293b' }}>{u.email}</td>
-                      <td style={tdStyle}>
-                        <span style={{ background: rc.bg, color: rc.color, padding: '2px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, textTransform: 'capitalize' }}>
+                    <tr key={u.uid} className={isLocked ? 'is-locked' : undefined}>
+                      <td className="cell-muted">{idx + 1}</td>
+                      <td className="cell-strong">{u.email}</td>
+                      <td>
+                        <span className={`badge ${ROLE_BADGE[u.role] || ROLE_BADGE.viewer}`} style={{ textTransform: 'capitalize' }}>
                           {u.role}
                         </span>
                       </td>
-                      <td style={{ ...tdStyle, color: '#64748b' }}>{u.companyName || '—'}</td>
-                      <td style={tdStyle}>
+                      <td className="cell-muted">{u.companyName || '—'}</td>
+                      <td>
                         {isLocked ? (
-                          <span style={{ color: '#dc2626', fontWeight: 600, fontSize: '13px' }}>
-                            🔒 Locked
-                            <span style={{ display: 'block', fontSize: '11px', color: '#94a3b8', fontWeight: 400 }}>
-                              {new Date(u.lockedAt!).toLocaleString()}
-                            </span>
-                          </span>
+                          <span className="badge is-danger" title={new Date(u.lockedAt!).toLocaleString()}>Locked</span>
                         ) : (
-                          <span style={{ color: '#16a34a', fontWeight: 600, fontSize: '13px' }}>✅ Active</span>
+                          <span className="badge is-success">Active</span>
                         )}
                       </td>
-                      <td style={{ ...tdStyle, textAlign: 'center' }}>
+                      <td style={{ textAlign: 'center' }}>
                         <button
+                          className={`icon-btn ${isLocked ? 'view' : 'delete'}`}
                           onClick={() => handleToggleLock(u)}
                           disabled={togglingUid === u.uid}
-                          style={{
-                            padding: '5px 16px', borderRadius: '7px', border: 'none', fontWeight: 600, fontSize: '13px',
-                            cursor: togglingUid === u.uid ? 'not-allowed' : 'pointer',
-                            background: togglingUid === u.uid ? '#e2e8f0' : isLocked ? '#dcfce7' : '#fee2e2',
-                            color: togglingUid === u.uid ? '#94a3b8' : isLocked ? '#166534' : '#991b1b',
-                          }}
                         >
-                          {togglingUid === u.uid ? '...' : isLocked ? '🔓 Unlock' : '🔒 Lock'}
+                          {togglingUid === u.uid ? '...' : isLocked ? 'Unlock' : 'Lock'}
                         </button>
                       </td>
                     </tr>
@@ -282,11 +258,5 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ adminCompanyName }) => {
     </div>
   );
 };
-
-const thStyle: React.CSSProperties = {
-  padding: '10px 14px', textAlign: 'left', fontSize: '12px',
-  fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em',
-};
-const tdStyle: React.CSSProperties = { padding: '12px 14px', verticalAlign: 'middle' };
 
 export default ManageUsers;

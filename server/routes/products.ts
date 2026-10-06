@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import geoip from 'geoip-lite';
 import multer from 'multer';
 import sharp from 'sharp';
 import * as XLSX from 'xlsx';
@@ -23,7 +22,8 @@ import {
   getProductLeaflet,
   deleteProductLeaflet,
   generateUniqueId,
-  logScanEvent,
+  generatePackCodes,
+  MAX_PACKS_PER_BATCH,
   getScanAnalytics,
   getProductScanDetails,
   getCompanyById,
@@ -32,6 +32,7 @@ import {
 } from '../db';
 import { authenticateToken, requireRole } from '../middleware';
 import { s3Enabled, uploadLeaflet, deleteLeaflet, uploadImage, deleteImage } from '../s3';
+import { recordScan, isCoordinate } from '../scanLog';
 import type { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import pool from '../pool';
@@ -357,10 +358,10 @@ router.get('/scan-analytics/:productId/scans', authenticateToken, async (req, re
   }
 });
 
-// GET /api/products/:uniqueId — get single product
-router.get('/:uniqueId', async (_req, res) => {
+// GET /api/products/:uniqueId — get single product (logged-in users; the public QR page uses POST /:uniqueId/view)
+router.get('/:uniqueId', authenticateToken, async (_req, res) => {
   try {
-    const product = await getProductByUniqueId(_req.params.uniqueId);
+    const product = await getProductByUniqueId(_req.params.uniqueId as string);
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
@@ -382,7 +383,20 @@ router.post('/', authenticateToken, async (req, res) => {
     // Resolve user's company_id
     const dbUser = user?.email ? await findUserByEmail(user.email) : null;
     const companyId = dbUser?.companyId || undefined;
-    
+
+    // Optional: one QR per pack — only for companies an admin has given access to
+    const wantsPackCodes = body.packCount !== undefined && body.packCount !== null && body.packCount !== '';
+    const packCount = Number(body.packCount);
+    if (wantsPackCodes) {
+      if (!Number.isInteger(packCount) || packCount < 1 || packCount > MAX_PACKS_PER_BATCH) {
+        return res.status(400).json({ error: `Number of packs must be a whole number from 1 to ${MAX_PACKS_PER_BATCH.toLocaleString('en-IN')}` });
+      }
+      const company = companyId ? await getCompanyById(companyId) : undefined;
+      if (!company?.perPackQrEnabled) {
+        return res.status(403).json({ error: 'One QR per pack is not enabled for your company. Please contact the admin.' });
+      }
+    }
+
     const product = {
       id: Date.now(),
       uniqueId: await generateUniqueId(),
@@ -407,6 +421,18 @@ router.post('/', authenticateToken, async (req, res) => {
 
     const saved = await addProduct(product);
     console.log('[POST /products] saved product:', JSON.stringify(saved));
+
+    if (wantsPackCodes) {
+      try {
+        const packCodes = await generatePackCodes(saved.uniqueId, companyId, packCount);
+        console.log(`[POST /products] created ${packCodes.count} pack QR codes for ${saved.uniqueId}`);
+        return res.status(201).json({ product: saved, packCodes });
+      } catch (err) {
+        // Don't leave behind a batch whose pack QR codes were never created
+        await permanentDeleteProduct(saved.uniqueId);
+        throw err;
+      }
+    }
     return res.status(201).json({ product: saved });
   } catch (err) {
     console.error('Add product error:', err);
@@ -777,90 +803,27 @@ router.post('/bulk-upload', authenticateToken, requireRole('admin'), upload.sing
   }
 });
 
-// POST /api/products/:uniqueId/scan — public, no auth — log a QR scan event
-router.post('/:uniqueId/scan', async (req, res) => {
+// POST /api/products/:uniqueId/view — public, no auth — the product page a QR scan opens.
+// Location is mandatory: product details are only returned with the scanner's GPS
+// coordinates, and the scan is logged with them.
+router.post('/:uniqueId/view', async (req, res) => {
   try {
     const { uniqueId } = req.params;
+    const bodyLat = req.body?.latitude;
+    const bodyLon = req.body?.longitude;
+    if (!isCoordinate(bodyLat, 90) || !isCoordinate(bodyLon, 180)) {
+      return res.status(400).json({ error: 'Location is required to view this product' });
+    }
+
     const product = await getProductByUniqueId(uniqueId);
     if (!product) return res.status(404).json({ error: 'Product not found' });
 
-    // Only log if the company has scan analytics enabled
-    if (product.companyId) {
-      const company = await getCompanyById(product.companyId);
-      if (!company || company.scanAnalyticsEnabled === false) {
-        return res.json({ ok: true, skipped: true });
-      }
-    }
-
-    const rawIp =
-      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-      (req.headers['x-real-ip'] as string)?.trim() ||
-      req.socket.remoteAddress ||
-      null;
-
-    // Normalise IPv4-mapped IPv6 (::ffff:1.2.3.4 → 1.2.3.4)
-    const ipAddress = rawIp?.replace(/^::ffff:/, '') || null;
-    const userAgent = req.headers['user-agent'] || null;
-
-    // GPS coords sent from browser take priority over IP geolocation
-    const bodyLat = typeof req.body?.latitude === 'number' ? req.body.latitude : null;
-    const bodyLon = typeof req.body?.longitude === 'number' ? req.body.longitude : null;
-
-    let latitude: number | null = null;
-    let longitude: number | null = null;
-    let country: string | null = null;
-    let region: string | null = null;
-    let city: string | null = null;
-
-    if (bodyLat !== null && bodyLon !== null) {
-      // Use GPS coordinates from browser and reverse-geocode via OpenStreetMap Nominatim
-      latitude = bodyLat;
-      longitude = bodyLon;
-      try {
-        const geoRes = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${bodyLat}&lon=${bodyLon}&format=json`,
-          { headers: { 'User-Agent': 'qa-generator-scan-tracker/1.0' }, signal: AbortSignal.timeout(4000) }
-        );
-        if (geoRes.ok) {
-          const geoData: any = await geoRes.json();
-          country = geoData?.address?.country ?? null;
-          region = geoData?.address?.state ?? geoData?.address?.county ?? null;
-          city = geoData?.address?.city ?? geoData?.address?.town ?? geoData?.address?.village ?? null;
-        }
-      } catch {
-        // Nominatim unavailable — leave city/country blank, coordinates still saved
-      }
-    } else {
-      // Fall back to IP geolocation
-      const geo = ipAddress ? geoip.lookup(ipAddress) : null;
-      if (geo) {
-        latitude = geo.ll?.[0] ?? null;
-        longitude = geo.ll?.[1] ?? null;
-        country = geo.country ?? null;
-        region = geo.region ?? null;
-        city = geo.city ?? null;
-      }
-    }
-
-    console.log(`[scan] ip=${ipAddress} gps=${bodyLat},${bodyLon} resolved=${city},${country}`);
-
-    await logScanEvent({
-      productId: uniqueId,
-      companyId: product.companyId,
-      productName: product.name,
-      ipAddress: ipAddress ?? undefined,
-      userAgent: userAgent ?? undefined,
-      country: country ?? undefined,
-      region: region ?? undefined,
-      city: city ?? undefined,
-      latitude: latitude ?? undefined,
-      longitude: longitude ?? undefined,
-    });
-
-    return res.json({ ok: true });
+    // Respond first — logging waits on reverse geocoding, which shouldn't slow the page
+    res.json({ product });
+    await recordScan(req, product, { latitude: bodyLat, longitude: bodyLon });
   } catch (err) {
-    console.error('Scan log error:', err);
-    return res.status(500).json({ error: 'Failed to log scan' });
+    console.error('Product view error:', err);
+    if (!res.headersSent) res.status(500).json({ error: 'Failed to fetch product' });
   }
 });
 

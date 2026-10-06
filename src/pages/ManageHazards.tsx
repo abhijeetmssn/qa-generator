@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiGetHazards, apiCreateHazard, apiUpdateHazard, apiDeleteHazard } from '../services/api';
+import Icon from '../components/Icon';
 import type { Hazard } from '../services/api';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -82,96 +83,77 @@ const ManageHazards: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <h2 style={{ marginBottom: '4px', color: '#1e293b' }}>Manage Hazards</h2>
-      <p style={{ color: '#64748b', marginBottom: '24px', fontSize: '14px' }}>
-        Upload hazard symbols and images. These will appear in the product dropdown.
-      </p>
+    <div className="narrow-page">
+      <div className="page-header">
+        <div>
+          <h1>Manage Hazards</h1>
+          <p className="page-subtitle">Upload hazard symbols and images. These will appear in the product dropdown.</p>
+        </div>
+      </div>
 
       {/* Add / Edit Form */}
-      <form onSubmit={handleSubmit} style={{
-        background: '#f8fafb', border: '1px solid #e2e8f0', borderRadius: '10px',
-        padding: '20px', marginBottom: '24px', display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap'
-      }}>
-        <div style={{ flex: '1 1 200px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
-            Hazard Name *
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Toxic, Flammable, Corrosive"
-            required
-            style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '14px' }}
-          />
+      <form onSubmit={handleSubmit} className="panel">
+        <div className="panel-header">
+          <h2 className="panel-title">{editingId ? 'Edit Hazard' : 'Add a Hazard'}</h2>
         </div>
-        <div style={{ flex: '1 1 200px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
-            Hazard Image
-          </label>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            style={{ fontSize: '13px' }}
-          />
+        <div className="panel-body hazard-form-body">
+          <div className="form-group">
+            <label>Hazard Name *</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Toxic, Flammable, Corrosive"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Hazard Image</label>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+            />
+          </div>
+          {imagePreview && (
+            <img src={imagePreview} alt="Preview" className="hazard-preview" />
+          )}
+          <div className="hazard-form-actions">
+            {editingId && (
+              <button type="button" className="secondary-btn" onClick={resetForm}>
+                Cancel
+              </button>
+            )}
+            <button type="submit" className="primary-btn" disabled={saving}>
+              {saving ? 'Saving…' : editingId ? 'Update' : <><Icon name="plus" size={16} /> Add Hazard</>}
+            </button>
+          </div>
         </div>
-        {imagePreview && (
-          <img src={imagePreview} alt="Preview" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '4px', border: '1px solid #e2e8f0' }} />
-        )}
-        <button type="submit" disabled={saving} style={{
-          padding: '8px 20px', background: editingId ? '#f59e0b' : '#3b82f6', color: 'white',
-          border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer', fontSize: '14px'
-        }}>
-          {saving ? '...' : editingId ? 'Update' : '+ Add'}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm} style={{
-            padding: '8px 16px', background: '#94a3b8', color: 'white',
-            border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px'
-          }}>
-            Cancel
-          </button>
-        )}
       </form>
 
       {/* Hazards List */}
       {loading ? (
-        <p style={{ color: '#64748b' }}>Loading...</p>
+        <p className="muted-text">Loading...</p>
       ) : hazards.length === 0 ? (
-        <p style={{ color: '#64748b', textAlign: 'center', padding: '40px 0' }}>No hazards added yet.</p>
+        <div className="empty-state">No hazards added yet.</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+        <div className="hazard-grid">
           {hazards.map((h) => (
-            <div key={h.id} style={{
-              background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px',
-              padding: '16px', textAlign: 'center', position: 'relative'
-            }}>
+            <div key={h.id} className="hazard-card">
               {h.hasImage ? (
                 <img
                   src={`${API_BASE}/hazards/${h.id}/image`}
                   alt={h.name}
-                  style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '8px' }}
+                  className="hazard-card-image"
                 />
               ) : (
-                <div style={{
-                  width: '80px', height: '80px', margin: '0 auto 8px', background: '#fef3c7',
-                  borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '2rem'
-                }}>⚠️</div>
+                <div className="hazard-card-image is-empty"><Icon name="alert" size={30} /></div>
               )}
-              <p style={{ fontWeight: 600, color: '#1e293b', margin: '0 0 8px' }}>{h.name}</p>
-              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-                <button onClick={() => handleEdit(h)} style={{
-                  padding: '4px 10px', background: '#f59e0b', color: 'white',
-                  border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer'
-                }}>Edit</button>
-                <button onClick={() => handleDelete(h.id!)} style={{
-                  padding: '4px 10px', background: '#ef4444', color: 'white',
-                  border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer'
-                }}>Delete</button>
+              <p className="hazard-card-name">{h.name}</p>
+              <div className="hazard-card-actions">
+                <button className="icon-btn edit" onClick={() => handleEdit(h)}>Edit</button>
+                <button className="icon-btn delete" onClick={() => handleDelete(h.id!)}>Delete</button>
               </div>
             </div>
           ))}

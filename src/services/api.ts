@@ -56,6 +56,7 @@ export interface Company {
   facebookUrl?: string;
   instagramUrl?: string;
   scanAnalyticsEnabled?: boolean;
+  perPackQrEnabled?: boolean; // admin has allowed one QR per pack for this company
   subscriptionExpiresAt?: string;
 }
 
@@ -206,15 +207,30 @@ export async function apiGetProduct(uniqueId: string): Promise<Product> {
   return data.product;
 }
 
-// Alias for clarity when fetching a public product
-export const apiGetProductByUniqueId = apiGetProduct;
+// Public product page (QR scan). Location is mandatory — the server refuses without it
+// and logs the scan with these coordinates.
+export async function apiViewProduct(uniqueId: string, coords: { latitude: number; longitude: number }): Promise<Product> {
+  const data = await request<{ product: Product }>(`/products/${uniqueId}/view`, {
+    method: 'POST',
+    body: JSON.stringify({ latitude: coords.latitude, longitude: coords.longitude }),
+  });
+  return data.product;
+}
 
-export async function apiAddProduct(product: Partial<Product>): Promise<Product> {
-  const data = await request<{ product: Product }>('/products', {
+// Pack QR codes created for a batch (one QR per pack)
+export interface PackCodeRun {
+  fromSerial: number;
+  toSerial: number;
+  count: number;
+}
+
+// packCount (optional): also create one QR per pack — only allowed when the admin has enabled it for the company
+export async function apiAddProduct(product: Partial<Product> & { packCount?: number }): Promise<Product & { packCodes?: PackCodeRun }> {
+  const data = await request<{ product: Product; packCodes?: PackCodeRun }>('/products', {
     method: 'POST',
     body: JSON.stringify(product),
   });
-  return data.product;
+  return data.packCodes ? { ...data.product, packCodes: data.packCodes } : data.product;
 }
 
 export async function apiUpdateProduct(uniqueId: string, updates: Partial<Product>): Promise<Product> {
@@ -483,18 +499,6 @@ export interface ScanSummary {
   recentScans: ScanRecentEntry[];
 }
 
-export async function apiLogScan(uniqueId: string, coords?: { latitude: number; longitude: number }): Promise<void> {
-  try {
-    await fetch(`${API_BASE}/products/${uniqueId}/scan`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(coords ?? {}),
-    });
-  } catch {
-    // fire-and-forget — never block the public page
-  }
-}
-
 export interface ScanAnalyticsResponse {
   summary: ScanSummary[];
   totalScans: number;
@@ -521,4 +525,37 @@ export async function apiGetProductScanDetails(productId: string, params?: { pag
   if (params?.limit) qs.set('limit', String(params.limit));
   const query = qs.toString() ? `?${qs.toString()}` : '';
   return request<ScanDetailResponse>(`/products/scan-analytics/${productId}/scans${query}`);
+}
+
+// ── Pack QR codes (one QR per pack) ──
+// Public product page for a pack QR (#c/<code>). Location is mandatory, like the batch QR page.
+export async function apiViewPackProduct(code: string, scan: { latitude: number; longitude: number; deviceId: string }): Promise<Product> {
+  const data = await request<{ product: Product }>(`/pack-codes/${encodeURIComponent(code)}/view`, {
+    method: 'POST',
+    body: JSON.stringify(scan),
+  });
+  return data.product;
+}
+
+export async function apiGetPackCodeSummary(uniqueId: string): Promise<{ total: number; lastSerial: number }> {
+  return request(`/pack-codes/product/${uniqueId}`);
+}
+
+export async function apiGetPackCodes(uniqueId: string, from: number, to: number): Promise<{ serialNo: number; code: string; url: string }[]> {
+  const data = await request<{ codes: { serialNo: number; code: string; url: string }[] }>(
+    `/pack-codes/product/${uniqueId}/codes?from=${from}&to=${to}`
+  );
+  return data.codes;
+}
+
+export async function apiDownloadPackCodesCsv(uniqueId: string, from: number, to: number): Promise<Blob> {
+  const token = getToken();
+  const res = await fetch(`${API_BASE}/pack-codes/product/${uniqueId}/codes?from=${from}&to=${to}&format=csv`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to download pack QR codes');
+  }
+  return res.blob();
 }

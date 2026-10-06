@@ -84,7 +84,7 @@ router.get('/:id/logo', async (req: Request, res: Response) => {
 // Create new company (admin only)
 router.post('/', authenticateToken, requireRole('admin'), async (req: Request, res: Response) => {
   try {
-    const { name, logo, address, phone, email, website, facebookUrl, instagramUrl, scanAnalyticsEnabled } = req.body;
+    const { name, logo, address, phone, email, website, facebookUrl, instagramUrl, scanAnalyticsEnabled, perPackQrEnabled } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Company name is required' });
@@ -106,6 +106,7 @@ router.post('/', authenticateToken, requireRole('admin'), async (req: Request, r
       facebookUrl: facebookUrl || undefined,
       instagramUrl: instagramUrl || undefined,
       scanAnalyticsEnabled: scanAnalyticsEnabled !== false,
+      perPackQrEnabled: perPackQrEnabled === true,
     });
 
     res.status(201).json(company);
@@ -127,8 +128,9 @@ router.put('/:id', authenticateToken, requireRole('admin', 'editor'), async (req
       if (!dbUser || dbUser.companyId !== targetId) {
         return res.status(403).json({ error: 'You can only edit your own company' });
       }
-      // Scan analytics is an admin-only setting — ignore it from non-admins
+      // Scan analytics and per-pack QR access are admin-only settings — ignore them from non-admins
       delete req.body.scanAnalyticsEnabled;
+      delete req.body.perPackQrEnabled;
     }
 
     const company = await updateCompany(targetId, req.body);
