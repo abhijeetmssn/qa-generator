@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import PublicProduct from './pages/PublicProduct';
+import LocationGate from './components/LocationGate';
 import { apiGetMe, apiLogout, apiGetCompanyPublic } from './services/api';
 import type { UserRole } from './services/api';
 import './App.css';
@@ -24,6 +25,7 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [publicProductId, setPublicProductId] = useState<string | null>(null);
+  const [publicPackCode, setPublicPackCode] = useState<string | null>(null); // pack QR: #c/<code>
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo | null>(null);
   const [companyNotFound, setCompanyNotFound] = useState(false);
 
@@ -33,6 +35,12 @@ function App() {
     if (hash.startsWith('#p/') || hash.startsWith('#product/')) {
       const productId = hash.startsWith('#p/') ? hash.replace('#p/', '') : hash.replace('#product/', '');
       setPublicProductId(productId);
+      setLoading(false);
+      return;
+    }
+    // Pack QR (one QR per pack of a batch)
+    if (hash.startsWith('#c/')) {
+      setPublicPackCode(hash.replace('#c/', ''));
       setLoading(false);
       return;
     }
@@ -80,6 +88,7 @@ function App() {
       } else {
         setPublicProductId(null);
       }
+      setPublicPackCode(hash.startsWith('#c/') ? hash.replace('#c/', '') : null);
     };
 
     window.addEventListener('hashchange', handleHashChange);
@@ -132,9 +141,21 @@ function App() {
     );
   }
 
-  // If viewing a public product, show it without requiring login
+  // If viewing a public product, show it without requiring login — but only once the
+  // phone has shared its location
   if (publicProductId) {
-    return <PublicProduct uniqueId={publicProductId} />;
+    return (
+      <LocationGate>
+        {(coords) => <PublicProduct key={publicProductId} uniqueId={publicProductId} coords={coords} />}
+      </LocationGate>
+    );
+  }
+  if (publicPackCode) {
+    return (
+      <LocationGate>
+        {(coords) => <PublicProduct key={publicPackCode} packCode={publicPackCode} coords={coords} />}
+      </LocationGate>
+    );
   }
 
   // If company ID in URL was not found

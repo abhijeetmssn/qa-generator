@@ -7,14 +7,19 @@ import 'react-datepicker/dist/react-datepicker.css';
 import SearchableSelect from '../components/SearchableSelect';
 import { formatByPrecision, parseDateStr, type DatePrecision } from '../utils/dates';
 import { assetUrl } from '../utils/assetUrl';
+import PackCodesDownload from '../components/PackCodesDownload';
+import Icon from '../components/Icon';
+
+const MAX_PACKS_PER_BATCH = 100000;
 
 type AddProductProps = {
   onProductAdded?: (product: any) => Promise<any>;
   onProductsList?: () => void;
   isAdmin?: boolean;
+  perPackQrAllowed?: boolean; // admin has allowed this company one QR per pack
 };
 
-const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList, isAdmin = false }) => {
+const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList, isAdmin = false, perPackQrAllowed = false }) => {
   const [masterProducts, setMasterProducts] = useState<Product[]>([]);
   const [hazards, setHazards] = useState<Hazard[]>([]);
   const [selectedMasterId, setSelectedMasterId] = useState('');
@@ -41,6 +46,9 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
   const [addedProduct, setAddedProduct] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
   const [datePrecision, setDatePrecision] = useState<DatePrecision>('month');
+  // 'batch' = one QR for the whole batch (default); 'pack' = one QR per pack
+  const [qrMode, setQrMode] = useState<'batch' | 'pack'>('batch');
+  const [packCount, setPackCount] = useState('');
 
   // Switching precision re-formats any already-picked dates to the new precision
   const handlePrecisionChange = (precision: DatePrecision) => {
@@ -121,6 +129,12 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
       alert('Please enter a batch number.');
       return;
     }
+    const perPack = perPackQrAllowed && qrMode === 'pack';
+    const packs = Number(packCount);
+    if (perPack && (!Number.isInteger(packs) || packs < 1 || packs > MAX_PACKS_PER_BATCH)) {
+      alert(`Please enter the number of packs in this batch (1 to ${MAX_PACKS_PER_BATCH.toLocaleString('en-IN')}).`);
+      return;
+    }
     setSubmitting(true);
 
     // ID is generated server-side — do not generate or send one from the client
@@ -140,6 +154,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
       hazardId: form.hazardId ? Number(form.hazardId) : undefined,
       marketedBy: form.marketedBy || '',
       _imageFile: productImageFile,
+      ...(perPack && { packCount: packs }),
     };
 
     try {
@@ -152,10 +167,15 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
         setProductImageFile(null);
         if (imageInputRef.current) imageInputRef.current.value = '';
         setForm({ name: '', batch: '', manufacturer: '', expiry: '', manufacturerName: '', manufacturerAddress: '', technicalName: '', registrationNumber: '', manufacturerLicence: '', imageUrl: '', hazardId: '', packingSize: '', marketedBy: '' });
+        setQrMode('batch');
+        setPackCount('');
       }
     } catch (err) {
       console.error('Failed to save product:', err);
-      alert('Failed to save product. Please try again.');
+      // Pack QR errors (e.g. access turned off by the admin) come with a reason worth showing
+      alert(perPack && err instanceof Error && err.message
+        ? `Failed to save product: ${err.message}`
+        : 'Failed to save product. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -166,7 +186,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
       <div className="add-product-header">
         <h1>Add A New Product</h1>
         <div className="header-actions">
-          <button type="button" className="secondary-btn" onClick={onProductsList}>← Products List</button>
+          <button type="button" className="secondary-btn" onClick={onProductsList}><Icon name="arrow-left" size={16} /> Products List</button>
         </div>
       </div>
       <div className="content-card">
@@ -253,7 +273,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
                 </div>
                 <div className="form-grid">
                   <div className="form-group">
-                    <label>BATCH NUMBER <span style={{ color: '#ef4444' }}>*</span></label>
+                    <label>BATCH NUMBER <span className="required">*</span></label>
                     <input name="batch" value={form.batch} onChange={handleChange} placeholder="Enter batch number" required />
                   </div>
                   <div className="form-group">
@@ -340,6 +360,58 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
                 </div>
               </div>
 
+              {/* Step 3: QR codes — only for companies the admin has allowed one QR per pack */}
+              {perPackQrAllowed && (
+                <div className="form-step">
+                  <div className="form-step-header">
+                    <span className="step-number">3</span>
+                    <span className="step-title">QR Codes</span>
+                  </div>
+                  <div className="form-grid">
+                    <div className="form-group full-width">
+                      <label>QR CODE TYPE</label>
+                      <div className="date-precision-track" role="group" aria-label="QR code type">
+                        <button
+                          type="button"
+                          className={`date-precision-seg${qrMode === 'batch' ? ' is-active' : ''}`}
+                          aria-pressed={qrMode === 'batch'}
+                          onClick={() => setQrMode('batch')}
+                        >
+                          One QR for the whole batch
+                        </button>
+                        <button
+                          type="button"
+                          className={`date-precision-seg${qrMode === 'pack' ? ' is-active' : ''}`}
+                          aria-pressed={qrMode === 'pack'}
+                          onClick={() => setQrMode('pack')}
+                        >
+                          One QR per pack
+                        </button>
+                      </div>
+                    </div>
+                    {qrMode === 'pack' && (
+                      <div className="form-group">
+                        <label>NUMBER OF PACKS IN THIS BATCH <span className="required">*</span></label>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min={1}
+                          max={MAX_PACKS_PER_BATCH}
+                          step={1}
+                          value={packCount}
+                          onChange={e => setPackCount(e.target.value)}
+                          placeholder="e.g. 2000"
+                          required
+                        />
+                        <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', marginBottom: 0 }}>
+                          A unique QR code is created for every pack. You can download or print them after saving.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="form-actions">
                 <button type="submit" className="submit-btn" disabled={submitting}>
                   {submitting ? 'Saving...' : '✓ Create Product'}
@@ -349,10 +421,36 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
           )}
         </form>
         
-        {addedProduct && (
-          <div className="qr-code-section" style={{ marginTop: '32px', padding: '24px', backgroundColor: '#f8fafb', borderRadius: '8px', textAlign: 'center' }}>
-            <h3 style={{ marginTop: 0, color: '#222' }}>Product Added Successfully!</h3>
-            <p style={{ color: '#666', marginBottom: '16px' }}>Share this QR Code with customers to view product details:</p>
+        {addedProduct?.packCodes && (
+          <div className="qr-code-section success-panel">
+            <h3 className="success-panel-title">Product Added Successfully!</h3>
+            <p className="success-panel-text">
+              Created <strong>{addedProduct.packCodes.count.toLocaleString('en-IN')}</strong> pack QR codes for batch{' '}
+              <strong>{addedProduct.batch}</strong> (Pack No. {addedProduct.packCodes.fromSerial.toLocaleString('en-IN')} – {addedProduct.packCodes.toSerial.toLocaleString('en-IN')}).
+              Download or print them below — you can also do this later from the product page.
+            </p>
+            <PackCodesDownload
+              product={{ uniqueId: addedProduct.uniqueId, name: addedProduct.name, batch: addedProduct.batch }}
+              lastSerial={addedProduct.packCodes.toSerial}
+            />
+            <p className="success-panel-meta"><strong>Product ID:</strong> {addedProduct.uniqueId}</p>
+            <div style={{ textAlign: 'center' }}>
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={() => setAddedProduct(null)}
+                style={{ marginTop: '12px' }}
+              >
+                Add Another Product
+              </button>
+            </div>
+          </div>
+        )}
+
+        {addedProduct && !addedProduct.packCodes && (
+          <div className="qr-code-section success-panel">
+            <h3 className="success-panel-title">Product Added Successfully!</h3>
+            <p className="success-panel-text">Share this QR Code with customers to view product details:</p>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
               <QRCodeSVG
                 value={`https://apasqr.com/#p/${addedProduct.uniqueId}`}
@@ -361,7 +459,7 @@ const AddProduct: React.FC<AddProductProps> = ({ onProductAdded, onProductsList,
                 includeMargin={true}
               />
             </div>
-            <p style={{ color: '#888', fontSize: '0.9rem' }}><strong>Product ID:</strong> {addedProduct.uniqueId}</p>
+            <p className="success-panel-meta"><strong>Product ID:</strong> {addedProduct.uniqueId}</p>
             <button 
               type="button"
               className="primary-btn"

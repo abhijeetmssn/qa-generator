@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { apiBulkUploadProducts, apiGetAllCompanies } from '../services/api';
+import Icon from '../components/Icon';
 import type { BulkUploadResult, Company } from '../services/api';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -91,10 +92,10 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
 
   return (
     <div className="bulk-upload-page">
-      <h2 style={{ marginBottom: '4px', color: '#1e293b' }}>Bulk Upload Products</h2>
-      <p style={{ color: '#64748b', marginBottom: '24px', fontSize: '14px' }}>
-        Upload an Excel file to import multiple products at once. Download the template to see the required format.
-      </p>
+      <div className="section-heading">
+        <h2>Bulk Upload Products</h2>
+        <p>Upload an Excel file to import multiple products at once. Download the template to see the required format.</p>
+      </div>
 
       {/* Step 1: Download Template */}
       <div className="bulk-step">
@@ -103,7 +104,7 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
           <h3>Download Template</h3>
           <p>Get the Excel template with the correct column headers.</p>
           <button className="secondary-btn" onClick={handleDownloadTemplate} style={{ marginTop: '8px' }}>
-            📥 Download Template
+            <Icon name="download" size={16} /> Download Template
           </button>
         </div>
       </div>
@@ -117,7 +118,7 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
           <select
             value={selectedCompanyId}
             onChange={(e) => setSelectedCompanyId(e.target.value ? Number(e.target.value) : '')}
-            style={{ marginTop: '8px', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', minWidth: '250px' }}
+            style={{ marginTop: '8px', width: 'auto', minWidth: '260px' }}
           >
             <option value="">-- Select a Company --</option>
             {companies.map((c) => (
@@ -150,7 +151,7 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
             />
             {file ? (
               <div className="bulk-file-info">
-                <span className="bulk-file-icon">📄</span>
+                <span className="bulk-file-icon"><Icon name="list" size={20} /></span>
                 <span className="bulk-file-name">{file.name}</span>
                 <span className="bulk-file-size">({(file.size / 1024).toFixed(1)} KB)</span>
                 <button
@@ -162,9 +163,9 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
               </div>
             ) : (
               <div className="bulk-dropzone-text">
-                <span style={{ fontSize: '2rem' }}>📁</span>
+                <span className="bulk-dropzone-icon"><Icon name="upload" size={28} /></span>
                 <p><strong>Drag & drop</strong> your Excel file here</p>
-                <p style={{ fontSize: '13px', color: '#94a3b8' }}>or click to browse — .xlsx, .xls, .csv</p>
+                <p className="field-hint" style={{ textAlign: 'center' }}>or click to browse — .xlsx, .xls, .csv</p>
               </div>
             )}
           </div>
@@ -182,7 +183,7 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
             disabled={!file || !selectedCompanyId || loading}
             style={{ marginTop: '8px' }}
           >
-            {loading ? '⏳ Uploading...' : '🚀 Upload & Import'}
+            {loading ? 'Uploading...' : <><Icon name="upload" size={16} /> Upload & Import</>}
           </button>
         </div>
       </div>
@@ -190,7 +191,7 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
       {/* Error */}
       {error && (
         <div className="bulk-message error">
-          ❌ {error}
+          {error}
         </div>
       )}
 
@@ -198,7 +199,7 @@ const BulkUpload: React.FC<BulkUploadProps> = ({ onUploadComplete }) => {
       {result && (
         <div className="bulk-result">
           <div className={`bulk-message ${result.inserted > 0 ? 'success' : 'warning'}`}>
-            {result.inserted > 0 ? '✅' : '⚠️'} {result.message}
+            {result.message}
           </div>
 
           <div className="bulk-stats">

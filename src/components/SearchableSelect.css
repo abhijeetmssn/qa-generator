@@ -12,27 +12,28 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 12px 16px;
-  font-size: 0.95rem;
-  background: #f8fafc;
-  color: #111827;
+  border: 1px solid var(--ink-300);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  background: var(--surface);
+  color: var(--ink-900);
   cursor: pointer;
   text-align: left;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.15s, box-shadow 0.15s;
   font-family: inherit;
-  min-height: 48px;
+  min-height: 40px;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
 
-.ss-trigger:hover,
+.ss-trigger:hover {
+  border-color: var(--ink-400);
+}
 .ss-open .ss-trigger {
-  border-color: #3b82f6;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
+  border-color: var(--brand-500);
+  box-shadow: var(--focus-ring);
 }
 
 .ss-trigger:disabled {
@@ -49,7 +50,7 @@
 }
 
 .ss-placeholder {
-  color: #9ca3af;
+  color: var(--ink-400);
 }
 
 .ss-arrow {
@@ -73,10 +74,10 @@
   left: 0;
   right: 0;
   z-index: 500;
-  background: #fff;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   animation: ss-slide-in 0.15s ease;
 }
@@ -193,8 +194,8 @@
 .ss-option:hover { background: #f1f5f9; }
 
 .ss-option.ss-selected {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--brand-50);
+  color: var(--brand-700);
   font-weight: 600;
 }
 

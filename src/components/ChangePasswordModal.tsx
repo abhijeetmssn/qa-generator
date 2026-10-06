@@ -32,7 +32,7 @@ const ChangePasswordModal: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       <div className="cp-modal" onClick={e => e.stopPropagation()}>
         <h2 className="cp-title">Change Password</h2>
         {success ? (
-          <p className="cp-success">✅ Password changed successfully.</p>
+          <p className="cp-success">Password changed successfully.</p>
         ) : (
           <form onSubmit={submit}>
             <div className="cp-field">

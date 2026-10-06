@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { apiLogin, SubscriptionExpiredError } from '../services/api';
+import Icon from '../components/Icon';
 import type { UserRole } from '../services/api';
 import '../styles/Login.css';
 
@@ -96,21 +97,21 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, companyInfo }) => {
 
           <div className="login-features">
             <div className="feature">
-              <div className="feature-icon-wrap">📦</div>
+              <div className="feature-icon-wrap"><Icon name="package" size={20} /></div>
               <div>
                 <h3>Product Management</h3>
                 <p>Manage inventory with ease</p>
               </div>
             </div>
             <div className="feature">
-              <div className="feature-icon-wrap">🔍</div>
+              <div className="feature-icon-wrap"><Icon name="scan" size={20} /></div>
               <div>
                 <h3>QR Scanning</h3>
                 <p>Instant product lookup via QR</p>
               </div>
             </div>
             <div className="feature">
-              <div className="feature-icon-wrap">📊</div>
+              <div className="feature-icon-wrap"><Icon name="dashboard" size={20} /></div>
               <div>
                 <h3>Analytics</h3>
                 <p>Track expiry &amp; stock levels</p>
@@ -119,7 +120,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, companyInfo }) => {
           </div>
 
           <div className="login-note">
-            🔒 Access is restricted to authorised users only. Contact your administrator to get an account.
+            Access is restricted to authorised users only. Contact your administrator to get an account.
           </div>
         </div>
 
@@ -164,11 +165,9 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, companyInfo }) => {
                 const daysSince = Math.abs(Math.min(0, days));
                 const dataDeletesIn = Math.max(0, 15 - daysSince);
                 return (
-                  <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '12px 16px', marginBottom: '12px' }}>
-                    <div style={{ fontWeight: 700, color: '#dc2626', fontSize: '14px', marginBottom: '6px' }}>
-                      ⚠️ Subscription Expired
-                    </div>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#b91c1c', lineHeight: '1.5' }}>
+                  <div className="login-alert">
+                    <div className="login-alert-title">Subscription Expired</div>
+                    <p>
                       {dataDeletesIn > 0
                         ? `Your data will be permanently deleted in ${dataDeletesIn} day${dataDeletesIn !== 1 ? 's' : ''}. Please pay your subscription amount to restore access.`
                         : 'Your data deletion period has passed. Please contact your administrator immediately.'}

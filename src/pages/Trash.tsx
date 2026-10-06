@@ -57,20 +57,22 @@ const Trash: React.FC<TrashProps> = ({ canEdit, isAdmin, onRestored }) => {
   };
 
   if (loading) {
-    return <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading trash...</div>;
+    return <div className="empty-state" style={{ width: '100%' }}>Loading trash...</div>;
   }
 
   return (
     <div className="products-list-page">
-      <div className="products-list-header">
-        <h1>🗑️ Trash</h1>
-        <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
-          {trashProducts.length} deleted product{trashProducts.length !== 1 ? 's' : ''}
-        </p>
+      <div className="page-header">
+        <div>
+          <h1>Trash</h1>
+          <p className="page-subtitle">
+            {trashProducts.length} deleted product{trashProducts.length !== 1 ? 's' : ''}
+          </p>
+        </div>
       </div>
 
       <div className="products-table-card">
-        <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
+        <div className="table-scroll-wrapper">
           <table className="products-table">
             <thead>
               <tr>
@@ -86,7 +88,7 @@ const Trash: React.FC<TrashProps> = ({ canEdit, isAdmin, onRestored }) => {
             <tbody>
               {trashProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                  <td colSpan={7} className="table-empty">
                     Trash is empty
                   </td>
                 </tr>

@@ -12,6 +12,7 @@ import ManageHazards from './ManageHazards';
 import Trash from './Trash';
 import ScanAnalytics from './ScanAnalytics';
 import Logo from '../components/Logo';
+import Icon from '../components/Icon';
 import Spinner from '../components/Spinner';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import { apiGetProducts, apiAddProduct, apiUpdateProduct, apiDeleteProduct, apiUploadProductImage, apiExportDatabase, apiGetCompanyById, apiGetAllCompanies, apiRenewSubscription } from '../services/api';
@@ -53,6 +54,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [scanAnalyticsEnabled, setScanAnalyticsEnabled] = useState<boolean>(false);
+  const [perPackQrEnabled, setPerPackQrEnabled] = useState<boolean>(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [renewingId, setRenewingId] = useState<number | null>(null);
@@ -84,6 +86,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         .then(c => {
           setSubscriptionExpiresAt(c.subscriptionExpiresAt || null);
           setScanAnalyticsEnabled(c.scanAnalyticsEnabled !== false);
+          setPerPackQrEnabled(c.perPackQrEnabled === true);
         })
         .catch(console.error);
     }
@@ -160,7 +163,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       const updated = await apiUpdateProduct(uniqueId, updates);
       setAllProducts(prev => prev.map(p => p.uniqueId === uniqueId ? updated : p));
       setPage('list');
-      showToast('✅ Changes saved successfully');
+      showToast('Changes saved successfully');
     } catch (error) {
       console.error('Failed to update product:', error);
       alert('Failed to update product');
@@ -170,7 +173,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const handleProductAdded = async (newProduct: any) => {
     const imageFile = newProduct._imageFile;
     delete newProduct._imageFile;
-    const saved = await apiAddProduct(newProduct);
+    // packCodes is only set when the batch was created with one QR per pack
+    const { packCodes, ...saved } = await apiAddProduct(newProduct);
     // Upload image if provided
     if (imageFile && saved.uniqueId) {
       try {
@@ -181,7 +185,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
       }
     }
     setAllProducts(prev => [saved, ...prev]);
-    return saved;
+    return packCodes ? { ...saved, packCodes } : saved;
   };
 
   const handleExportDb = async () => {
@@ -200,7 +204,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const renderPage = () => {
     switch (page) {
       case 'add':
-        return <AddProduct onProductAdded={handleProductAdded} onProductsList={() => setPage('list')} isAdmin={user.role === 'admin'} />;
+        return <AddProduct onProductAdded={handleProductAdded} onProductsList={() => setPage('list')} isAdmin={user.role === 'admin'} perPackQrAllowed={perPackQrEnabled} />;
       case 'edit':
         return canEdit && selectedProduct ? (
           <EditProduct product={selectedProduct} onSave={handleSaveProduct} onCancel={() => setPage('list')} />
@@ -241,57 +245,73 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         }} />;
       default:
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-            {/* Subscription card */}
+          <div className="dashboard-home">
+            <div className="page-header">
+              <div>
+                <h1>Dashboard</h1>
+                <p className="page-subtitle">{user.companyName ? `Overview for ${user.companyName}` : "Overview of your account"}</p>
+              </div>
+            </div>
+
+            {/* Subscription status */}
             {subscriptionExpiresAt && (() => {
               const days = getDaysRemaining(subscriptionExpiresAt);
               const daysSinceExpiry = days <= 0 ? Math.abs(days) : 0;
               const dataDeletesIn = Math.max(0, 15 - daysSinceExpiry);
-              const bg = days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : days <= 10 ? '#fffbeb' : '#f0fdf4';
-              const borderColor = days <= 0 ? '#ef4444' : days <= 5 ? '#f97316' : days <= 10 ? '#f59e0b' : '#22c55e';
-              const titleColor = days <= 0 ? '#dc2626' : days <= 10 ? '#92400e' : '#15803d';
-              const textColor = days <= 0 ? '#dc2626' : days <= 10 ? '#78350f' : '#166534';
+              const tone = days <= 0 ? "danger" : days <= 10 ? "warning" : "success";
               return (
-                <div className="card" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: '6px', background: bg, borderLeft: `4px solid ${borderColor}` }}>
-                  <div style={{ fontWeight: 700, fontSize: '1rem', color: titleColor }}>
-                    {days <= 0 ? '⚠️ Subscription Expired' : `✅ ${days} Day${days !== 1 ? 's' : ''} Remaining`}
+                <div className={`notice is-${tone}`}>
+                  <div className="notice-icon"><Icon name={days <= 0 ? "alert" : "clock"} size={20} /></div>
+                  <div className="notice-body">
+                    <div className="notice-title">
+                      {days <= 0 ? "Subscription Expired" : `${days} Day${days !== 1 ? "s" : ""} Remaining`}
+                    </div>
+                    <p>
+                      {days <= 0
+                        ? dataDeletesIn > 0
+                          ? `Your data will be permanently deleted in ${dataDeletesIn} day${dataDeletesIn !== 1 ? "s" : ""}. Please pay your subscription to avoid data loss.`
+                          : "Your data deletion period has passed. Please contact admin immediately to recover your account."
+                        : days <= 10
+                          ? "Your maintenance subscription is expiring soon. Please contact admin to renew."
+                          : "Your maintenance subscription is active."}
+                    </p>
+                    <p className="notice-meta">
+                      {days <= 0 ? "Expired on: " : "Renewal due on: "}
+                      {new Date(subscriptionExpiresAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                    </p>
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.88rem', color: textColor }}>
-                    {days <= 0
-                      ? dataDeletesIn > 0
-                        ? `Your data will be permanently deleted in ${dataDeletesIn} day${dataDeletesIn !== 1 ? 's' : ''}. Please pay your subscription to avoid data loss.`
-                        : 'Your data deletion period has passed. Please contact admin immediately to recover your account.'
-                      : days <= 10
-                        ? 'Your maintenance subscription is expiring soon. Please contact admin to renew.'
-                        : 'Your maintenance subscription is active.'}
-                  </p>
-                  <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: textColor }}>
-                    {days <= 0 ? 'Expired on: ' : 'Renewal due on: '}
-                    {new Date(subscriptionExpiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </p>
                 </div>
               );
             })()}
-            <div className="card">
-              <div className="card-icon">📋</div>
-              <div>
-                <div className="card-title">Total Products</div>
-                <div className="card-value">
-                  {loadingProducts
-                    ? <Spinner size="small" />
-                    : allProducts.length}
+
+            <div className="stat-grid">
+              <div className="stat-card">
+                <div className="stat-icon"><Icon name="package" size={22} /></div>
+                <div>
+                  <div className="stat-label">Total Products</div>
+                  <div className="stat-value">
+                    {loadingProducts
+                      ? <Spinner size="small" />
+                      : allProducts.length}
+                  </div>
                 </div>
               </div>
             </div>
-            {user.role === 'admin' && (
-              <div className="card" style={{ alignItems: 'stretch', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ fontWeight: 700, color: '#1e3a8a', fontSize: '1rem' }}>🏢 Companies &amp; Subscriptions</div>
+
+            {user.role === "admin" && (
+              <div className="panel">
+                <div className="panel-header">
+                  <div>
+                    <h2 className="panel-title">Companies &amp; Subscriptions</h2>
+                    <p className="panel-subtitle">Soonest to expire first</p>
+                  </div>
+                </div>
                 {loadingCompanies ? (
-                  <Spinner size="small" />
+                  <div className="panel-body"><Spinner size="small" /></div>
                 ) : companies.length === 0 ? (
-                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#64748b' }}>No companies found.</p>
+                  <div className="panel-body"><p className="muted-text">No companies found.</p></div>
                 ) : (
-                  <div style={{ overflowX: 'auto' }}>
+                  <div className="table-scroll-wrapper">
                     <table className="companies-table">
                       <thead>
                         <tr><th>Company</th><th>Subscription Expiry</th><th>Status</th><th></th></tr>
@@ -299,22 +319,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                       <tbody>
                         {companies.map(c => {
                           const days = getDaysRemaining(c.subscriptionExpiresAt || null);
-                          const color = days <= 0 ? '#dc2626' : days <= 5 ? '#ea580c' : days <= 10 ? '#d97706' : '#16a34a';
-                          const bg = days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : days <= 10 ? '#fffbeb' : '#f0fdf4';
-                          const label = !c.subscriptionExpiresAt ? '—' : days <= 0 ? 'Expired' : `${days}d left`;
+                          const tone = days <= 0 ? "danger" : days <= 10 ? "warning" : "success";
+                          const label = !c.subscriptionExpiresAt ? "—" : days <= 0 ? "Expired" : `${days}d left`;
                           return (
                             <tr key={c.id}>
-                              <td style={{ fontWeight: 600 }}>{c.name}</td>
-                              <td>{c.subscriptionExpiresAt ? new Date(c.subscriptionExpiresAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
-                              <td><span className="sub-badge" style={{ color, background: bg, border: `1px solid ${color}33` }}>{label}</span></td>
-                              <td style={{ textAlign: 'right' }}>
+                              <td className="cell-strong">{c.name}</td>
+                              <td>{c.subscriptionExpiresAt ? new Date(c.subscriptionExpiresAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</td>
+                              <td><span className={`badge is-${c.subscriptionExpiresAt ? tone : "neutral"}`}>{label}</span></td>
+                              <td style={{ textAlign: "right" }}>
                                 <button
                                   type="button"
                                   className="renew-btn"
                                   onClick={() => handleRenew(c)}
                                   disabled={renewingId === c.id}
                                 >
-                                  {renewingId === c.id ? 'Renewing…' : 'Renew'}
+                                  {renewingId === c.id ? "Renewing…" : "Renew"}
                                 </button>
                               </td>
                             </tr>
@@ -326,19 +345,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 )}
               </div>
             )}
-            {user.role === 'admin' && (
-              <div className="card" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ fontWeight: 700, color: '#1e3a8a', fontSize: '1rem' }}>🗄️ Database Export</div>
-                <p style={{ margin: 0, fontSize: '0.88rem', color: '#64748b' }}>Download a full .sql backup of all tables and data. Use it to restore or migrate the database.</p>
-                <button
-                  type="button"
-                  className="export-btn"
-                  onClick={handleExportDb}
-                  disabled={exportingDb}
-                  style={{ marginTop: '4px' }}
-                >
-                  {exportingDb ? '⏳ Exporting...' : '⬇ Export Database (.sql)'}
-                </button>
+            {user.role === "admin" && (
+              <div className="panel">
+                <div className="panel-header">
+                  <div>
+                    <h2 className="panel-title">Database Export</h2>
+                    <p className="panel-subtitle">Download a full .sql backup of all tables and data. Use it to restore or migrate the database.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={handleExportDb}
+                    disabled={exportingDb}
+                  >
+                    <Icon name="database" size={16} />
+                    {exportingDb ? "Exporting..." : "Export Database (.sql)"}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -372,7 +395,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               setSidebarOpen(false);
             }}
           >
-            <span className="nav-icon">📊</span>
+            <span className="nav-icon"><Icon name="dashboard" /></span>
             Dashboard
           </a>
           <a
@@ -384,7 +407,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               setSidebarOpen(false);
             }}
           >
-            <span className="nav-icon">➕</span>
+            <span className="nav-icon"><Icon name="plus" /></span>
             Add Products
           </a>
           <a
@@ -396,7 +419,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
               setSidebarOpen(false);
             }}
           >
-            <span className="nav-icon">📋</span>
+            <span className="nav-icon"><Icon name="list" /></span>
             Products List
           </a>
           {scanAnalyticsEnabled && (
@@ -409,7 +432,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 setSidebarOpen(false);
               }}
             >
-              <span className="nav-icon">📲</span>
+              <span className="nav-icon"><Icon name="scan" /></span>
               Scan Analytics
             </a>
           )}
@@ -423,7 +446,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 setSidebarOpen(false);
               }}
             >
-              <span className="nav-icon">🗑️</span>
+              <span className="nav-icon"><Icon name="trash" /></span>
               Trash
             </a>
           )}
@@ -437,7 +460,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 setSidebarOpen(false);
               }}
             >
-              <span className="nav-icon">✏️</span>
+              <span className="nav-icon"><Icon name="edit" /></span>
               Edit Company
             </a>
           )}
@@ -452,7 +475,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   setSidebarOpen(false);
                 }}
               >
-                <span className="nav-icon">👥</span>
+                <span className="nav-icon"><Icon name="users" /></span>
                 Manage Users
               </a>
               <a
@@ -464,7 +487,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   setSidebarOpen(false);
                 }}
               >
-                <span className="nav-icon">🏢</span>
+                <span className="nav-icon"><Icon name="building" /></span>
                 Create Company
               </a>
               <a
@@ -476,7 +499,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   setSidebarOpen(false);
                 }}
               >
-                <span className="nav-icon">✏️</span>
+                <span className="nav-icon"><Icon name="edit" /></span>
                 Edit Company
               </a>
               <a
@@ -488,7 +511,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   setSidebarOpen(false);
                 }}
               >
-                <span className="nav-icon">📤</span>
+                <span className="nav-icon"><Icon name="upload" /></span>
                 Bulk Upload
               </a>
               <a
@@ -500,7 +523,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   setSidebarOpen(false);
                 }}
               >
-                <span className="nav-icon">⚠️</span>
+                <span className="nav-icon"><Icon name="alert" /></span>
                 Manage Hazards
               </a>
             </>
@@ -509,40 +532,35 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         <div className="powered-by">
           {user.companyName ? (
             <>
-              <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                {user.companyName}
-              </div>
+              <div className="powered-by-company">{user.companyName}</div>
               {user.companyAddress && (
-                <div style={{ fontSize: '11px', color: '#999', marginBottom: '8px' }}>
-                  {user.companyAddress}
-                </div>
+                <div className="powered-by-address">{user.companyAddress}</div>
               )}
-              <div style={{ borderTop: '1px solid #ddd', paddingTop: '8px', marginTop: '8px', fontSize: '11px', color: '#999' }}>
-                Powered By <a href="#">APAS</a>
+              <div className="powered-by-brand">
+                Powered by <a href="#">APAS</a>
               </div>
             </>
           ) : (
-            <>Powered By <a href="#">APAS</a></>
+            <div className="powered-by-brand">Powered by <a href="#">APAS</a></div>
           )}
         </div>
       </aside>
       <main className="main-content">
         <header className="header">
-          <div className="menu-icon" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</div>
+          <button type="button" className="menu-icon" aria-label="Open menu" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            <Icon name="menu" size={22} />
+          </button>
           <div className="header-right">
             {subscriptionExpiresAt && (() => {
               const days = getDaysRemaining(subscriptionExpiresAt);
-              const bg = days <= 0 ? '#fef2f2' : days <= 5 ? '#fff7ed' : days <= 10 ? '#fffbeb' : '#f0fdf4';
-              const color = days <= 0 ? '#dc2626' : days <= 5 ? '#ea580c' : days <= 10 ? '#d97706' : '#16a34a';
+              const tone = days <= 0 ? 'danger' : days <= 10 ? 'warning' : 'success';
               const daysSinceExpiry = days <= 0 ? Math.abs(days) : 0;
               const dataDeletesIn = Math.max(0, 15 - daysSinceExpiry);
               const expiryDate = new Date(subscriptionExpiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
               return (
-                <div
-                  title={`Renewal due on ${expiryDate}`}
-                  style={{ fontSize: '12px', fontWeight: 700, padding: '5px 12px', borderRadius: '20px', background: bg, color, border: `1px solid ${color}22` }}
-                >
-                  {days > 0 ? `⏳ ${days}d left · ${expiryDate}` : dataDeletesIn > 0 ? `⚠️ Data deletes in ${dataDeletesIn}d` : '🚨 Data at risk'}
+                <div title={`Renewal due on ${expiryDate}`} className={`header-pill is-${tone}`}>
+                  <Icon name={days > 0 ? 'clock' : 'alert'} size={14} strokeWidth={2} />
+                  {days > 0 ? `${days}d left · ${expiryDate}` : dataDeletesIn > 0 ? `Data deletes in ${dataDeletesIn}d` : 'Data at risk'}
                 </div>
               );
             })()}
@@ -552,7 +570,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                   className="admin-dropdown"
                   onClick={() => setShowLogoutMenu(!showLogoutMenu)}
                 >
-                  👤 {user.email?.split('@')[0] || 'User'} ▼
+                  <span className="user-avatar">{(user.email || 'U').charAt(0).toUpperCase()}</span>
+                  <span className="user-name">{user.email?.split('@')[0] || 'User'}</span>
+                  <Icon name="chevron-down" size={16} />
                 </button>
                 {showLogoutMenu && (
                   <div className="logout-menu">
@@ -564,7 +584,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                       }}
                       className="menu-item"
                     >
-                      🔑 Change Password
+                      <Icon name="key" size={16} /> Change Password
                     </button>
                     <button
                       onClick={() => {
@@ -573,7 +593,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                       }}
                       className="menu-item logout-btn"
                     >
-                      🚪 Sign Out
+                      <Icon name="logout" size={16} /> Sign Out
                     </button>
                   </div>
                 )}

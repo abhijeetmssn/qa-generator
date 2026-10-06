@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import type { Product, Company } from '../services/api';
 import { apiGetAllCompanies } from '../services/api';
 import Spinner from '../components/Spinner';
+import Icon from '../components/Icon';
 import { formatProductDate } from '../utils/dates';
 
 function formatISTDate(val?: string) {
@@ -125,25 +126,22 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
       <div className="products-list-header">
         <h1>Product List</h1>
         <div className="products-list-actions">
-          <button className="export-btn" onClick={handleExport}>Export</button>
-          <button className="primary-btn" onClick={goAdd}>Add Product +</button>
+          <button className="export-btn" onClick={handleExport}><Icon name="download" size={16} /> Export</button>
+          <button className="primary-btn" onClick={goAdd}><Icon name="plus" size={16} /> Add Product</button>
         </div>
       </div>
 
       {/* Company filter for admin */}
       {isAdmin && (
-        <div style={{ background: '#fff', borderRadius: '12px', padding: '16px 20px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <label style={{ fontWeight: 600, fontSize: '14px', color: '#334155', marginBottom: '8px', display: 'block' }}>
-            Filter by Company
-          </label>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="filter-bar">
+          <label className="filter-bar-label">Filter by Company</label>
+          <div className="filter-bar-row">
             <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
               <input
                 type="text"
                 placeholder="Search company..."
                 value={companySearch}
                 onChange={(e) => setCompanySearch(e.target.value)}
-                style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px', outline: 'none' }}
               />
             </div>
             <select
@@ -152,7 +150,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                 setSelectedCompanyId(e.target.value ? Number(e.target.value) : null);
                 setCurrentPage(1);
               }}
-              style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px', minWidth: '200px', outline: 'none' }}
+              style={{ width: 'auto', minWidth: '200px' }}
             >
               <option value="">All Companies</option>
               {filteredCompanies.map(c => (
@@ -162,9 +160,9 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
             {selectedCompanyId && (
               <button
                 onClick={() => { setSelectedCompanyId(null); setCompanySearch(''); setCurrentPage(1); }}
-                style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f1f5f9', cursor: 'pointer', fontSize: '13px', color: '#64748b' }}
+                className="secondary-btn"
               >
-                ✕ Clear
+                Clear
               </button>
             )}
           </div>
@@ -190,7 +188,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
             onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
-        <div style={{overflowX: 'auto', width: '100%', flex: 1, WebkitOverflowScrolling: 'touch'}}>
+        <div className="table-scroll-wrapper">
           <table className="products-table">
             <thead>
               <tr>
@@ -208,7 +206,7 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
             <tbody>
               {paged.length === 0 ? (
                 <tr>
-                  <td colSpan={10} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>
+                  <td colSpan={10} className="table-empty">
                     {search ? 'No products match your search.' : 'No products found.'}
                   </td>
                 </tr>
@@ -249,17 +247,17 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
           </table>
         </div>
         {/* Pagination */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', fontSize: '13px', color: '#64748b', borderTop: '1px solid #e2e8f0' }}>
+        <div className="table-footer">
           <span>
             Showing {filtered.length === 0 ? 0 : (safePage - 1) * pageSize + 1} to {Math.min(safePage * pageSize, filtered.length)} of {filtered.length} entries
             {search && ` (filtered from ${products.length} total)`}
           </span>
           {totalPages > 1 && (
-            <div style={{ display: 'flex', gap: '4px' }}>
+            <div className="pager">
               <button
+                className="pager-btn"
                 disabled={safePage <= 1}
                 onClick={() => setCurrentPage(safePage - 1)}
-                style={{ padding: '4px 10px', borderRadius: '4px', border: '1px solid #e2e8f0', background: '#fff', cursor: safePage <= 1 ? 'default' : 'pointer', opacity: safePage <= 1 ? 0.5 : 1 }}
               >
                 ‹ Prev
               </button>
@@ -267,28 +265,19 @@ const ProductsList: React.FC<ProductsListProps> = ({ products, goAdd, onView, on
                 .filter((p) => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
                 .map((p, i, arr) => (
                   <React.Fragment key={p}>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span style={{ padding: '4px 6px' }}>…</span>}
+                    {i > 0 && arr[i - 1] !== p - 1 && <span className="pager-gap">…</span>}
                     <button
+                      className={`pager-btn${p === safePage ? ' is-active' : ''}`}
                       onClick={() => setCurrentPage(p)}
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: '4px',
-                        border: '1px solid',
-                        borderColor: p === safePage ? '#4f46e5' : '#e2e8f0',
-                        background: p === safePage ? '#4f46e5' : '#fff',
-                        color: p === safePage ? '#fff' : '#334155',
-                        cursor: 'pointer',
-                        fontWeight: p === safePage ? 600 : 400,
-                      }}
                     >
                       {p}
                     </button>
                   </React.Fragment>
                 ))}
               <button
+                className="pager-btn"
                 disabled={safePage >= totalPages}
                 onClick={() => setCurrentPage(safePage + 1)}
-                style={{ padding: '4px 10px', borderRadius: '4px', border: '1px solid #e2e8f0', background: '#fff', cursor: safePage >= totalPages ? 'default' : 'pointer', opacity: safePage >= totalPages ? 0.5 : 1 }}
               >
                 Next ›
               </button>

@@ -6,10 +6,10 @@ html, body, #root {
 }
 
 body {
-  font-family: 'Inter', 'Segoe UI', 'Trebuchet MS', sans-serif;
-  background: linear-gradient(135deg, #f0f2f5 0%, #e4e9f2 100%);
+  font-family: var(--font-sans);
+  background: var(--canvas);
   min-height: 100%;
-  color: #1f2937;
+  color: var(--ink-800);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -20,11 +20,16 @@ body {
 
 a {
   text-decoration: none;
+  color: var(--brand-600);
 }
 
-/* Global smooth transitions */
+button {
+  font-family: inherit;
+}
+
+/* Smooth, subtle state changes (colour and shadow only — no layout animation) */
 button, a, input, select, textarea {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
 /* ── Mobile: prevent iOS input auto-zoom (requires font-size ≥ 16px) ── */
@@ -35,6 +40,8 @@ button, a, input, select, textarea {
   input[type="tel"],
   input[type="url"],
   input[type="date"],
+  input[type="number"],
+  input[type="search"],
   textarea,
   select {
     font-size: 16px !important;
@@ -46,10 +53,17 @@ button, a, input, select, textarea {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Keyboard focus is always visible */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -57,12 +71,15 @@ button, a, input, select, textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(30, 58, 138, 0.2);
+  background: var(--ink-300);
   border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(30, 58, 138, 0.4);
+  background: var(--ink-400);
+  background-clip: content-box;
 }
 
 /* ── Consistent Form Input Styles ── */
@@ -72,28 +89,39 @@ input[type="password"],
 input[type="tel"],
 input[type="url"],
 input[type="date"],
+input[type="number"],
+input[type="search"],
 textarea,
 select {
   width: 100%;
-  padding: 11px 15px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--ink-300);
+  border-radius: var(--radius);
   font-size: 14px;
   font-family: inherit;
-  background: #fafbfc;
-  color: #1f2937;
-  transition: all 0.25s ease;
+  line-height: 1.4;
+  background: var(--surface);
+  color: var(--ink-900);
   box-sizing: border-box;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-xs);
 }
 
-input[type="text"]::placeholder,
-input[type="email"]::placeholder,
-input[type="password"]::placeholder,
-input[type="tel"]::placeholder,
-input[type="url"]::placeholder,
+input::placeholder,
 textarea::placeholder {
-  color: #9ca3af;
+  color: var(--ink-400);
+}
+
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="password"]:hover,
+input[type="tel"]:hover,
+input[type="url"]:hover,
+input[type="date"]:hover,
+input[type="number"]:hover,
+input[type="search"]:hover,
+textarea:hover,
+select:hover {
+  border-color: var(--ink-400);
 }
 
 input[type="text"]:focus,
@@ -102,12 +130,14 @@ input[type="password"]:focus,
 input[type="tel"]:focus,
 input[type="url"]:focus,
 input[type="date"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: #3b82f6;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(59, 130, 246, 0.08);
+  border-color: var(--brand-500);
+  background: var(--surface);
+  box-shadow: var(--focus-ring);
 }
 
 input[type="text"]:disabled,
@@ -116,11 +146,50 @@ input[type="password"]:disabled,
 input[type="tel"]:disabled,
 input[type="url"]:disabled,
 input[type="date"]:disabled,
+input[type="number"]:disabled,
+input[type="search"]:disabled,
 textarea:disabled,
 select:disabled {
-  background: #f3f4f6;
-  color: #9ca3af;
+  background: var(--surface-muted);
+  color: var(--ink-400);
+  border-color: var(--line);
   cursor: not-allowed;
-  opacity: 0.7;
+  box-shadow: none;
 }
 
+/* Native file pickers styled as a secondary button */
+input[type="file"] {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink-600);
+  max-width: 100%;
+}
+input[type="file"]::file-selector-button {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-800);
+  background: var(--surface);
+  border: 1px solid var(--ink-300);
+  border-radius: var(--radius);
+  padding: 7px 14px;
+  margin-right: 12px;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+input[type="file"]::file-selector-button:hover {
+  background: var(--surface-muted);
+  border-color: var(--ink-400);
+}
+
+/* Same chevron on every dropdown */
+select:not([multiple]) {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%2364748b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M3 4.5l3 3 3-3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+  cursor: pointer;
+}

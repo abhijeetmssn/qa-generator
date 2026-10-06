@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiGetCompanyById, apiUpdateCompany, apiUploadLogo, apiGetAllCompanies, apiRenewSubscription } from '../services/api';
+import Icon from '../components/Icon';
+import ToggleSwitch from '../components/ToggleSwitch';
 import type { Company } from '../services/api';
 
 interface EditCompanyProps {
@@ -13,7 +15,7 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }) => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(companyId || null);
-  const [formData, setFormData] = useState<Company>({ name: '', address: '', phone: '', email: '', website: '', facebookUrl: '', instagramUrl: '', scanAnalyticsEnabled: true });
+  const [formData, setFormData] = useState<Company>({ name: '', address: '', phone: '', email: '', website: '', facebookUrl: '', instagramUrl: '', scanAnalyticsEnabled: true, perPackQrEnabled: false });
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(null);
@@ -46,7 +48,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
 
     apiGetCompanyById(selectedCompanyId)
       .then(async company => {
-        setFormData({ name: company.name || '', address: company.address || '', phone: company.phone || '', email: company.email || '', website: company.website || '', facebookUrl: company.facebookUrl || '', instagramUrl: company.instagramUrl || '', scanAnalyticsEnabled: company.scanAnalyticsEnabled !== false });
+        setFormData({ name: company.name || '', address: company.address || '', phone: company.phone || '', email: company.email || '', website: company.website || '', facebookUrl: company.facebookUrl || '', instagramUrl: company.instagramUrl || '', scanAnalyticsEnabled: company.scanAnalyticsEnabled !== false, perPackQrEnabled: company.perPackQrEnabled === true });
         setSubscriptionExpiresAt(company.subscriptionExpiresAt || null);
         const logoUrl = `${API_BASE}/companies/${selectedCompanyId}/logo`;
         const res = await fetch(logoUrl);
@@ -86,6 +88,7 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
     try {
       const payload: Partial<Company> = { name: formData.name, address: formData.address, phone: formData.phone, email: formData.email, website: formData.website, facebookUrl: formData.facebookUrl, instagramUrl: formData.instagramUrl };
       if (isAdmin) payload.scanAnalyticsEnabled = formData.scanAnalyticsEnabled; // scan analytics is admin-only
+      if (isAdmin) payload.perPackQrEnabled = formData.perPackQrEnabled; // per-pack QR access is admin-only
       await apiUpdateCompany(selectedCompanyId, payload);
       if (logoFile) {
         await apiUploadLogo(logoFile, selectedCompanyId);
@@ -109,7 +112,12 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
   if (loadingCompanies) {
     return (
       <div className="add-product-wrapper">
-        <div className="add-product-header"><h1>Edit Company</h1></div>
+        <div className="page-header">
+        <div>
+          <h1>Edit Company</h1>
+          <p className="page-subtitle">Company details and customer-care contacts shown on the product page.</p>
+        </div>
+      </div>
         <div className="content-card" style={{ textAlign: 'center', padding: '48px' }}>
           <p style={{ color: '#64748b' }}>Loading companies...</p>
         </div>
@@ -119,20 +127,22 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
 
   return (
     <div className="add-product-wrapper">
-      <div className="add-product-header"><h1>Edit Company</h1></div>
+      <div className="page-header">
+        <div>
+          <h1>Edit Company</h1>
+          <p className="page-subtitle">Company details and customer-care contacts shown on the product page.</p>
+        </div>
+      </div>
 
       <div className="content-card">
 
         {/* Company Selector — admin only */}
         {isAdmin && (
-          <div className="form-group" style={{ marginBottom: '28px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '700', fontSize: '14px', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Select Company
-            </label>
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label>Select Company</label>
             <select
               value={selectedCompanyId ?? ''}
               onChange={e => setSelectedCompanyId(e.target.value ? Number(e.target.value) : null)}
-              style={{ width: '100%', padding: '12px 14px', borderRadius: '10px', border: '1.5px solid #e2e8f0', fontSize: '14px', background: '#f8f9fb', color: '#111827', cursor: 'pointer' }}
             >
               <option value="">-- Select a company to edit --</option>
               {companies.map(c => (
@@ -145,24 +155,22 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
         {/* Company Form */}
         {selectedCompanyId ? (
           loading ? (
-            <p style={{ color: '#64748b', textAlign: 'center', padding: '32px 0' }}>Loading company details...</p>
+            <div className="empty-state">Loading company details...</div>
           ) : (
             <>
               <div className="card-section-title">Company Details</div>
 
               {error && (
-                <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '12px 16px', color: '#dc2626', marginBottom: '16px', fontSize: '0.9rem' }}>{error}</div>
+                <div className="alert is-danger">{error}</div>
               )}
               {success && (
-                <div style={{ background: '#dcfce7', border: '1px solid #86efac', borderRadius: '8px', padding: '12px 16px', color: '#15803d', marginBottom: '16px', fontSize: '0.9rem', fontWeight: 600 }}>
-                  ✓ Company details saved successfully!
-                </div>
+                <div className="alert is-success">Company details saved successfully.</div>
               )}
 
               <form className="add-product-form" onSubmit={handleSubmit}>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>COMPANY NAME <span style={{ color: '#ef4444' }}>*</span></label>
+                    <label>COMPANY NAME <span className="required">*</span></label>
                     <input name="name" value={formData.name} onChange={handleChange} placeholder="Enter company name" required />
                   </div>
                 </div>
@@ -207,18 +215,18 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
                       const days = subscriptionExpiresAt
                         ? Math.ceil((new Date(subscriptionExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
                         : null;
-                      const color = days === null ? '#94a3b8' : days <= 0 ? '#ef4444' : days <= 5 ? '#f97316' : days <= 10 ? '#f59e0b' : '#22c55e';
+                      const tone = days === null ? 'neutral' : days <= 0 ? 'danger' : days <= 10 ? 'warning' : 'success';
                       return (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', paddingTop: '4px' }}>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 600, color, minWidth: '180px' }}>
+                        <div className="subscription-row">
+                          <span className={`badge is-${tone}`}>
                             {days === null
                               ? 'No expiry set'
                               : days <= 0
-                              ? '⚠️ Expired'
-                              : `⏳ ${days} day${days !== 1 ? 's' : ''} remaining`}
-                          </div>
+                              ? 'Expired'
+                              : `${days} day${days !== 1 ? 's' : ''} remaining`}
+                          </span>
                           {subscriptionExpiresAt && (
-                            <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                            <div className="field-hint" style={{ margin: 0 }}>
                               Expires: {new Date(subscriptionExpiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                             </div>
                           )}
@@ -238,9 +246,10 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
                                   setRenewing(false);
                                 }
                               }}
-                              style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', background: '#3b82f6', color: '#fff', fontWeight: 600, fontSize: '0.88rem', cursor: renewing ? 'not-allowed' : 'pointer', opacity: renewing ? 0.7 : 1 }}
+                              className="secondary-btn"
                             >
-                              {renewing ? '⏳ Renewing...' : '🔄 Renew 1 Month'}
+                              <Icon name="refresh" size={15} />
+                              {renewing ? 'Renewing...' : 'Renew 1 Month'}
                             </button>
                           )}
                         </div>
@@ -254,73 +263,76 @@ const EditCompany: React.FC<EditCompanyProps> = ({ companyId, isAdmin, onSaved }
                 <div className="form-row">
                   <div className="form-group">
                     <label>SCAN ANALYTICS</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', paddingTop: '4px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, scanAnalyticsEnabled: !prev.scanAnalyticsEnabled }))}
-                        style={{
-                          width: '52px', height: '28px', borderRadius: '14px', border: 'none', cursor: 'pointer',
-                          background: formData.scanAnalyticsEnabled ? '#22c55e' : '#d1d5db',
-                          position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-                        }}
-                      >
-                        <span style={{
-                          position: 'absolute', top: '3px',
-                          left: formData.scanAnalyticsEnabled ? '27px' : '3px',
-                          width: '22px', height: '22px', borderRadius: '50%',
-                          background: '#fff', transition: 'left 0.2s',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                        }} />
-                      </button>
-                      <span style={{ fontSize: '14px', color: formData.scanAnalyticsEnabled ? '#15803d' : '#6b7280' }}>
-                        {formData.scanAnalyticsEnabled ? 'Enabled — QR scan events will be tracked' : 'Disabled — scans will not be recorded'}
-                      </span>
-                    </div>
+                    <ToggleSwitch
+                      checked={!!formData.scanAnalyticsEnabled}
+                      onChange={() => setFormData(prev => ({ ...prev, scanAnalyticsEnabled: !prev.scanAnalyticsEnabled }))}
+                      onLabel="Enabled — QR scan events will be tracked"
+                      offLabel="Disabled — scans will not be recorded"
+                    />
+                  </div>
+                </div>
+                )}
+
+                {/* One QR per pack — admin only */}
+                {isAdmin && (
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>ONE QR PER PACK</label>
+                    <ToggleSwitch
+                      checked={!!formData.perPackQrEnabled}
+                      onChange={() => setFormData(prev => ({ ...prev, perPackQrEnabled: !prev.perPackQrEnabled }))}
+                      onLabel="Allowed — new batches can get a unique QR for every pack"
+                      offLabel="Not allowed — one QR per batch only"
+                    />
                   </div>
                 </div>
                 )}
 
                 {/* Logo Section */}
                 <div className="card-section-title" style={{ marginTop: '8px' }}>Company Logo</div>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '24px', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '120px', height: '120px', borderRadius: '12px', border: '2px dashed #cbd5e1', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                <div className="logo-editor">
+                  <div className="logo-editor-preview">
+                    <div className="logo-box">
                       {logoPreview ? (
-                        <img src={logoPreview} alt="New logo preview" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '10px' }} />
+                        <img src={logoPreview} alt="New logo preview" />
                       ) : currentLogoUrl ? (
-                        <img src={currentLogoUrl} alt="Current logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '10px' }} />
+                        <img src={currentLogoUrl} alt="Current logo" />
                       ) : (
-                        <span style={{ fontSize: '2.5rem', color: '#cbd5e1' }}>🏢</span>
+                        <Icon name="building" size={36} strokeWidth={1.4} />
                       )}
                     </div>
-                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                    <span className="logo-caption">
                       {logoPreview ? 'New logo (unsaved)' : currentLogoUrl ? 'Current logo' : 'No logo'}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minWidth: '200px' }}>
+                  <div className="logo-editor-actions">
                     <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleLogoSelect} style={{ display: 'none' }} id="logo-file-input" />
-                    <label htmlFor="logo-file-input" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'white', border: '1.5px solid #4caf50', borderRadius: '10px', padding: '10px 18px', color: '#4caf50', fontWeight: 600, fontSize: '0.9rem', transition: 'all 0.2s', width: 'fit-content' }}>
-                      📁 {logoFile ? 'Change Logo' : 'Upload Logo'}
-                    </label>
-                    {logoPreview && (
-                      <button type="button" onClick={handleRemoveLogo} style={{ background: 'white', border: '1.5px solid #ef4444', borderRadius: '10px', padding: '10px 18px', color: '#ef4444', fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', width: 'fit-content' }}>
-                        ✕ Remove
-                      </button>
-                    )}
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>PNG, JPG or WebP · Max 5MB</p>
-                    {logoFile && <p style={{ margin: 0, fontSize: '0.82rem', color: '#15803d', fontWeight: 500 }}>Selected: {logoFile.name}</p>}
+                    <div className="logo-editor-buttons">
+                      <label htmlFor="logo-file-input" className="secondary-btn">
+                        <Icon name="upload" size={15} /> {logoFile ? 'Change Logo' : 'Upload Logo'}
+                      </label>
+                      {logoPreview && (
+                        <button type="button" onClick={handleRemoveLogo} className="secondary-btn is-danger">
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <p className="field-hint" style={{ margin: 0 }}>PNG, JPG or WebP · Max 5MB</p>
+                    {logoFile && <p className="field-hint" style={{ margin: 0, color: 'var(--success-700)' }}>Selected: {logoFile.name}</p>}
                   </div>
                 </div>
 
-                <button type="submit" className="submit-btn" disabled={saving} style={{ marginTop: '8px' }}>
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </button>
+                <div className="form-actions">
+                  <button type="submit" className="submit-btn" disabled={saving}>
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
               </form>
             </>
           )
         ) : (
           !isAdmin && (
-            <p style={{ color: '#64748b', textAlign: 'center', padding: '32px 0' }}>No company assigned to your account.</p>
+            <div className="empty-state">No company assigned to your account.</div>
           )
         )}
       </div>
