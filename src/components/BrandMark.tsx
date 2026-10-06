@@ -1,0 +1,22 @@
+import React from 'react';
+
+// APAS brand mark: a gold shield (authentication) whose check-mark is a leaf (agri products).
+// Same artwork as public/favicon.svg — keep the two in sync.
+const BrandMark: React.FC<{ size?: number; className?: string }> = ({ size = 40, className }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 64 64"
+    xmlns="http://www.w3.org/2000/svg"
+    role="img"
+    aria-label="APAS"
+    className={className}
+  >
+    <path d="M32 4.5 53.5 12v17.6C53.5 43.6 44.6 54.6 32 59.5 19.4 54.6 10.5 43.6 10.5 29.6V12Z" fill="#F5B301" />
+    <path d="M27.6 43.4C28.6 31.6 35.2 22.6 46.8 19.4 46.4 31.4 39.6 40.2 27.6 43.4Z" fill="#0B1F4B" />
+    <path d="M29.8 41.2 44.4 21.8" stroke="#F5B301" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M19.6 33.2 27.8 42.4" stroke="#0B1F4B" strokeWidth="5.2" strokeLinecap="round" />
+  </svg>
+);
+
+export default BrandMark;

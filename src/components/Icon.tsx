@@ -6,7 +6,7 @@ export type IconName =
   | 'dashboard' | 'plus' | 'list' | 'scan' | 'trash' | 'building' | 'edit' | 'users'
   | 'upload' | 'alert' | 'menu' | 'chevron-down' | 'clock' | 'key' | 'logout'
   | 'download' | 'printer' | 'search' | 'refresh' | 'database' | 'package' | 'arrow-left'
-  | 'phone' | 'mail' | 'globe' | 'map-pin' | 'location';
+  | 'phone' | 'mail' | 'globe' | 'map-pin' | 'location' | 'eye';
 
 const PATHS: Record<IconName, React.ReactNode> = {
   dashboard: (
@@ -149,6 +149,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
       <circle cx="12" cy="10" r="3" />
+    </>
+  ),
+  eye: (
+    <>
+      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
     </>
   ),
   location: (

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { apiLogin, SubscriptionExpiredError } from '../services/api';
 import Icon from '../components/Icon';
+import BrandMark from '../components/BrandMark';
 import type { UserRole } from '../services/api';
 import '../styles/Login.css';
 
@@ -85,8 +86,8 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, companyInfo }) => {
               </>
             ) : (
               <>
-                <div className="login-logo-box">
-                  <div className="login-logo-fallback">APAS</div>
+                <div className="login-brandmark">
+                  <BrandMark size={60} />
                 </div>
                 <h1 className="login-title">APAS</h1>
                 <p className="login-subtitle">Agri Product Authentication System</p>
